@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 Verification CLI: Step 0 (product identity + H(T) interpolation), a small
-Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, and a
-Step 3 tiny replacement-matrix slice.
+Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, a
+Step 3 tiny replacement-matrix slice, and Step 4 Hermite recovery of H(0).
 
 Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
   python -m counting_sat_algebra.verify --step2
   python -m counting_sat_algebra.verify --step3
+  python -m counting_sat_algebra.verify --step4
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from .blocked_sum import (
 )
 from .bounded_occurrence import random_bounded_3cnf, run_degree_bound_experiment
 from .cnf import brute_count, random_3cnf
+from .hermite import analyze_step4_case, recovery_problems, step4_cases
 from .independent import run_independent_suite
 from .replacement_matrix import (
     FULL_M0_LOG2_DIMENSION_AT_R2,
@@ -322,12 +324,101 @@ def run_step3_suite() -> list[dict]:
     return rows
 
 
+def run_step4_suite() -> list[dict]:
+    """Hermite recovery of H(0) from Hasse jets, compared with Lagrange.
+
+    The condition count stays D+1. Distinct sample points are fewer than the
+    value-only path. Each point is one pass over {0,1}^n. A single node that
+    carries every coefficient does quadratic arithmetic in D per assignment.
+    """
+    print("=== (F) Hermite / Hasse interpolation ===")
+    print(
+        "  Several Hasse coefficients of H at each sample t, from the formal "
+        "derivative of the clause product."
+    )
+    print(
+        "  The condition count stays D+1, packed into fewer distinct points than "
+        "Lagrange on T = 1..D+1."
+    )
+    print(
+        "  Each distinct t is one pass over 2^n assignments. Derivative orders "
+        "are not separate passes. A full jet of order D does quadratic arithmetic "
+        "per assignment."
+    )
+    print(
+        "  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm."
+    )
+    rows: list[dict] = []
+    cases = step4_cases()
+    for index, case in enumerate(cases, start=1):
+        started = time.perf_counter()
+        recoveries = analyze_step4_case(case)
+        elapsed = time.perf_counter() - started
+        problems: list[str] = []
+        for recovery in recoveries:
+            problems.extend(
+                f"{recovery.scheme}: {problem}"
+                for problem in recovery_problems(recovery)
+            )
+        if not recoveries:
+            rows.append(
+                {
+                    "name": case.name,
+                    "n": case.cnf.n,
+                    "m": case.cnf.m,
+                    "brute": -1,
+                    "degree_cap": -1,
+                    "observed_degree": -1,
+                    "schemes": 0,
+                    "ok": False,
+                    "sec": time.perf_counter() - started,
+                }
+            )
+            print(f"  [F {index:02d}/{len(cases)}] {case.name}  no schemes  FAIL", flush=True)
+            return rows
+        ok = not problems
+        head = recoveries[0]
+        row = {
+            "name": case.name,
+            "n": head.n,
+            "m": head.m,
+            "brute": head.brute,
+            "degree_cap": head.degree_cap,
+            "observed_degree": head.observed_degree,
+            "schemes": len(recoveries),
+            "ok": ok,
+            "sec": elapsed,
+        }
+        rows.append(row)
+        status = "OK" if ok else "FAIL"
+        print(
+            f"  [F {index:02d}/{len(cases)}] {case.name}  "
+            f"n={head.n} m={head.m} R={head.R} k={head.k} D={head.degree_cap}  "
+            f"#F={head.brute}  deg={head.observed_degree}  "
+            f"schemes={len(recoveries)}  {status}  ({elapsed:.3f}s)",
+            flush=True,
+        )
+        for recovery in recoveries:
+            print(
+                f"      {recovery.scheme:<12} {recovery.sample_comparison()}  "
+                f"passes={recovery.cube_passes}  assignments={recovery.assignments}  "
+                f"H(0)={recovery.h0}",
+                flush=True,
+            )
+        if not ok:
+            for problem in problems:
+                print(f"    {problem}", flush=True)
+            return rows
+    return rows
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
     bounded_rows: List[dict],
     blocked_rows: List[dict] | None = None,
     matrix_rows: List[dict] | None = None,
+    hermite_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -364,6 +455,11 @@ def print_summary_table(
             f"{'matrix':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
             f"{'OK' if r['ok'] else 'FAIL':>6}"
         )
+    for r in hermite_rows or []:
+        print(
+            f"{'hermite':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
+            f"{'OK' if r['ok'] else 'FAIL':>6}"
+        )
     print("-" * 72)
     if interp_rows:
         print(
@@ -385,12 +481,16 @@ def print_summary_table(
         print(
             f"Matrix slice  (E): {sum(1 for r in matrix_rows if r['ok'])}/{len(matrix_rows)} passed"
         )
+    if hermite_rows:
+        print(
+            f"Hermite       (F): {sum(1 for r in hermite_rows if r['ok'])}/{len(hermite_rows)} passed"
+        )
     print("=" * 72)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0, 1, 2, and 3)"
+        description="Counting-polynomial skeleton verifier (Steps 0, 1, 2, 3, and 4)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -407,6 +507,11 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="run only the Step 3 tiny replacement-matrix checks",
     )
+    parser.add_argument(
+        "--step4",
+        action="store_true",
+        help="run the Step 4 Hermite / Hasse checks",
+    )
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -420,19 +525,31 @@ def main(argv: List[str] | None = None) -> int:
         bounded_specs = [(6, 4, 1), (6, 6, 1)]
         growth_groups = (1, 2, 3, 4)
 
-    only_step2 = args.step2 and not args.step3
-    only_step3 = args.step3 and not args.step2
-    only_steps_2_and_3 = args.step2 and args.step3
+    only_step2 = args.step2 and not args.step3 and not args.step4
+    only_step3 = args.step3 and not args.step2 and not args.step4
+    only_steps_2_and_3 = args.step2 and args.step3 and not args.step4
+    only_step4 = args.step4 and not args.step2 and not args.step3
+    mixed_with_step4 = args.step4 and (args.step2 or args.step3)
     if only_step2:
         print("counting_sat_algebra.verify — Step 2 only")
     elif only_step3:
         print("counting_sat_algebra.verify — Step 3 only")
     elif only_steps_2_and_3:
         print("counting_sat_algebra.verify — Steps 2 and 3 only")
+    elif only_step4:
+        print("counting_sat_algebra.verify — Step 4 only")
+    elif mixed_with_step4:
+        names = ", ".join(
+            str(number)
+            for number, enabled in ((2, args.step2), (3, args.step3), (4, args.step4))
+            if enabled
+        )
+        print(f"counting_sat_algebra.verify — Steps {names} only")
     else:
-        print("counting_sat_algebra.verify — Steps 0, 1, 2, and 3")
+        print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, and 4")
         print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
-        print("a blocked sum on hand-built replacements, and a tiny replacement matrix.")
+        print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
+        print("and Hermite recovery of H(0) from Hasse coefficients.")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
 
@@ -506,6 +623,66 @@ def main(argv: List[str] | None = None) -> int:
         )
         return 0
 
+    if only_step4:
+        hermite_rows = run_step4_suite()
+        print()
+        if not hermite_rows or not all(row["ok"] for row in hermite_rows):
+            print("FAIL: Hermite recovery disagreed with brute force", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], None, None, hermite_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: Step 4 only. On these instances Hermite interpolation from Hasse "
+            "coefficients recovers H(0) = #F, in agreement with the direct sum at 0, "
+            "with brute force, and with Lagrange interpolation on the same replacement "
+            "family and the same degree cap. The number of conditions stays D+1. The "
+            "number of distinct sample points is strictly smaller than that. Each "
+            "sample point is one pass over {0,1}^n; a full jet of order D does "
+            "quadratic arithmetic per assignment. No Theorem 1.1, no 2^{o(n)} claim. "
+            "Full M0 is not built."
+        )
+        return 0
+
+    if mixed_with_step4:
+        example_rows: list[dict] = []
+        matrix_rows: list[dict] = []
+        if args.step2:
+            example_rows, growth_rows = run_step2_suite(growth_groups)
+            if (
+                not example_rows
+                or not all(row["ok"] for row in example_rows)
+                or len(growth_rows) != len(growth_groups)
+                or not all(row["ok"] for row in growth_rows)
+            ):
+                print("FAIL: blocked sum disagreed with the full sum", file=sys.stderr)
+                return 1
+            print()
+        if args.step3:
+            matrix_rows = run_step3_suite()
+            print()
+            if not matrix_rows or not all(row["ok"] for row in matrix_rows):
+                print("FAIL: replacement-matrix slice disagreed with its checks", file=sys.stderr)
+                return 1
+            print()
+        hermite_rows = run_step4_suite()
+        print()
+        if not hermite_rows or not all(row["ok"] for row in hermite_rows):
+            print("FAIL: Hermite recovery disagreed with brute force", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], example_rows or None, matrix_rows or None, hermite_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: the requested steps only. Hermite recovery matches brute force "
+            "and Lagrange at H(0), using D+1 conditions at fewer distinct sample "
+            "points. Each Hermite node still enumerates 2^n assignments. "
+            f"Side length, when Step 3 ran, is at most {SLICE_MAX_DIMENSION}. "
+            "The parameter list with R≥32 and 6R≤Q is not built. "
+            "No Theorem 1.1, no 2^{o(n)} claim."
+        )
+        return 0
+
     print("=== (A) Independent components ===")
     indep_rows = run_independent_suite(trials=args.trials_a, seed=args.seed + 1)
     for r in indep_rows:
@@ -563,19 +740,30 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (E) all {len(matrix_rows)} replacement-matrix slices passed")
     print()
 
+    hermite_rows = run_step4_suite()
+    if not hermite_rows or not all(row["ok"] for row in hermite_rows):
+        print("FAIL: Hermite recovery disagreed with brute force", file=sys.stderr)
+        return 1
+    print(f"  (F) all {len(hermite_rows)} Hermite instances passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
 
-    print_summary_table(interp_rows, indep_rows, bounded_rows, example_rows, matrix_rows)
+    print_summary_table(
+        interp_rows, indep_rows, bounded_rows, example_rows, matrix_rows, hermite_rows
+    )
     print()
     print("ALL TESTS PASSED")
     print(
         "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
         "identity, degree-cap checks on occurrence-≤3 3-CNFs, blocked-sum agreement "
-        "with full-space H(t) on hand-built replacements, and a tiny replacement "
-        f"matrix of side length at most {SLICE_MAX_DIMENSION}. "
-        "Popcount measurement tuples grow as (r+1)^b. "
+        "with full-space H(t) on hand-built replacements, a tiny replacement "
+        f"matrix of side length at most {SLICE_MAX_DIMENSION}, and Hermite recovery "
+        "of H(0) from Hasse coefficients at fewer distinct sample points than D+1. "
+        "The Hermite condition count stays D+1, and each of those points still "
+        "enumerates 2^n assignments. Popcount measurement tuples grow as (r+1)^b. "
         f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
         "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
     )

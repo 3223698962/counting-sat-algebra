@@ -32,8 +32,10 @@ Q = 192. At r = 2 the side length is then 2**384. ``SLICE_MAX_DIMENSION``
 refuses anything above 64, so that matrix is not stored, not factored, and not
 run. Schedules below are written out by hand. The balancing argument that
 would choose them for large n needs n on the order of D**2 and is not run.
-Hermite interpolation, sparsification, and a subexponential count are not
-implemented. Theorem 1.1 is not implemented. Nothing here runs in 2^{o(n)}.
+Sparsification and a subexponential count are not implemented. Hermite
+interpolation of H is a separate exact check in ``hermite.py``; it is not
+part of this matrix, and each of its sample points still enumerates the cube.
+Theorem 1.1 is not implemented. Nothing here runs in 2^{o(n)}.
 
 The same formulas are checked at four tiny parameter points, including the
 four-coordinate identity

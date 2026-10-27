@@ -13,6 +13,10 @@ Replacement linear forms and the univariate H(T) from Section 2.3:
 本原型在全部 2^n 赋值上用精确有理数求值 H(1),…,H(D+1)，
 再插值恢复 H(0)。``eval_H_at`` 本身仍然枚举全部赋值。
 
+Step 4 lives in ``hermite.py``. It reads several Hasse coefficients at each
+sample point and recovers the same H(0) from fewer distinct nodes than the
+D+1 value samples used here. Each node is still one pass over the cube.
+
 Step 2 lives in ``blocked_sum.py``. For a hand-built family whose higher
 T-coefficients lie in a fixed list of linear measurements, that module
 regroups the same sum by blocks. The regrouping is checked against
