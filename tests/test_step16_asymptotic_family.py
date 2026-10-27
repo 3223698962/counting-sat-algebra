@@ -112,7 +112,7 @@ def test_step16_cli_is_wired(tmp_path, monkeypatch):
     assert main(['verify', '--step16', '--output', str(output)]) == 0
     import json
     report = json.loads(output.read_text(encoding='utf-8'))
-    assert report['version'] == __version__ == '0.18.0'
+    assert report['version'] == __version__ == '0.19.0'
     assert report['steps'] == [16] and report['all_checks_passed'] is True
     assert report['theorem_1_1_complete'] is report['lean_proof_complete'] is False
     assert 'Lemma 4.8' in report['scope']

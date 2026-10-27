@@ -1,8 +1,8 @@
 # counting-sat-algebra
 
-以 `references/` 中的计数算法为对照，逐步实现确定性的精确 #SAT 计数，并核验时间与空间结论。当前版本为 **0.18.0**。
+以 `references/` 中的计数算法为对照，逐步实现确定性的精确 #SAT 计数，并核验时间与空间结论。当前版本为 **0.19.0**。
 
-当前已实现参考文献 Sections 3、4 的若干部件：精确条件期望日程、线性代数设计检查、共享测量求和、Taylor 系数恢复、完整参数下的辅助算子条目查询和有限参数的稀疏放置。DIMACS 计数入口通过独立连通分量调用代数计数后端，局部后端为 `--backend common` 或 `--backend tensor`。Step 14 按实际替换多项式的支持集分解，已从同一 16384 变量全局放置恢复精确计数 1。Step 15 在连通支持上做有限 Taylor 张量消元，中间表必须落在显式预算内。它不是 Appendix D 的一般模收缩，也不给出该渐近界。Step 16 按 Lemma 4.8 计算参数日程，并在预算内运行一个通过 Lemma 4.7 全部数值前提的有限元组。该闭式在这些 n 上于形成 D 之前失败；有限元组的运行不是渐近时间或空间界的证明。Step 17 实现 Section 5.1–5.2 的有限对象：稀疏 \(\mathbb F_2\) 单项式、整数提升、Lemma 5.1 的系数除法，以及总 \(h\) 次小于 \(\ell\) 的截断乘积。4 个变量的实例在 \(2^5\) 下的最小非负剩余是 4，与独立的 16 点扫描一致。超预算时在分配项表或扫描之前拒绝，不返回部分计数。这不是 Section 5.3 的替换求和，也不是 Section 6 或 Theorem 2.2 的运行时间。一般 k-CNF 的整条管线与渐近复杂度结论仍未完成。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 17 没有完成 Theorem 1.1。
+当前已实现参考文献 Sections 3、4 的若干部件：精确条件期望日程、线性代数设计检查、共享测量求和、Taylor 系数恢复、完整参数下的辅助算子条目查询和有限参数的稀疏放置。DIMACS 计数入口通过独立连通分量调用代数计数后端，局部后端为 `--backend common` 或 `--backend tensor`。Step 14 按实际替换多项式的支持集分解，已从同一 16384 变量全局放置恢复精确计数 1。Step 15 在连通支持上做有限 Taylor 张量消元，中间表必须落在显式预算内。它不是 Appendix D 的一般模收缩，也不给出该渐近界。Step 16 按 Lemma 4.8 计算参数日程，并在预算内运行一个通过 Lemma 4.7 全部数值前提的有限元组。该闭式在这些 n 上于形成 D 之前失败；有限元组的运行不是渐近时间或空间界的证明。Step 17 实现 Section 5.1–5.2 的有限对象：稀疏 \(\mathbb F_2\) 单项式、整数提升、Lemma 5.1 的系数除法，以及总 \(h\) 次小于 \(\ell\) 的截断乘积。4 个变量的实例在 \(2^5\) 下的最小非负剩余是 4，与独立的 16 点扫描一致。超预算时在分配项表或扫描之前拒绝，不返回部分计数。Step 18 把这些方程因子写成 \(A_\ell\) 中的替换形式，并用 Section 3 的测量扫描求和。同一 4 变量实例的 \(V\) 系数是 \((-2,6,0,-192,2496)\)，未约化和 2308，模 \(2^5\) 仍是 4。有限设计不是 Lemma 4.8 的行；该分支上 \(D\) 没有形成。超预算时在枚举或分配喷射之前拒绝，不返回部分计数。这不是 Section 6 的方程选择，也不是 Appendix D，也不是 Theorem 2.2 的运行时间。一般 k-CNF 的整条管线与渐近复杂度结论仍未完成。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 18 没有完成 Theorem 1.1。
 
 ## 运行
 
@@ -14,9 +14,9 @@ python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
 ```
 
-`--reference` 运行 Steps 9–17，共 40 项检查：1024 变量实例的日程和设计检查、精确尾界检查、四个小实例的共享测量计数、结构化矩阵查询、16384 变量的稀疏放置、实际 CNF 计数、同一全局放置在启用和关闭复用时的支持集计数与预算拒绝、Step 15 的连通路径计数、完整 Taylor 系数对照和超宽因子在建表前拒绝，Step 16 的 Lemma 4.8 闭式、较小 n 的前提失败、被选择的有限元组、稀疏放置、三个后端的计数或拒绝，和稠密满矩阵仍在分配前拒绝，以及 Step 17 的 Lemma 5.1、\(\ell=2\) 的三项乘积、稀疏提升、4 变量公共零点、空系统和常数方程，还有项表、系数位数和布尔立方在分配或扫描前的拒绝。`--step9` 至 `--step17` 可单独运行，也支持 `--output` 保存实际执行的参考检查。失败报告保留已执行的结果并标记失败步骤。
+`--reference` 运行 Steps 9–18，共 47 项检查：1024 变量实例的日程和设计检查、精确尾界检查、四个小实例的共享测量计数、结构化矩阵查询、16384 变量的稀疏放置、实际 CNF 计数、同一全局放置在启用和关闭复用时的支持集计数与预算拒绝、Step 15 的连通路径计数、完整 Taylor 系数对照和超宽因子在建表前拒绝，Step 16 的 Lemma 4.8 闭式、较小 n 的前提失败、被选择的有限元组、稀疏放置、三个后端的计数或拒绝，和稠密满矩阵仍在分配前拒绝，以及 Step 17 的 Lemma 5.1、\(\ell=2\) 的三项乘积、稀疏提升、4 变量公共零点、空系统和常数方程，还有项表、系数位数和布尔立方在分配或扫描前的拒绝，以及 Step 18 的次数上界、4 变量替换求和（剩余 4，系数 \((-2,6,0,-192,2496)\)）、高出现分支 \((4,0)\)、Lemma 4.8 守卫失败，和向量、分支、系数位数在枚举前的拒绝。`--step9` 至 `--step18` 可单独运行，也支持 `--output` 保存实际执行的参考检查。失败报告保留已执行的结果并标记失败步骤。
 
-`--quick` 运行 Steps 0–17 的较小网格，并包含 Step 16 与 Step 17 的同一组有限检查。Steps 2–8 的单独命令继续可用。`--step8` 保留原布尔枚举预算模式；默认日程 API 使用精确线性代数。
+`--quick` 运行 Steps 0–18 的较小网格，并包含 Step 16、Step 17 与 Step 18 的同一组有限检查。Steps 2–8 的单独命令继续可用。`--step8` 保留原布尔枚举预算模式；默认日程 API 使用精确线性代数。
 
 核验结果中的 `COUNTED` 表示确实恢复了计数，并与独立暴力计数或已知闭式核对；`CHECKED` 表示设计、参数或条目核对；`REFUSED` 表示预算或前提导致停止。大实例的设计通过不会被当成计数完成。
 
@@ -24,11 +24,11 @@ python -m counting_sat_algebra count examples/count_demo.cnf --output benches/co
 
 `.github/workflows/ci.yml` 在 pull request、推送到 `main`，以及手动 `workflow_dispatch` 时运行。同一引用上的新运行会取消尚未结束的运行。
 
-Python 3.12 用 pip 缓存安装可编辑包后运行 `pytest -q` 和 `python -m counting_sat_algebra.verify --quick`。`--quick` 覆盖 Steps 0–17 的较小网格，并执行 Steps 9–17 的参考检查。该作业要求日志包含 `ALL TESTS PASSED`、参考小结的通过数等于检查数，并且仍写明 Theorem 1.1 未实现、没有 \(2^{o(n)}\) 结论。
+Python 3.12 用 pip 缓存安装可编辑包后运行 `pytest -q` 和 `python -m counting_sat_algebra.verify --quick`。`--quick` 覆盖 Steps 0–18 的较小网格，并执行 Steps 9–18 的参考检查。该作业要求日志包含 `ALL TESTS PASSED`、参考小结的通过数等于检查数，并且仍写明 Theorem 1.1 未实现、没有 \(2^{o(n)}\) 结论。
 
 Python 3.10 安装同一包，并运行去掉 `test_step7_scheduler.py`、`test_step9_reference_design.py`、`test_step12_sparse_placement.py`、`test_step14_support_count.py` 和 `test_step16_asymptotic_family.py` 的 pytest。侧长 256 的日程点和 n=16384 的放置留在 Python 3.12 的 `pytest` 与 `verify --quick` 中。
 
-`python -m counting_sat_algebra.verify --reference` 写出 Steps 9–17 的报告。它在推送到 `main`、`workflow_dispatch`，以及带 `run-reference` 标签的 pull request 上运行。某项检查未通过、`all_checks_passed` 不是 true，或 `theorem_1_1_complete` 与 `lean_proof_complete` 不是 false 时，作业失败。绿色 CI 只说明这些有限检查通过。它不是 Theorem 1.1 的证明，也不否定 ETH。Step 17 的九项检查包含在这份报告里，但它们只覆盖 Section 5.1–5.2。
+`python -m counting_sat_algebra.verify --reference` 写出 Steps 9–18 的报告。它在推送到 `main`、`workflow_dispatch`，以及带 `run-reference` 标签的 pull request 上运行。某项检查未通过、`all_checks_passed` 不是 true，或 `theorem_1_1_complete` 与 `lean_proof_complete` 不是 false 时，作业失败。绿色 CI 只说明这些有限检查通过。它不是 Theorem 1.1 的证明，也不否定 ETH。Step 17 的九项检查和 Step 18 的七项检查包含在这份报告里。Step 18 覆盖 Section 5.3–5.5 的有限替换求和，不覆盖 Section 6 或 Appendix D。
 
 ## 新的计数接口
 
@@ -95,7 +95,7 @@ print(result.plan.boolean_vector_bound, result.boolean_vectors)
 
 16384 变量放置仅存 **59392** 个多项式条目和 **14336** 个测量条目，对应稠密多项式位置数为 **536870912**。手选点使用 τ=1/2；Step 16 的选择器在同一 (r,Q,R) 上改用满足精确尾界的最小 τ=5/16，测量允许量从 16384 降到 10240，独立测量数 4096 仍落在允许量内。共享测量路线的计划为 q=5461、J=5462，超过扫描预算，实际扫描为零。Step 14 与 Step 16 的支持集路线都得到 **10240** 个实际支持分量；启用复用完成 13 次局部求值、10227 次复用，实际扫描 96。Step 16 的张量后端在同一放置上扫描 176128 个局部布尔向量并得到同一计数 1。32769 变量结果来自独立 CNF 分量重新放置；该实例通过数值前提，但未执行全局放置。这些独立分量计数和不相交支持集计数不是一般连通实例的时间界。Lemma 4.8 的闭式在这些 n 上没有形成 D，因此这次运行不是渐近界。
 
-227 项 pytest 与 40 项参考检查全部通过。完整参考报告保存在 `benches/reference_alignment.json`，版本为 0.18.0，步骤为 9–17，只记录计数、检查结果和操作统计。`artifacts/step15-verification.json` 单独保存 Step 15 的四行结果。`artifacts/step16-verification.json` 单独保存 Step 16 的十行结果。`artifacts/step17-verification.json` 单独保存 Step 17 的九行结果。Step 17 没有完成 Theorem 1.1。
+237 项 pytest 与 47 项参考检查全部通过。完整参考报告保存在 `benches/reference_alignment.json`，版本为 0.19.0，步骤为 9–18，只记录计数、检查结果和操作统计。`artifacts/step15-verification.json` 单独保存 Step 15 的四行结果。`artifacts/step16-verification.json` 单独保存 Step 16 的十行结果。`artifacts/step17-verification.json` 单独保存 Step 17 的九行结果。`artifacts/step18-verification.json` 单独保存 Step 18 的七行结果。Step 18 没有完成 Theorem 1.1。
 
 [对齐说明](docs/REFERENCE_ALIGNMENT.md) 区分 Theorem 1.1 的较强时间界、Sections 3–6 的较弱时间界和未完成的 Lean 主定理。当前测试不能作为 ETH 结论、一般 \(2^{o(n)}\) 算法或完整形式化证明。
 

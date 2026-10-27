@@ -10,13 +10,15 @@ uses finite Taylor tensor elimination on connected supports. Step 16 chooses
 Lemma 4.8's integer schedule and runs a budget-feasible finite member when
 Lemma 4.7 accepts it. Step 17 builds finite Section 5.1–5.2 objects: sparse
 F2 systems, integer lifts, Lemma 5.1's coefficient division, and the truncated
-product. Those checks are exhaustive on a budgeted cube. The dense matrix
-remains limited to side 256.
+product. Those checks are exhaustive on a budgeted cube. Step 18 builds the
+Section 5.3–5.5 replacement factors and sums them with the Section 3 routine
+in A_ell on a checked finite design. Lemma 4.8 does not form D on these
+branches. The dense matrix remains limited to side 256.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
 Finite comparisons and numerical admission do not establish those bounds.
-Step 17 does not implement Theorem 1.1.
+Step 18 does not implement Theorem 1.1, Section 6, or Appendix D.
 """
 
 from .blocked_sum import (
@@ -32,6 +34,11 @@ from .blocked_sum import (
 )
 from .design import BlockDesign, make_design, popcount_design
 from .common_count import CommonCountPlan, CommonCountResult, count_placed_formula
+from .algebra_count import (
+    STEP18_SCOPE, AlgebraBudgets, AlgebraDesign, IncidenceCut, ReplacementSumResult,
+    count_replacement_sum, design_problems, finite_admitted_design, grouped_unit_design,
+    h_degree_bound, incidence_cut, input_degree_bound, sum_supplied_design,
+)
 from .conditional_balance import ConditionalSchedules, choose_schedules
 from .reference_parameters import (
     AsymptoticChoice, ChoiceBudgets, Lemma48Proposal, ParameterTuple,
@@ -145,6 +152,19 @@ __all__ = [
     "lemma_4_8_proposal",
     "choose_schedules",
     "count_placed_formula",
+    "STEP18_SCOPE",
+    "AlgebraBudgets",
+    "AlgebraDesign",
+    "IncidenceCut",
+    "ReplacementSumResult",
+    "count_replacement_sum",
+    "design_problems",
+    "finite_admitted_design",
+    "grouped_unit_design",
+    "h_degree_bound",
+    "incidence_cut",
+    "input_degree_bound",
+    "sum_supplied_design",
     "AuxiliarySlice",
     "BalanceCheck",
     "BlockDesign",
@@ -189,4 +209,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.18.0"
+__version__ = "0.19.0"
