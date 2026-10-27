@@ -33,9 +33,10 @@ refuses anything above 256, and Q > 30 is refused before a matrix is stored,
 so that matrix is not allocated, not factored, and not run. The Step 3
 schedules below are written out by hand. Step 7 checks two further explicit
 placements, at side lengths 81 and 256, and a balance-check scaffold that
-refuses to choose schedules when 2(b+w)D**2 ≤ M and 2Qr**2 ≤ n fail. That
-scaffold does not run the conditional-expectation balancer. The inequalities
-need n on the order of D**2.
+refuses to choose schedules when 2(b+w)D**2 ≤ M and 2Qr**2 ≤ n fail. Step 8
+runs a successive-choice search when those inequalities hold. On the admitted
+rows it refuses before design_problems_at, because that walk would exceed a
+Boolean-point budget. The inequalities need n on the order of D**2.
 Sparsification and a subexponential count are not implemented. Hermite
 interpolation of H is a separate exact check in ``hermite.py``; it is not
 part of this matrix, and each of its sample points still enumerates the cube.

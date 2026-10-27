@@ -62,13 +62,21 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 
 - [x] The slice cap is 256. `auxiliary_problems` passes on two points the cap of 64 refused: r = 3, Q = 2, R = 1, D = 81, and r = 2, Q = 4, R = 3, D = 256. Both have R < Q. T = 0 restoration, degree ≤ R−1, support, the measurement rows, and the kernel condition were checked, and on one explicit placement each, H(0) matches brute force inside M·(R−1) and m·k·R
 - [x] `schedule_placement` checks 2(b+w)D² ≤ M and 2Qr² ≤ n, with n ≤ M ≤ bn. Those inequalities need n on the order of D². They fail for every formula this repository compares with brute force, and the call then refuses. It does not draw a placement
-- [x] When the inequalities hold (64 unit clauses, r = 2, Q = 1, D = 4), the same call still refuses to choose schedules. The conditional-expectation balancer is not implemented. Caller-supplied schedules, including the four Step 3 placements and the two new points, are placed and `design_problems_at` is run
+- [x] Caller-supplied schedules, including the four Step 3 placements and the two new points, are placed and `design_problems_at` is run. Choosing schedules when the inequalities hold is Step 8
 - [x] `build_auxiliary_slice(2, 192, 32)` and `schedule_placement` at those parameters both refuse before a matrix is allocated. The next pure powers, 729 and 1024, stay above the cap. `verify --quick` runs the D = 81 point and the refusals. `verify --step7` also runs D = 256
 - Not claimed: Theorem 1.1, a refutation of ETH, a subexponential runtime, or 2^{o(n)}. A passing balance check is not a schedule
 
+### Step 8 — conditional-expectation balancer scaffold
+
+- [x] Successive choice runs only when the Lemma 4.5 inequalities hold and the slice is under the cap. At each variable and each clause it tries every symbol in {0, …, r−1}^Q and keeps the symbol that minimizes a quadratic load potential. Ties break toward the lexicographically first symbol. Nothing is sampled. The schedule cube is not enumerated
+- [x] On 64 disjoint unit clauses, r = 2, Q = 1, D = 4, the search meets label multiplicity 16 ≤ 2M/D = 32 and largest group 32, with 32·r ≤ 2n. `design_problems_at` is not called: an outside group has size 32, and that walk enumerates 2^32 Boolean points, above the budget 4096. `place_formula` is not called. The same kind of refusal, with 1 ≤ R < Q holding, is what 1024 disjoint units give at r = 2, Q = 2, R = 1, D = 16 (outside group 512, multiplicity 64 ≤ 128)
+- [x] Formulas that fail the inequalities, including the brute-comparable ones, still refuse with no placement and without running the search. Full M0 and side length 1024 still refuse before allocation. A direct call on eight units at r = 2, Q = 2, which is not admitted, passes `design_problems_at` and the T = 0 restoration. `schedule_placement` does not make that call
+- [x] `verify --step8` and `verify --quick` record these rows. Refusals are not timed. The direct check on eight units took about 0.01 seconds on one run. That clock is not a complexity result
+- Not claimed: Theorem 1.1, a refutation of ETH, a subexponential runtime, or 2^{o(n)}. The search is not a proof of Lemma 4.5. The binomial tail is not checked. A budget refusal is not a placement
+
 ## Not started
 
-No further step is listed. The distance to a full counting algorithm is still the list in `docs/PROGRESS.md`: full M0, the conditional-expectation balancer, sparsification with n' = n + o(n), a measurement space that is not exponential in the number of blocks, and a Hermite evaluation that does not walk the cube. Those constructions are not implemented here.
+No further step is listed. The distance to a full counting algorithm is still the list in `docs/PROGRESS.md`: full M0, a balancer that places an admitted formula inside the design budget, sparsification with n' = n + o(n), a measurement space that is not exponential in the number of blocks, and a Hermite evaluation that does not walk the cube. The Step 8 search stops before `design_problems_at` on every admitted row in this tree.
 
 ## Out of scope
 
@@ -87,7 +95,7 @@ src/counting_sat_algebra/
   hermite.py                                                           # Step 4
   sparsify.py                                                          # Step 5
   parameter_scan.py                                                    # Step 6
-  scheduler.py                                                         # Step 7
+  scheduler.py                                                         # Steps 7 and 8
 benches/
 docs/PROGRESS.md
 ```

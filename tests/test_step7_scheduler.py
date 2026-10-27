@@ -1,9 +1,9 @@
 """Step 7: a higher slice cap, two new points, and a balance-check scaffold.
 
 The cap is 256. Full M0 at R = 32, Q = 192 is still refused before allocation.
-The scaffold refuses when the Lemma 4.5 inequalities fail, and it does not
-choose schedules when they hold. These tests do not claim Theorem 1.1, a
-refutation of ETH, or a 2^{o(n)} count.
+The scaffold refuses when the Lemma 4.5 inequalities fail. When they hold, the
+Step 8 search may choose schedules and still refuse to place them. These tests
+do not claim Theorem 1.1, a refutation of ETH, or a 2^{o(n)} count.
 """
 
 from __future__ import annotations
@@ -123,7 +123,9 @@ def test_small_formulas_fail_the_balance_inequalities() -> None:
         assert "balancer" in outcome.reason
 
 
-def test_admitted_parameters_do_not_choose_a_schedule(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_admitted_toy_meets_the_bounds_and_refuses_the_design_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def _boom(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("build_auxiliary_slice was called")
 
@@ -139,12 +141,22 @@ def test_admitted_parameters_do_not_choose_a_schedule(monkeypatch: pytest.Monkey
     outcome = schedule_placement(cnf, r=2, Q=1, R=1)
     assert outcome.balance.admitted and outcome.placed is None
     assert not outcome.built_slice and not outcome.accepted
-    assert "no schedules were chosen" in outcome.reason
-    assert "not implemented" in outcome.reason
+    assert outcome.balancer_attempted and not outcome.balancer_built
+    assert not outcome.design_checked and not outcome.caller_supplied
+    assert outcome.multiplicity == 16 and outcome.multiplicity_ok is True
+    assert outcome.multiplicity_bound == Fraction(32)
+    assert outcome.group_size_ok is True and outcome.max_group_size == 32
+    assert outcome.outside_group_size == 32
+    assert outcome.trials == 256
+    assert "2**32" in outcome.reason and "4096" in outcome.reason
+    assert "place_formula was not called" in outcome.reason
     assert "1 <= R < Q" in outcome.reason
+    assert "not implemented" not in outcome.reason
     again = schedule_placement(cnf, r=2, Q=1)
     assert again.placed is None and again.balance.admitted
     assert again.balance.degree_gap_ok is None
+    assert again.multiplicity == 16 and not again.accepted
+    assert "cannot be a Lemma 4.7 witness" in again.reason
 
 
 def test_full_m0_is_refused_before_allocation(monkeypatch: pytest.MonkeyPatch) -> None:

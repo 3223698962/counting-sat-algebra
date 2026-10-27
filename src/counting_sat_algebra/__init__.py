@@ -1,4 +1,4 @@
-"""counting_sat_algebra: small algebraic #SAT testbed (Steps 0 through 7).
+"""counting_sat_algebra: small algebraic #SAT testbed (Steps 0 through 8).
 
 Steps 0 and 1 check the counting polynomial, univariate interpolation, and a
 bounded-occurrence degree cap. Step 2 checks a simplified (r, τ, D)-design and
@@ -13,7 +13,10 @@ a machine-limited grid and records which of those pieces match brute force
 and which stop on an unfinished construction or a budget. Step 7 raises
 the slice cap to 256, checks two further explicit placements, and refuses to
 choose schedules when the balance inequalities 2(b+w)D^2 <= M and 2Qr^2 <= n
-fail.
+fail. Step 8 runs a successive-choice search when those inequalities hold
+and the slice is under the cap. On the admitted rows the search meets the
+multiplicity and group bounds and refuses before design_problems_at, because
+that walk would exceed a Boolean-point budget.
 
 Every check still enumerates an exponential set: the cube {0,1}^n, a
 measurement space that is exponential in the number of blocks for the popcount
@@ -21,8 +24,9 @@ design, or a matrix whose side length is r**(2Q) on a machine-limited
 parameter. Copying can make the reduced n larger than the source n, and past
 that point the count is recorded as unchecked. The matrix at the parameter
 list R ≥ 32, 6R ≤ Q is not built. The scan does not time that matrix. The
-balance scaffold does not run the conditional-expectation balancer. Theorem
-1.1 is not implemented. Nothing here runs in 2^{o(n)} time.
+balancer does not enumerate the schedule cube and does not accept a placement
+on the admitted rows in this tree. Theorem 1.1 is not implemented. Nothing
+here runs in 2^{o(n)} time.
 """
 
 from .blocked_sum import (
@@ -123,4 +127,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
