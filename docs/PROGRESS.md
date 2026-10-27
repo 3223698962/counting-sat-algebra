@@ -1,6 +1,6 @@
 # Progress
 
-Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, and a Step 5 occurrence reduction are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point.
+Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, a Step 5 occurrence reduction, and a Step 6 parameter scan are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point. Step 6 runs those pieces on one fixed grid and records a match or a refusal. A refusal is not timed. The scan does not close the distance listed at the end of this file.
 
 ## Step 0
 
@@ -339,13 +339,120 @@ Step 3 is not applied. Its schedules are written out by hand for four placements
 
 The reduction does not keep n' close to n. At B = 3 a variable in d clauses becomes d variables whenever d > 3, and a 3-CNF with 3m − 2n > 20 leaves the brute-force window no matter how the clauses are arranged. The n = 5, m = 12 row is that situation at a tiny source. Nothing in this step runs in 2^{o(n)}. Theorem 1.1 is not implemented.
 
-## Next: Step 6
+## Step 6 — parameter scan
 
-For n in a machine-limited range, time brute force against a blocked sum. Record which steps match brute force, which stopped on an unfinished construction, and the remaining distance to a full counting algorithm. That step is not in this tree.
+Shipped in `parameter_scan.py`. The grid is fixed. Pytest and `verify --quick` run the `quick` profile (22 cells). `verify --step6` and `benches/parameter_scan.json` run the `full` profile (33 cells), which includes every quick cell and then the larger n. Nothing on the grid allocates full M0. Nothing on the grid enumerates a cube with n > 20. A cell whose pipeline was not started has no pipeline timing. The clocks below are one run of `python -m counting_sat_algebra.verify --step6` on the agent machine. The bench file is another run of the same grid. The two clocks are not required to agree. The operation counts are.
+
+The popcount family is the one from Step 2: b blocks of size r, one clause per block, every higher coefficient 1. For r = 2 the clause forbids one of the four local assignments, the blocks are disjoint, and #F = 3^b. For r = 3, #F = 7^b. For r = 1 the clauses are units of alternating sign and #F = 1. H(0) does not depend on R, because the replacement restores X_v at T = 0. D = b · min(r, 3) · R is stored on the design and is not read by the blocked sum.
+
+### Blocked sum against brute force
+
+"Agreed" means blocked H(0), the full-cube sum `eval_H_at` at 0, and `brute_count` were equal. "Refused" means that comparison was not finished. The plan columns are the closed forms (r+1)^b, b · 2^r · (r+1)^{b-1}, and 2^n. On a refused row those counts were not performed, except the brute-force column of the tuple-cap row, which did walk the cube.
+
+| cell | n | r | b | R | #F | tuples | local | cube | what ran |
+|------|---|---|---|---|----|--------|-------|------|----------|
+| blocked-r2-b1 | 2 | 2 | 1 | 1 | 3 | 3 | 4 | 4 | agreed |
+| blocked-r2-b2 | 4 | 2 | 2 | 1 | 9 | 9 | 24 | 16 | agreed |
+| blocked-r2-b3 | 6 | 2 | 3 | 1 | 27 | 27 | 108 | 64 | agreed |
+| blocked-r2-b4 | 8 | 2 | 4 | 1 | 81 | 81 | 432 | 256 | agreed |
+| blocked-r2-b5 | 10 | 2 | 5 | 1 | 243 | 243 | 1620 | 1024 | agreed |
+| blocked-r2-b6 | 12 | 2 | 6 | 1 | 729 | 729 | 5832 | 4096 | agreed |
+| blocked-r2-b7 | 14 | 2 | 7 | 1 | 2187 | 2187 | 20412 | 16384 | agreed |
+| blocked-r2-b2-R2 | 4 | 2 | 2 | 2 | 9 | 9 | 24 | 16 | agreed; D = 8, tuples unchanged |
+| blocked-r1-b4 | 4 | 1 | 4 | 1 | 1 | 16 | 64 | 16 | agreed; tuples = 2^n |
+| blocked-r3-b3 | 9 | 3 | 3 | 1 | 343 | 64 | 384 | 512 | agreed; local evaluations below the cube |
+| blocked-r1-b17-tuple-cap | 17 | 1 | 17 | 1 | 1 | 131072 | 2228224 | 131072 | brute force only; blocked sum refused |
+| blocked-r2-b11-brute-wall | 22 | 2 | 11 | 1 | — | 177147 | 2598156 | 4194304 | neither enumeration started |
+
+From b = 2 upward on the r = 2 rows, the local-evaluation count is already larger than the cube (24 > 16, 108 > 64, and so on, through 20412 > 16384). The r = 3 row goes the other way: 384 local evaluations and a cube of 512. Either way the tuple count is exponential in the number of groups. For r = 2 it is 3^{n/2}.
+
+Wall times from that one `--step6` run, in seconds. "Blocked" is the `blocked_sum` call. "Full" is `eval_H_at` at t = 0. "Brute" is `brute_count`. A dash means that call was not made.
+
+| cell | brute | blocked | full sum |
+|------|-------|---------|----------|
+| blocked-r2-b1 | <0.0001 | 0.0001 | <0.0001 |
+| blocked-r2-b2 | <0.0001 | 0.0004 | 0.0004 |
+| blocked-r2-b3 | <0.0001 | 0.0013 | 0.0025 |
+| blocked-r2-b4 | 0.0001 | 0.0052 | 0.0146 |
+| blocked-r2-b5 | 0.0006 | 0.0190 | 0.0789 |
+| blocked-r2-b6 | 0.0028 | 0.0698 | 0.3892 |
+| blocked-r2-b7 | 0.0109 | 0.2448 | 1.9374 |
+| blocked-r3-b3 | 0.0004 | 0.0063 | 0.0489 |
+| blocked-r1-b17-tuple-cap | 0.0557 | — | — |
+| blocked-r2-b11-brute-wall | — | — | — |
+
+On this run the blocked loop's clock sat below the rational cube sum, and brute force sat below both. That is not an ordering of the operation counts. Boolean model counting, the blocked rational loop, and `eval_H_at` do different work per assignment. The local-evaluation count is still larger than 2^n on the r = 2 rows with b ≥ 2. These times are not a complexity result.
+
+The tuple-cap row is inside the brute-force wall and outside the measurement cap of 100000. `blocked_sum` raises before the measurement loop. The closed-form local-evaluation count was not performed. The brute-wall row is past both rails: `brute_count` refuses n = 22 before it loops, and the blocked sum is not called, because a parameter point with n > 20 and a small tuple count would otherwise start the measurement loop with nothing to compare it to.
+
+### Where the other steps match, and where they stop
+
+Same popcount family, R = 1, r = 2, unless the cell says otherwise. The assignment budget is 100000 cube assignments, the rail from Step 5. Lagrange's plan is (D+2)·2^n: the D+1 nodes of `interpolate_H0`, plus one direct evaluation at 0. Paired Hermite's plan is (passes + 1)·2^n, with passes = ceil((D+1)/2) and jet width 2, plus the direct evaluation. The single-point jet of order D is a separate cell and is not run.
+
+| cell | n | D | plan | #F | what ran |
+|------|---|---|------|----|----------|
+| lagrange-r2-b1 | 2 | 2 | 16 | 3 | agreed |
+| lagrange-r2-b2 | 4 | 4 | 96 | 9 | agreed |
+| lagrange-r2-b3 | 6 | 6 | 512 | 27 | agreed, 0.0276s |
+| lagrange-r2-b4 | 8 | 8 | 2560 | 81 | agreed, 0.2212s |
+| lagrange-r2-b5 | 10 | 10 | 12288 | 243 | agreed, 1.5041s |
+| lagrange-r2-b7-budget | 14 | 14 | 262144 | — | refused, not timed |
+| hermite-paired-r2-b1 | 2 | 2 | 12 | 3 | agreed; 2 points, jet width 2, 3 conditions |
+| hermite-paired-r2-b2 | 4 | 4 | 64 | 9 | agreed; 3 points, 0.0025s |
+| hermite-paired-r2-b3 | 6 | 6 | 320 | 27 | agreed; 4 points, 0.0220s |
+| hermite-paired-r2-b7-budget | 14 | 14 | 147456 | — | refused, not timed |
+| hermite-single-point-not-run | 2 | 2 | 4 | — | not started; jet width would be 3 |
+
+At n = 14 the blocked sum still runs (2187 tuples, under the measurement cap, n ≤ 20) and both interpolation plans are over the budget. That split is the scan: the steps do not share a cost. Paired Hermite on the rows that ran kept D+1 conditions and fewer distinct points than the value-only path. Each of those points is still one pass over the cube. The single-point cell records the plan for the b = 1 formula, one pass of 4 assignments with jet width D+1 = 3, and does not run it. Packing every coefficient into t = 1 does not evaluate H below exponential cost in n.
+
+The degree cells use the Step 1 sampler, window max(m·3·R, 3·n·R)+2.
+
+| cell | n | m | caps | plan | #F | degree | what ran |
+|------|---|---|------|------|----|--------|----------|
+| degree-clause-n3 | 3 | 1 | 3 and 9 | 88 | 7 | 3 | agreed, 0.0020s |
+| degree-bounded-n6-m4 | 6 | 4 | 12 and 18 | 1280 | 44 | 12 | agreed, 0.1329s |
+| degree-bounded-n12-m12-budget | 12 | 12 | 36 and 36 | 155648 | — | — | formula built, H not sampled, not timed |
+
+`degree-clause-n3` is one positive 3-clause. The measured degree equalled the tight cap. `degree-bounded-n6-m4` is `random_bounded_3cnf(6, 4, seed 42)` with replacement seed 42, the same counts as the Step 1 bench row n6-m4-r1: #F = 44 and degree 12. The n = 12 row is a legal occurrence-≤3 3-CNF. The window is past the budget, so brute force was not run either.
+
+Copying, cap B = 3. "Source #F" is the cube that was counted. The reduced cube is counted only when n' ≤ 20.
+
+| cell | n | n' | source #F | what ran |
+|------|---|----|-----------|----------|
+| copy-popcount-b1 | 2 | 2 | 3 | agreed; occurrence 1, the map is the identity, #F' = #F |
+| copy-blowup-n5-m12 | 5 | 36 | 8 | reduced cube not enumerated; lower bound n' ≥ 26; occurrence after copying is 3 |
+| copy-units-n21 | 1 | 21 | 1 | reduced cube not enumerated; `brute_count` refuses n = 21 |
+| copy-random-n4-m8 | 4 | 24 | 4 | reduced cube not enumerated; lower bound n' ≥ 16 |
+| copy-cross-block | 3 | 6 | 4 | #F' = #F = 4 was counted; the blocked sum was refused |
+
+`copy-blowup-n5-m12` is `random_3cnf(5, 12, seed 0)`, the same formula as Step 5. The plan for the reduced cube is 2^36 assignments. That loop was not started. `copy-cross-block` is the Step 5 crossing clause. After copying, n' = 6 and the 3-clause still meets both blocks. `run_step2_pipeline` returns the Step 2 refusal. The scan does not call `place_formula` and does not build a schedule. The blocked sum was not timed. Step 3's kernel condition, on its four hand-written placements, is a different construction. This reduction does not produce one of those placements.
+
+The matrix cells:
+
+| cell | what ran |
+|------|----------|
+| matrix-swap-4 | agreed. Side length 4, the hand-written exchange, n = 2, #F = 1, observed degree 0. The degree report walked 20 cube assignments. This is not full M0 |
+| matrix-full-m0 | refused before allocation. `build_auxiliary_slice(2, 192, 32)` raises. The side length is 2^384, above the slice cap 64. No scheduler is invoked. No timing was recorded |
+
+### Distance to a full counting algorithm
+
+The scan is a record of the pieces that exist. It is not a claim that the missing pieces are close, and it is not a 2^{o(n)} algorithm. The unfinished list:
+
+- Full M0 at R ≥ 32 and 6R ≤ Q is not built. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses that call before it allocates the matrix. The scan records the refusal and does not time a matrix.
+- A scheduler that would place variables and clauses into those coordinates, with group size at most 2n/r and label multiplicity at most 2M/D, is not implemented. The four Step 3 placements are hand-written. That size bound needs n on the order of D^2, which is already false for every formula this repository compares with brute force, so the scheduler is not run.
+- Sparsification that keeps n' = n + o(n) is not implemented. Implication-cycle copying at B = 3 replaces a variable of occurrence d > 3 by d variables. The scan records `random_3cnf(5, 12, seed 0)` at n' = 36, past the brute-force wall n ≤ 20, and does not enumerate that reduced cube.
+- A subexponential measurement space is not implemented. The popcount design enumerates (r+1)^b tuples. For blocks of size 2 that is 3^{n/2}. On the rows this scan runs, the local-evaluation count is often larger than the cube. The scan does not claim a 2^{o(n)} measurement loop.
+- Hermite interpolation does not remove the 2^n pass. The paired scheme packs D+1 conditions into fewer distinct t, and each t still sums the cube. A full jet of order D does quadratic arithmetic per assignment. The scan runs the paired scheme only inside the assignment budget. It does not run the single-point jet as a substitute for the cube, and it does not treat either scheme as a subexponential evaluation.
+- Clauses that cross a Step 2 block partition are not factored by the blocked sum. Copying does not pull a crossing clause into one block, and it does not produce a Step 3 placement. The scan records that refusal and does not time a blocked sum on it.
+- Theorem 1.1 is not implemented. This repository does not refute ETH. No cell of the scan is a 2^{o(n)} counting algorithm.
+
+There is no further step in `ROADMAP.md`. The list above is the remaining work.
 
 ## Known gaps
 
-- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64. Step 5 does not hand the copied formula to that matrix.
+Step 6 records these on its grid. Recording them does not remove them.
+
+- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64. Step 5 does not hand the copied formula to that matrix. The scan refuses the call and does not time it.
 - The occurrence reduction checks #F' = #F inside the brute-force window and records the rows that leave it. It is not a reduction with n' = n + o(n), and it does not remove the 2^{n'} pass inside `interpolate_H0` or the 2^n pass inside each Hermite sample.
 - The copied formula is mixed width. `check_bounded_occurrence` accepts it only when the reduction added no cycle, which is the case already inside the Step 1 testbed. A general copied instance is not an exact 3-CNF with m ≤ n.
 - Step 2 matches the full sum on the instances in the Step 2 section and on `two-block-copies`. It refuses a copied clause that still crosses blocks. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.

@@ -50,12 +50,17 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - The output is mixed width. The exact-width-3 checker rejects the cycle clauses. Step 3 is not applied. B = 3 is the smallest cap this gadget meets
 - Not claimed: Theorem 1.1, a subexponential runtime, 2^{o(n)}, or a reduction that keeps n' = n + o(n)
 
-## Not started
-
 ### Step 6 — parameter scan
 
-- [ ] For n in a machine-limited range, time brute force against a blocked sum
-- [ ] Record which steps match brute force, which stopped on an unfinished construction, and the remaining distance to a full counting algorithm
+- [x] For n in a machine-limited range, time brute force against the popcount blocked sum. The grid runs blocks of size 2 for b = 1..7 (n = 2..14), plus rows at r = 1, r = 3, and R = 2. On every row that runs, blocked H(0) matches brute force and the full-cube sum
+- [x] Lagrange, paired Hermite, and the Step 1 degree check run on that family where the assignment budget allows, and are refused where it does not. At n = 14 the blocked sum still runs; Lagrange and paired Hermite do not
+- [x] Occurrence copying is recorded on the popcount row (the map is the identity), on the seeded 3-CNF with n = 5 and m = 12 (n' = 36, cube not enumerated), on n' = 21, and on a clause that crosses blocks. Step 3 is not applied to that clause. Full M0 at R = 32 and Q = 192 is refused before allocation
+- [x] The reproducible record is the operation counts: 2^n, (r+1)^b, the local-evaluation count, and the assignment budget. Wall times are one machine's clock. A refused pipeline has no timing
+- Not claimed: Theorem 1.1, a subexponential runtime, 2^{o(n)}, or that the scan closes the distance to a full counting algorithm. That distance is the list in `docs/PROGRESS.md`
+
+## Not started
+
+No further step is listed. Relative to this roadmap the repository is complete. What a full counting algorithm would still need is recorded in `docs/PROGRESS.md` under "Distance to a full counting algorithm". Those constructions are not implemented here.
 
 ## Out of scope
 
@@ -73,6 +78,7 @@ src/counting_sat_algebra/
   replacement_matrix.py                                                # Step 3
   hermite.py                                                           # Step 4
   sparsify.py                                                          # Step 5
+  parameter_scan.py                                                    # Step 6
 benches/
 docs/PROGRESS.md
 ```
