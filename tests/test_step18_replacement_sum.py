@@ -191,7 +191,7 @@ def test_step18_reference_rows_and_cli(tmp_path, capsys):
     assert main(['verify', '--step18', '--output', str(output)]) == 0
     report = json.loads(output.read_text(encoding='utf-8'))
     text = capsys.readouterr().out
-    assert report['version'] == __version__ == '0.19.0'
+    assert report['version'] == __version__ == '0.20.0'
     assert report['steps'] == [18] and report['all_checks_passed'] is True
     assert report['theorem_1_1_complete'] is report['lean_proof_complete'] is False
     assert report['failed_step'] is None and report['wall_times_recorded'] is False

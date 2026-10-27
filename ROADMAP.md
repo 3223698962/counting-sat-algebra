@@ -170,13 +170,23 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] A Boolean-vector budget, a branch budget, and a coefficient-bit budget each return no count. The scan or the branch loop has not started, and the jet table is not allocated. An invalid kernel returns no count before enumeration
 - [x] This is a finite sum. It does not implement Section 6 equation selection, Appendix D, or Theorem 2.2's bit complexity. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
 
+### Step 19 — finite Section 6 equation selection and disjoint sparsification
+
+- [x] Build clause violation polynomials over \(\mathbb F_2\): positive literal \(1+x\), negative literal \(x\), tautology 0, empty clause 1. Expand a binary row of \((e,c)\) pairs into square-free monomials. Duplicate clause indices cancel modulo 2
+- [x] Compute Lemma 6.1's integers \(\mu=\lfloor\log_2 m\rfloor+1\), \(P=20000 B^2\mu^2\), \(D_0=320000 B^2\mu^3\). On \(n=m=3\), \(B=1\) the values are \(\mu=2\), \(P=80000\), \(D_0=2560000\). \(q_G=1\) and \(h\le 0\), so \(A(0)\) is the two even-parity checks. Every nonzero accepted vector has weight 2, which is at least \(m/P\); there are 2 rows, each of weight 3, and \(2\le 3n\). Label `CHECKED`
+- [x] Refuse the local-code search for \(n=m=2048\), \(B=1\) before any matrix is allocated: the search is 524288 bits. Label `REFUSED`. No kernel vectors are scanned
+- [x] Greedy-append rows of a budgeted list length, breaking ties by enumeration order. On two unit clauses in two variables, list length 1 uses 6 rounds and 24 counts. Final \(N(A)=1=\#F\), and `count_common_zeros` agrees. Label `COUNTED`. The paper-scale \(P=80000\), a candidate budget of 1, and a cube budget of 1 each return no count and enumerate nothing. Label `REFUSED`
+- [x] Lemma 6.3 / Appendix A: normalize without unit propagation and without copying variables. Branch on the deterministic shared-literal rule. Children keep the declared \(n\), and satisfying assignments partition across the leaves. On the 3-variable 2-CNF the leaf counts are \((3,1)\), summing to \(\#F=4\), with occurrence at most \(B=6\). Label `COUNTED`. A node budget of 1 returns no leaves and no count. Label `REFUSED`. Step 5 implication-cycle copying increases \(n\); this tree does not
+- [x] Proposition 6.4 integers: at \(n=20\), \(\lambda_n=5\), \(\nu_n=3\), \(s=0\), so the schedule is the exhaustive-search case. The integer witness \(s=2\) is only \(\lambda=521284\), \(\nu=19\). For \(k=2\) and \(\sigma=1\) the Appendix A power of two is \(M=64\). Label `CHECKED`. The \(O_k(\rho(n))\) bound is not claimed
+- [x] This is a finite, budgeted Section 6 milestone. Appendix D is not implemented. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
+
 ## Remaining work toward the reference conclusion
 
 - [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
 - [x] Choose and run finite members of the asymptotic parameter family. Lemma 4.8's closed form is checked exactly; at every n this repository can place, that closed form fails before D is formed. One budget-feasible tuple that passes Lemma 4.7 is placed and counted or refused. This is not a proof of the asymptotic bound
 - [x] Implement the finite Section 5.1–5.2 sparse-system algebra: monomial lists, integer lifts, Lemma 5.1, and the truncated product, with budget refusals. The common-zero check enumerates a tiny cube. It does not build Section 5.3 replacement forms or prove Theorem 2.2
 - [x] Run Sections 5.3–5.5 on a finite design: replacement factors for the sparse equations, neutral scopes, the high-incidence branch split, and the Section 3 sum in \(A_\ell\). Lemma 4.8 does not form \(D\) on these branches. This is not Theorem 2.2's running time
-- [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control. That reduction is the handoff after Step 18
+- [x] Implement Section 6's equation selection and disjoint sparsification as a finite budgeted milestone. The parameter formulas are exact. Searches and candidate lists that do not fit the budgets are refused before allocation. Satisfying assignments of one small CNF partition across leaves on the same \(n\). Proposition 6.4's integers are checked. This is not the \(O_k(\rho(n))\) bound, and Step 5's copying is not Lemma 6.3
 - [ ] Implement Appendix D's general modular contraction to reach Theorem 1.1's sharper bound. Step 15's finite Taylor elimination is not this algorithm
 - [ ] Establish exact bit-operation and space bounds; complete the Lean machine and proof without the existing sorry
 
@@ -203,6 +213,7 @@ src/counting_sat_algebra/
   tensor_count.py                                                       # Step 15
   sparse_systems.py                                                     # Step 17, Sections 5.1–5.2
   algebra_count.py                                                      # Step 18, Sections 5.3–5.5 in A_ell
+  equation_selection.py                                                 # Step 19, finite Section 6 selection and disjoint sparsification
 benches/
 examples/count_demo.cnf
 examples/connected_path.cnf

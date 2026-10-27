@@ -13,12 +13,16 @@ F2 systems, integer lifts, Lemma 5.1's coefficient division, and the truncated
 product. Those checks are exhaustive on a budgeted cube. Step 18 builds the
 Section 5.3–5.5 replacement factors and sums them with the Section 3 routine
 in A_ell on a checked finite design. Lemma 4.8 does not form D on these
-branches. The dense matrix remains limited to side 256.
+branches. The dense matrix remains limited to side 256. Step 19
+checks finite Section 6 objects: violation polynomials, a budgeted Lemma 6.1
+matrix, greedy row selection, and disjoint sparsification that keeps the
+declared n. Proposition 6.4's integers are checked. The rho bound is not
+claimed.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
 Finite comparisons and numerical admission do not establish those bounds.
-Step 18 does not implement Theorem 1.1, Section 6, or Appendix D.
+Step 19 does not implement Theorem 1.1 or Appendix D.
 """
 
 from .blocked_sum import (
@@ -53,6 +57,13 @@ from .sparse_placement import (
 from .component_count import ComponentCountResult, count_cnf_components
 from .support_count import SupportCountPlan, SupportCountResult, count_placed_formula_by_support
 from .tensor_count import ContractionBudgets, ContractionPlan, ContractionResult, count_placed_formula_by_contraction
+from .equation_selection import (
+    STEP19_SCOPE, DisjointCountResult, GreedySelectionResult, InitialMatrixResult,
+    Proposition64Schedule, Section6Budgets, SparsificationTree,
+    build_disjoint_sparsification, clause_violation_polynomial, construct_initial_matrix,
+    count_via_disjoint_sparsification, expand_binary_row, greedy_select_equations,
+    lemma_6_1_parameters, normalize_cnf, proposition_6_4_schedule,
+)
 from .sparse_systems import (
     STEP17_SCOPE, BudgetRefusal, CommonZeroResult, ParityPolynomials, Section5Budgets,
     SparseSystem, TruncatedProduct, brute_common_zeros, build_truncated_product,
@@ -152,6 +163,22 @@ __all__ = [
     "lemma_4_8_proposal",
     "choose_schedules",
     "count_placed_formula",
+    "STEP19_SCOPE",
+    "DisjointCountResult",
+    "GreedySelectionResult",
+    "InitialMatrixResult",
+    "Proposition64Schedule",
+    "Section6Budgets",
+    "SparsificationTree",
+    "build_disjoint_sparsification",
+    "clause_violation_polynomial",
+    "construct_initial_matrix",
+    "count_via_disjoint_sparsification",
+    "expand_binary_row",
+    "greedy_select_equations",
+    "lemma_6_1_parameters",
+    "normalize_cnf",
+    "proposition_6_4_schedule",
     "STEP18_SCOPE",
     "AlgebraBudgets",
     "AlgebraDesign",
@@ -209,4 +236,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.19.0"
+__version__ = "0.20.0"
