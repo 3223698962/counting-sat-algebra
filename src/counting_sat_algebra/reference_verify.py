@@ -1,10 +1,12 @@
-"""Executable alignment checks for reference Sections 3–6.
+"""Executable finite alignment checks for reference Sections 3–6 and Appendix D.
 
 Section 5 checks are the finite monomial, Lemma 5.1, and truncated-product
 objects, plus the finite Section 5.3–5.5 replacement sum in A_ell. Section 6
 checks are budgeted equation selection and disjoint sparsification on a fixed
-n. They do not implement Appendix D or Theorem 1.1, and they do not claim
-Proposition 6.4's running time.
+n. Step 20 adds Appendix D coefficient rings, networks and local recovery.
+Step 21 adds finite collision packing and prospective child topologies.
+Recursive modular contraction and Theorem 1.1 remain open; the checks do not
+claim Proposition 6.4's running time.
 """
 
 from __future__ import annotations
@@ -41,6 +43,20 @@ from .equation_selection import (
     count_violations_common_zeros, greedy_select_equations, kernel_support_check, largest_s,
     lemma_6_1_parameters, proposition_6_4_schedule, choose_branching_M,
 )
+from .modular_ring import ModularRing, extension_ring_for_size, evaluate_polynomial, interpolate_polynomial
+from .modular_network import (
+    STEP20_SCOPE, BooleanTensorNetwork, ModularBudgets, TensorVertex,
+    contract_network, count_cnf_modular,
+)
+from .modular_recovery import (
+    PacketLayout, cauchy_local_polynomial, embed_network, evaluate_deformation,
+    recover_network_modular,
+)
+from .modular_packing import (
+    STEP21_SCOPE, PackingBudgets, appendix_d_integers, appendix_d_proposal,
+    child_topology, choose_collision_labels, pack_network, packing_hypotheses,
+)
+from .modular_ring import ModularBudgetRefusal
 
 
 def _row(name, n, m, ok, label, **details):
@@ -1120,6 +1136,363 @@ def run_section6_suite() -> list[dict]:
     return rows
 
 
+def run_appendix_d_suite() -> list[dict]:
+    print('=== (V) Appendix D finite modular networks and local recovery ===', flush=True)
+    rows = []
+    ring = extension_ring_for_size(2, 5, 2)
+    unit = ring.element((1, 1, 0, 0, 2))
+    V = ring.from_base((0, 1))
+    points = tuple(ring.residue_point(j) for j in range(7))
+    coefficients = tuple(ring.element((j, j + 1, 0, 0, 2 * j)) for j in range(7))
+    values = tuple(evaluate_polynomial(ring, coefficients, point) for point in points)
+    ring_ok = (
+        ring.extension_degree == 4 and ring.polynomial == 0b10011
+        and ring.mul(unit, ring.inverse(unit)) == ring.one and ring.mul(V, V) == ring.zero
+        and interpolate_polynomial(ring, points, values) == coefficients
+    )
+    rows.append(_row(
+        'appendix-d-coefficient-ring', 0, 0, ring_ok, 'CHECKED',
+        s=2, precision=5, ell=2, extension_degree=4, polynomial_bits=bin(ring.polynomial),
+        interpolation_points=7, all_coordinates_checked=True,
+    ))
+
+    demo = CNF(8, [[(0, False), (1, False), (2, False)], [(3, False), (4, False), (5, False)]])
+    counted = count_cnf_modular(demo)
+    rows.append(_row(
+        'appendix-d-cnf-network', demo.n, demo.m,
+        counted.counted and counted.count == brute_count(demo) == 196
+        and counted.edges == 12 and counted.vertices == 14 and counted.max_degree == 3
+        and counted.free_variables == 2 and counted.boolean_vectors_scanned == 4096
+        and counted.tensor_evaluations == 57344,
+        'COUNTED', **asdict(counted), clause_ports=6, backend='direct modular leaf',
+    ))
+    tree = CNF(3, [[(0, False)]] * 4)
+    tree_count = count_cnf_modular(tree)
+    rows.append(_row(
+        'appendix-d-equality-tree', tree.n, tree.m,
+        tree_count.counted and tree_count.count == brute_count(tree) == 4
+        and tree_count.edges == 10 and tree_count.vertices == 11 and tree_count.max_degree == 3,
+        'COUNTED', **asdict(tree_count), clause_ports=4, trivalent_equality_vertices=2,
+    ))
+    empty, unsat = count_cnf_modular(CNF(5, [])), count_cnf_modular(CNF(5, [[]]))
+    rows.append(_row(
+        'appendix-d-trivial-formulas', 5, 0,
+        empty.counted and empty.count == 32 and unsat.counted and unsat.count == 0
+        and empty.edges == unsat.edges == 0 and unsat.network_allocated is False,
+        'COUNTED', counts=[empty.count, unsat.count], edges=0, tensor_evaluations=0,
+        empty_network_assignments=empty.boolean_vectors_scanned,
+    ))
+
+    creation, later = ModularRing(2), ModularRing(8)
+    lifted = BooleanTensorNetwork(later, 1, (
+        TensorVertex('row', 0, (0,), creation, lambda bits: (-1,)),
+        TensorVertex('column', 1, (0,), creation, lambda bits: (6,)),
+    ))
+    lifted_result = contract_network(lifted)
+    rows.append(_row(
+        'appendix-d-creation-precision', 0, 1, lifted_result.value == (12,), 'CHECKED',
+        creation_precision=2, call_precision=8, value=list(lifted_result.value or ()),
+        lifted_entry_values=[3, 2], boolean_vectors_scanned=lifted_result.boolean_vectors_scanned,
+        note='Each entry is reduced at precision 2 and lifted separately; the two edge terms sum to 12.',
+    ))
+
+    local_ring = ring.at_precision(9)
+    kernel = cauchy_local_polynomial(local_ring, 1, 1, 0, 1)
+    expected_kernel = tuple(local_ring.scalar(value) for value in (-3, -22, -48, -32))
+    identity_ok = all(
+        cauchy_local_polynomial(local_ring, 1, 0, x, y)[0] == local_ring.scalar(int(x == y))
+        for x in range(2) for y in range(2)
+    )
+    rows.append(_row(
+        'appendix-d-integral-cauchy-coordinates', 0, 0,
+        kernel == expected_kernel and identity_ok, 'CHECKED', a=1, L=2, alpha=4,
+        t=1, row=0, column=1, exact_scalar_coefficients=[-3, -22, -48, -32],
+        precision=9, identity_at_zero_checked=True,
+    ))
+
+    base = ModularRing(5, 2)
+    network = BooleanTensorNetwork(base, 2, (
+        TensorVertex('row', 0, (0, 1), base, lambda bits: (1 + bits[0], 2 - bits[1])),
+        TensorVertex('column', 1, (0, 1), base, lambda bits: (1 + bits[1], -bits[0])),
+    ))
+    extension = embed_network(network, ring.polynomial)
+    layout = PacketLayout(1, ((0, 1),))
+    recovered = recover_network_modular(extension, layout, 1)
+    at_one = evaluate_deformation(extension, layout, 1, ring.zero)
+    recovered_ok = (
+        recovered.recovered and recovered.value == contract_network(extension).value == ring.from_base((9, 4))
+        and at_one.value == ring.from_base((26, 13))
+        and recovered.port_pairs_scanned == 224 and recovered.tensor_evaluations == 448
+        and recovered.plan is not None and recovered.plan.degree_bound == 6
+        and [node.precision for node in recovered.plan.nodes] == [133, 133]
+    )
+    rows.append(_row(
+        'appendix-d-local-recovery', 0, 2, recovered_ok, 'CHECKED',
+        coefficients=list(ring.base_coefficients(recovered.value)) if recovered.value is not None else None,
+        value_at_one=[26, 13], precision=5, ell=2,
+        plan=asdict(recovered.plan) if recovered.plan is not None else None,
+        port_pairs_scanned=recovered.port_pairs_scanned, tensor_evaluations=recovered.tensor_evaluations,
+        recursive_contraction=False,
+    ))
+
+    nonlinear = BooleanTensorNetwork(base, 2, (
+        TensorVertex('row', 0, (0, 1), base, lambda bits: (1 + bits[0] * bits[1], 2 - bits[1])),
+        network.vertices[1],
+    ))
+    nonlinear = embed_network(nonlinear, ring.polynomial)
+    full_degree = recover_network_modular(nonlinear, layout, 1)
+    rows.append(_row(
+        'appendix-d-nonlinear-row-recovery', 0, 2,
+        full_degree.recovered and full_degree.value == contract_network(nonlinear).value == ring.from_base((8, 5)),
+        'CHECKED', coefficients=[8, 5], precision=5, ell=2,
+        port_pairs_scanned=full_degree.port_pairs_scanned, tensor_evaluations=full_degree.tensor_evaluations,
+        note='The degree-6 rational deformation is checked coefficientwise by the independent pytest oracle.',
+    ))
+
+    tapered = recover_network_modular(extension, PacketLayout(2, ((0, None, 1, None),)), 2)
+    tapered_ok = (
+        tapered.recovered and tapered.value == ring.from_base((9, 4)) and tapered.plan is not None
+        and [node.multiplicity for node in tapered.plan.nodes] == [6, 3, 6, 6, 3, 6]
+        and [node.precision for node in tapered.plan.nodes] == [149, 101, 149, 149, 101, 149]
+        and tapered.port_pairs_scanned == 1440 and tapered.tensor_evaluations == 2880
+    )
+    rows.append(_row(
+        'appendix-d-tapered-precision-levels', 0, 2, tapered_ok, 'CHECKED',
+        coefficients=[9, 4], precision=5, ell=2,
+        plan=asdict(tapered.plan) if tapered.plan is not None else None,
+        port_pairs_scanned=tapered.port_pairs_scanned, tensor_evaluations=tapered.tensor_evaluations,
+        recursive_contraction=False,
+    ))
+
+    refused = count_cnf_modular(demo, budgets=ModularBudgets(max_boolean_vectors=4095))
+    rows.append(_row(
+        'appendix-d-network-vector-budget', demo.n, demo.m,
+        refused.refused and refused.count is None and not refused.network_allocated
+        and refused.boolean_vectors_scanned == refused.tensor_evaluations == 0,
+        'REFUSED', **asdict(refused),
+    ))
+    for name, budgets in (
+        ('precision', ModularBudgets(max_precision_bits=132)),
+        ('port-pairs', ModularBudgets(max_boolean_vectors=223)),
+        ('jet-storage', ModularBudgets(max_jet_slots=751)),
+    ):
+        refused_recovery = recover_network_modular(extension, layout, 1, budgets=budgets)
+        rows.append(_row(
+            f'appendix-d-recovery-{name}-budget', 0, 2,
+            refused_recovery.refused and refused_recovery.value is None and not refused_recovery.jets_allocated
+            and refused_recovery.port_pairs_scanned == refused_recovery.tensor_evaluations == 0,
+            'REFUSED', value=None, reason=refused_recovery.reason,
+            port_pairs_scanned=0, tensor_evaluations=0, jets_allocated=False,
+        ))
+    short_field = recover_network_modular(network, layout, 1)
+    rows.append(_row(
+        'appendix-d-insufficient-residue-points', 0, 2,
+        short_field.refused and short_field.value is None and 'too few distinct' in short_field.reason
+        and short_field.port_pairs_scanned == 0 and not short_field.jets_allocated,
+        'REFUSED', value=None, reason=short_field.reason, field_size=2, required_points=7,
+        port_pairs_scanned=0, jets_allocated=False,
+    ))
+    for row in rows:
+        row.update(recursive_contraction=False, theorem_1_1_complete=False, lean_proof_complete=False)
+        print(f"  [V] {row['name']}: {row['label']}", flush=True)
+    print(f'  {STEP20_SCOPE}', flush=True)
+    return rows
+
+
+def run_packet_packing_suite() -> list[dict]:
+    print('=== (W) Appendix D collision labels, packets and child topology ===', flush=True)
+    rows = []
+    proposal = appendix_d_proposal(16, 20)
+    integers = proposal.integers
+    rows.append(_row(
+        'appendix-d-active-schedule-guard', 0, 20,
+        (integers.lambda_s, integers.u, integers.a, proposal.H, proposal.delta) == (4, 0, 0, 8, 13)
+        and not proposal.leaf and proposal.hypotheses is None,
+        'CHECKED', s=16, lambda_s=4, u=0, a=0, H=8, delta=13,
+        L_formed=False, D_arr_formed=False, reason=proposal.reason,
+    ))
+    witness = appendix_d_integers(131072)
+    deeper = appendix_d_integers(262144, 1)
+    rows.append(_row(
+        'appendix-d-logarithmic-schedule-witness', 0, 0,
+        (witness.u, witness.a, witness.previous_a) == (1, 2, 0)
+        and (deeper.u, deeper.a, deeper.previous_a) == (1, 6, 4)
+        and witness.r == 64 and witness.epsilon == Fraction(1, 131072),
+        'CHECKED', lambda_s=131072, depth=0, u=1, a=2, previous_a=0,
+        second_lambda=262144, second_depth=1, second_u=1, second_a=6, second_previous_a=4,
+        r=64, epsilon='1/131072', size_s_constructed=False,
+    ))
+    admitted = packing_hypotheses(128, 2, 1, 4)
+    too_small = packing_hypotheses(32, 2, 1, 4)
+    paper_r = packing_hypotheses(8192, 64, 1, 4)
+    rows.append(_row(
+        'appendix-d-squared-collision-guard', 0, 0,
+        admitted.admitted and not too_small.collision
+        and not paper_r.collision and paper_r.density and paper_r.packet_degree,
+        'CHECKED', finite_r2_threshold=128, r64_D_arr=4096, r64_collision_threshold=134217728,
+        r64_M=8192, r64_D6_admitted=False,
+        note='The collision condition contains D_arr squared. These finite tuples are not D.4 schedule members.',
+    ))
+
+    def no_entry(bits):
+        raise AssertionError('collision packing must not evaluate tensor entries')
+
+    ring = ModularRing(1)
+
+    def matching(M):
+        return BooleanTensorNetwork(ring, M, tuple(
+            TensorVertex(f'{side}-{edge}', side, (edge,), ring, no_entry)
+            for side in (0, 1) for edge in range(M)
+        ))
+
+    ends = ((0, 2), (0, 2), (0, 3), (1, 2), (1, 3), (1, 3))
+    small = BooleanTensorNetwork(ring, len(ends), tuple(
+        TensorVertex(str(v), int(v >= 2), tuple(i for i, edge in enumerate(ends) if v in edge), ring, no_entry)
+        for v in range(4)
+    ))
+    labeling = choose_collision_labels(small, 2, 1, trace=True)
+
+    def pair_oracle(assigned):
+        value = Fraction(-len(ends) ** 2, 4)
+        for first in ends:
+            for second in ends:
+                probability = Fraction(1)
+                for left, right in zip(first, second):
+                    if left == right:
+                        factor = Fraction(1)
+                    elif left in assigned and right in assigned:
+                        factor = Fraction(int(assigned[left] == assigned[right]))
+                    else:
+                        factor = Fraction(1, 2)
+                    probability *= factor
+                value += probability
+        return value
+
+    assigned = {}
+    ce_ok = labeling.initial_potential == Fraction(23, 2) and labeling.final_potential == 1
+    for choice in labeling.choices:
+        ce_ok &= choice.before == pair_oracle(assigned)
+        ce_ok &= all(value == pair_oracle({**assigned, choice.vertex: label})
+                     for label, value in enumerate(choice.candidates))
+        ce_ok &= choice.after == min(choice.candidates) <= choice.before
+        assigned[choice.vertex] = choice.label
+    rows.append(_row(
+        'appendix-d-shared-parallel-collision-expectation', 0, small.edges, ce_ok, 'CHECKED',
+        initial_potential=str(labeling.initial_potential), final_potential=str(labeling.final_potential),
+        labels=list(labeling.labels), pair_loads=[list(row) for row in labeling.pair_loads],
+        candidate_expectations_checked=True, label_trials=labeling.label_trials,
+        score_updates=labeling.score_updates, tensor_evaluations=0,
+    ))
+
+    finite = pack_network(matching(128), 2, 1, delta=4)
+    finite_ok = (
+        finite.packed and finite.check.ok and finite.plan.hypotheses.admitted
+        and finite.packing.H_pad == 32 and len(finite.packing.layout.packets) == 64
+        and finite.packing.labeling.final_potential == 0 and finite.check.max_child_edges == 128
+        and finite.check.max_packet_degree == 4 and not finite.check.child_shrink
+    )
+    rows.append(_row(
+        'appendix-d-finite-D6-packing', 0, 128, finite_ok, 'CHECKED',
+        r=2, a=1, delta=4, D6_admitted=True, D4_schedule_member=False,
+        H_pad=finite.packing.H_pad if finite.packing else None,
+        packets=len(finite.packing.layout.packets) if finite.packing else None,
+        max_group_ports=64, max_child_edges=128, max_packet_degree=4, child_shrink=False,
+        initial_potential='96', final_potential='0', label_trials=finite.label_trials,
+        score_updates=finite.score_updates, tensor_evaluations=finite.tensor_evaluations,
+    ))
+    multi = pack_network(matching(32), 2, 2, require_hypotheses=False)
+    multi_ok = (
+        multi.packed and multi.check.ok and multi.packing.H_pad == 4
+        and len(multi.packing.layout.packets) == 16 and multi.check.max_packet_degree == 8
+        and {sum(low == high for low, high in symbols) for symbols in multi.packing.packet_symbols} == {0, 1, 2}
+    )
+    rows.append(_row(
+        'appendix-d-multicoordinate-packet-orbits', 0, 32, multi_ok, 'CHECKED',
+        r=2, a=2, H_pad=4, packets=16, max_packet_degree=8, equal_coordinate_counts=[0, 1, 2],
+        D6_admitted=False, tensor_evaluations=multi.tensor_evaluations,
+    ))
+
+    large = matching(8192)
+    strict = pack_network(large, 64, 1, delta=4)
+    rows.append(_row(
+        'appendix-d-r64-D6-refusal', 0, large.edges,
+        strict.refused and strict.packing is None and not strict.labels_allocated and strict.label_trials == 0,
+        'REFUSED', r=64, a=1, delta=4, D6_admitted=False, packing=None,
+        labels_allocated=False, packets_allocated=False, label_trials=0, reason=strict.reason,
+    ))
+    actual = pack_network(large, 64, 1, delta=4, require_hypotheses=False)
+    child = child_topology(actual.packing, 0, 0) if actual.packed else None
+    actual_ok = (
+        actual.packed and actual.check.ok and not actual.plan.hypotheses.admitted
+        and actual.packing.H_pad == 2 and len(actual.packing.layout.packets) == 4096
+        and actual.packing.labeling.initial_potential == 8190 and actual.packing.labeling.final_potential == 0
+        and all(load == 2 for row in actual.packing.labeling.pair_loads for load in row)
+        and actual.check.row_group_ports == actual.check.column_group_ports == ((128,) * 64,)
+        and child is not None and child.edges == 256 and child.max_degree == 4
+        and actual.check.child_shrink and actual.label_trials == 1048576 and actual.score_updates == 1572864
+    )
+    rows.append(_row(
+        'appendix-d-r64-actual-packet-and-child-bounds', 0, large.edges, actual_ok, 'CHECKED',
+        r=64, a=1, delta=4, D6_admitted=False, D4_schedule_member=False,
+        H_pad=2, packets=4096, initial_potential='8190', final_potential='0', pair_class_load=2,
+        max_group_ports=128, max_child_edges=256, max_packet_degree=4, child_shrink=True,
+        label_trials=actual.label_trials, score_updates=actual.score_updates,
+        tensor_evaluations=actual.tensor_evaluations, child_topology_only=True,
+    ))
+
+    cnf = CNF(2, [[(0, False)], [(0, False)]])
+    from .modular_network import encode_cnf_network
+    encoded = encode_cnf_network(cnf)
+    field = extension_ring_for_size(2, encoded.network.ring.precision)
+    network = embed_network(encoded.network, field.polynomial)
+    automatic = pack_network(network, 2, 1, require_hypotheses=False)
+    recovered = recover_network_modular(network, automatic.packing.layout, 1) if automatic.packed else None
+    count = (recovered.value[0] << encoded.free_variables) if recovered is not None and recovered.recovered else None
+    rows.append(_row(
+        'appendix-d-automatic-layout-cnf-recovery', cnf.n, cnf.m,
+        count == brute_count(cnf) == 2 and recovered.port_pairs_scanned == 6656
+        and recovered.tensor_evaluations == 33280,
+        'COUNTED', count=count, brute=2, network_edges=4, free_variables=1,
+        port_pairs_scanned=recovered.port_pairs_scanned if recovered else 0,
+        tensor_evaluations=recovered.tensor_evaluations if recovered else 0,
+        backend='Step 20 local recovery with automatically constructed packets',
+        D6_admitted=False,
+    ))
+
+    for name, limits, trace in (
+        ('label-trials', PackingBudgets(max_label_trials=1), False),
+        ('trace', PackingBudgets(max_trace_entries=1), True),
+        ('padding', PackingBudgets(max_padded_slots=167), False),
+        ('score-updates', PackingBudgets(max_score_updates=1023), False),
+    ):
+        refused = pack_network(matching(128), 2, 1, delta=4, budgets=limits, trace=trace)
+        rows.append(_row(
+            f'appendix-d-packing-{name}-budget', 0, 128,
+            refused.refused and refused.packing is None and not refused.labels_allocated
+            and not refused.packets_allocated and refused.label_trials == refused.score_updates == 0,
+            'REFUSED', packing=None, label_trials=0, score_updates=0, tensor_evaluations=0,
+            labels_allocated=False, packets_allocated=False, reason=refused.reason,
+        ))
+    child_refused = False
+    child_reason = 'packing did not complete'
+    if actual.packed:
+        try:
+            child_topology(actual.packing, 0, 0, budgets=PackingBudgets(max_child_edges=255))
+        except ModularBudgetRefusal as error:
+            child_refused = True
+            child_reason = str(error)
+    rows.append(_row(
+        'appendix-d-child-topology-budget', 0, 8192, child_refused, 'REFUSED',
+        child_edges=256, child_edge_budget=255, child_topology_allocated=False,
+        packing_already_constructed=True, tensor_evaluations=0, reason=child_reason,
+    ))
+    for row in rows:
+        row.update(recursive_contraction=False, theorem_1_1_complete=False, lean_proof_complete=False)
+        print(f"  [W] {row['name']}: {row['label']}", flush=True)
+    print(f'  {STEP21_SCOPE}', flush=True)
+    return rows
+
+
 REFERENCE_SUITES = (
     (9, run_reference_design_suite),
     (10, run_common_count_suite),
@@ -1132,6 +1505,8 @@ REFERENCE_SUITES = (
     (17, run_section5_suite),
     (18, run_section5_replacement_suite),
     (19, run_section6_suite),
+    (20, run_appendix_d_suite),
+    (21, run_packet_packing_suite),
 )
 
 
@@ -1151,9 +1526,11 @@ def write_reference_report(
                'component counts, disjoint replacement supports, finite connected Taylor contraction, '
                'finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 '
                'sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and '
-               'finite Section 6 equation selection with disjoint sparsification. '
+               'finite Section 6 equation selection with disjoint sparsification, and finite Appendix D '
+               'coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, '
+               'collision parameter schedules, packet layouts and prospective child topologies. '
                'Proposition 6.4 does not claim an O_k(rho(n)) bound. '
-               'Appendix D and Theorem 1.1 are not implemented; '
+               'Appendix D recursive contraction and Theorem 1.1 are not implemented; '
                'no general-input asymptotic claim.'),
         wall_times_recorded=False,
         steps=steps,

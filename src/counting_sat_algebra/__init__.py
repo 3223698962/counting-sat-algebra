@@ -18,11 +18,16 @@ checks finite Section 6 objects: violation polynomials, a budgeted Lemma 6.1
 matrix, greedy row selection, and disjoint sparsification that keeps the
 declared n. Proposition 6.4's integers are checked. The rho bound is not
 claimed.
+Step 20 adds Appendix D's finite coefficient rings, CNF tensor networks,
+direct modular leaves, Cauchy local coordinates and tapered Hermite recovery.
+Step 21 constructs finite collision labels and packet layouts, and checks
+the prospective child topologies. Weighted modes and recursive child
+contractions remain open.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
 Finite comparisons and numerical admission do not establish those bounds.
-Step 19 does not implement Theorem 1.1 or Appendix D.
+Step 21 does not implement Theorem 1.1 or the general Appendix D contraction.
 """
 
 from .blocked_sum import (
@@ -57,6 +62,23 @@ from .sparse_placement import (
 from .component_count import ComponentCountResult, count_cnf_components
 from .support_count import SupportCountPlan, SupportCountResult, count_placed_formula_by_support
 from .tensor_count import ContractionBudgets, ContractionPlan, ContractionResult, count_placed_formula_by_contraction
+from .modular_ring import ModularBudgetRefusal, ModularRing, extension_ring_for_size
+from .modular_network import (
+    STEP20_SCOPE, BooleanTensorNetwork, CnfNetworkEncoding, ModularBudgets,
+    ModularCountResult, NetworkContractionResult, TensorVertex,
+    contract_network, count_cnf_modular, encode_cnf_network,
+)
+from .modular_recovery import (
+    DeformationResult, ModularRecoveryResult, PacketLayout, TaperedJet, TaperedNode, TaperedPlan,
+    cauchy_local_polynomial, embed_network, evaluate_deformation,
+    plan_tapered_recovery, recover_network_modular, recover_tapered_jets,
+)
+from .modular_packing import (
+    STEP21_SCOPE, AppendixDIntegers, AppendixDProposal, ChildTopology, CollisionChoice,
+    CollisionLabels, PackedNetwork, PackingBudgets, PackingCheck, PackingHypotheses,
+    PackingPlan, PackingResult, appendix_d_integers, appendix_d_proposal,
+    check_packing, child_topology, choose_collision_labels, pack_network, packing_hypotheses,
+)
 from .equation_selection import (
     STEP19_SCOPE, DisjointCountResult, GreedySelectionResult, InitialMatrixResult,
     Proposition64Schedule, Section6Budgets, SparsificationTree,
@@ -113,6 +135,50 @@ from .sparsify import (
 )
 
 __all__ = [
+    "STEP21_SCOPE",
+    "AppendixDIntegers",
+    "AppendixDProposal",
+    "ChildTopology",
+    "CollisionChoice",
+    "CollisionLabels",
+    "PackedNetwork",
+    "PackingBudgets",
+    "PackingCheck",
+    "PackingHypotheses",
+    "PackingPlan",
+    "PackingResult",
+    "appendix_d_integers",
+    "appendix_d_proposal",
+    "check_packing",
+    "child_topology",
+    "choose_collision_labels",
+    "pack_network",
+    "packing_hypotheses",
+    "STEP20_SCOPE",
+    "ModularBudgetRefusal",
+    "ModularRing",
+    "extension_ring_for_size",
+    "BooleanTensorNetwork",
+    "CnfNetworkEncoding",
+    "ModularBudgets",
+    "ModularCountResult",
+    "NetworkContractionResult",
+    "TensorVertex",
+    "contract_network",
+    "count_cnf_modular",
+    "encode_cnf_network",
+    "DeformationResult",
+    "ModularRecoveryResult",
+    "PacketLayout",
+    "TaperedJet",
+    "TaperedNode",
+    "TaperedPlan",
+    "cauchy_local_polynomial",
+    "embed_network",
+    "evaluate_deformation",
+    "plan_tapered_recovery",
+    "recover_network_modular",
+    "recover_tapered_jets",
     "SparsePlacedFormula",
     "SparsePlacementBudgets",
     "SparseScheduleOutcome",
@@ -236,4 +302,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.20.0"
+__version__ = "0.22.0"

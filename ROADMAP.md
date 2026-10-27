@@ -180,6 +180,28 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Proposition 6.4 integers: at \(n=20\), \(\lambda_n=5\), \(\nu_n=3\), \(s=0\), so the schedule is the exhaustive-search case. The integer witness \(s=2\) is only \(\lambda=521284\), \(\nu=19\). For \(k=2\) and \(\sigma=1\) the Appendix A power of two is \(M=64\). Label `CHECKED`. The \(O_k(\rho(n))\) bound is not claimed
 - [x] This is a finite, budgeted Section 6 milestone. Appendix D is not implemented. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
 
+### Step 20 — Appendix D finite modular networks and local recovery
+
+- [x] Implement \(B_{p,\ell}\) and its unramified extension \(A_p\), with exact integer polynomial reduction, deterministic irreducibility checks, unit inversion and residue-field interpolation. Choose \(e=4\lceil\log_2s\rceil\) within explicit search budgets
+- [x] Preserve each implicit tensor's creation precision. Canonically lift entries separately, keeping their original descriptions; lifting is not a ring homomorphism
+- [x] Encode CNFs as D.2 networks with trivalent equality trees and one subdivision per wire. Preserve ordered ports, parallel edges and declared free variables. The 8-variable example has 12 edges, 14 vertices and count **196**, with 4096 edge assignments and 57344 entry evaluations. Four copies of a unit clause on three declared variables give count **4** through a 10-edge equality-tree network
+- [x] Compute integral Cauchy local coordinates by canceling known powers of two before inverting odd denominators. On \(a=1,t=1,x=0,y=1\), the coefficients are \((-3,-22,-48,-32)\). Check \(W(0)=I\)
+- [x] Evaluate D.8 on bounded port-pair cubes, interpolate over the residue field, and apply D.9 with D.5's tapered precisions. A two-edge network gives \(9+4V\) modulo 32 with \(V^2=0\). The one-level check uses 224 port pairs; the two-level check uses 1440 pairs and precisions 101/149. A degree-6 nonlinear deformation gives \(8+5V\), with an independent rational polynomial oracle in pytest
+- [x] Refuse before network allocation or before kernel/jet allocation and entry evaluation when the relevant budget fails. Export `verify --step20`, include its 14 checks in `--reference` and `--quick`, and keep the theorem/proof flags false
+- These are finite D.1–D.2 and D.4.1, D.4.3–D.4.4 objects. The direct leaf routine enumerates \(2^M\) edge assignments; D.8 enumerates \(2^{2M}\) port pairs per value. The supplied packet layout does not establish Lemma D.3. No general recursive contraction or asymptotic bound is claimed. See [docs/APPENDIX_D.md](docs/APPENDIX_D.md)
+
+### Step 21 — collision labels, packet layouts and child topology
+
+- [x] Compute D.4's integer schedule without floating point, including H, Delta, u and cumulative a. Use a popcount identity for logarithmic witnesses without constructing s or iterating through huge depths. On s=16, M=20, u=a=0; the active guard stops before forming L or D_arr
+- [x] Check D.6 exactly: M >= 2*D_arr^2*Delta, M >= L*D_arr and 2*L <= Delta. The first condition contains D_arr squared. Keep numerical admission separate from actual finite conclusions and from membership in the fixed D.4 schedule
+- [x] Select labels by exact conditional expectations using incidence histograms. Include shared-endpoint and parallel-edge correlations; preserve vertex order and break ties by the lowest label. Independently enumerate remaining labels to check every candidate expectation on small multigraphs
+- [x] Pad every pair-label class uniformly and construct packets with a fixed orientation convention. Equal-coordinate slot bits select distinct copies. Check actual loads, potentials, group ports, packet counts and degree bounds; reject inconsistent certificates
+- [x] Construct D.4.6 port topology with original port order and isolated vertices preserved. This produces no packet tensor and evaluates no entries. Child edge and degree bounds are checked on the finite topology; recursive invariants remain open
+- [x] On a 128-edge matching, r=2, a=1, Delta=4 passes D.6 and yields 64 packets; its 128-edge child does not shrink to M/8. On an 8192-edge matching, r=64, a=1, Delta=4 fails D.6 and is refused by default. Explicit finite mode yields 4096 packets and a largest child topology with 256 edges and degree 4. These are not D.4 schedule members
+- [x] Feed an automatic layout into Step 20 recovery: two repeated positive units on two declared variables yield count 2, including the free variable. This scans 6656 port pairs and evaluates 33280 entries; it does not run recursive contraction
+- [x] Preflight label trials, score updates, optional trace and conservative padded storage before label search. Check child budgets before allocating its topology. Export `verify --step21`; add 33 pytest tests and 14 reference rows. Full v0.22.0 verification passes 322 pytest tests and 84 reference checks, with `--quick` and both CI validators
+- See [docs/PACKET_PACKING.md](docs/PACKET_PACKING.md) for APIs, exact formulas, finite witnesses and refusal semantics
+
 ## Remaining work toward the reference conclusion
 
 - [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
@@ -187,7 +209,12 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Implement the finite Section 5.1–5.2 sparse-system algebra: monomial lists, integer lifts, Lemma 5.1, and the truncated product, with budget refusals. The common-zero check enumerates a tiny cube. It does not build Section 5.3 replacement forms or prove Theorem 2.2
 - [x] Run Sections 5.3–5.5 on a finite design: replacement factors for the sparse equations, neutral scopes, the high-incidence branch split, and the Section 3 sum in \(A_\ell\). Lemma 4.8 does not form \(D\) on these branches. This is not Theorem 2.2's running time
 - [x] Implement Section 6's equation selection and disjoint sparsification as a finite budgeted milestone. The parameter formulas are exact. Searches and candidate lists that do not fit the budgets are refused before allocation. Satisfying assignments of one small CNF partition across leaves on the same \(n\). Proposition 6.4's integers are checked. This is not the \(O_k(\rho(n))\) bound, and Step 5's copying is not Lemma 6.3
-- [ ] Implement Appendix D's general modular contraction to reach Theorem 1.1's sharper bound. Step 15's finite Taylor elimination is not this algorithm
+- [x] Implement Appendix D's finite coefficient ring, D.2 network encoding, direct leaf sums, Cauchy deformation and tapered Hermite recovery. These are the Step 20 primitives, not a general recursive algorithm
+- [x] Implement D.4.2's finite integer schedule and collision packing, and D.4.6's child port topology. Step 21 checks numerical hypotheses and actual conclusions separately; it does not execute a full D.4 schedule member
+- [ ] Implement D.4.5's weighted modes
+- [ ] Implement D.4.6's packet tensor coefficients and immutable creation-time descriptions
+- [ ] Implement D.4.7's recursive child contractions and establish edge, degree and precision invariants throughout recursion. Step 15's finite Taylor elimination is not this algorithm
+- [ ] Implement D.3's incidence-monomial network encoding and connect the general-density Section 6 queries to the completed modular recursion
 - [ ] Establish exact bit-operation and space bounds; complete the Lean machine and proof without the existing sorry
 
 Unsupported claims of theorem completion are not an acceptance criterion. Results must distinguish counted formulas, checked hypotheses or coordinates, and budget refusals.
@@ -214,6 +241,8 @@ src/counting_sat_algebra/
   sparse_systems.py                                                     # Step 17, Sections 5.1–5.2
   algebra_count.py                                                      # Step 18, Sections 5.3–5.5 in A_ell
   equation_selection.py                                                 # Step 19, finite Section 6 selection and disjoint sparsification
+  modular_ring.py, modular_network.py, modular_recovery.py                # Step 20, Appendix D finite modular networks and local recovery
+  modular_packing.py                                                   # Step 21, collision packing and child port topology
 benches/
 examples/count_demo.cnf
 examples/connected_path.cnf
