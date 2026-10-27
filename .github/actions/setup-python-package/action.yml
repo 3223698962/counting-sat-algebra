@@ -1,5 +1,5 @@
 name: Setup counting-sat-algebra
-description: Check out the repo, cache pip from pyproject.toml, and install the package with dev extras.
+description: Cache pip from pyproject.toml and install the package with dev extras. The job checks out the repo first so this local action is on disk.
 
 inputs:
   python-version:
@@ -10,7 +10,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
