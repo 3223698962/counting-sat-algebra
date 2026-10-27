@@ -2,7 +2,7 @@
 
 Tautologies and duplicate clauses are removed without changing the models.
 Declared unused variables contribute a factor of two each. Every nontrivial
-local count is obtained from the shared-measurement routine, with optional
+local count is obtained from shared measurements or finite Taylor contraction, with optional
 memoization of identical local formulas. No brute-force oracle is a backend.
 
 This preprocessing can handle large disconnected formulas. A large connected
@@ -13,7 +13,7 @@ reference's general-input asymptotic bound is a separate obligation.
 from __future__ import annotations
 
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .cnf import CNF
 from .common_count import COMMON_VECTOR_BUDGET, count_placed_formula
@@ -22,6 +22,7 @@ from .sparse_placement import (
     SparsePlacementBudgetExceeded, SparsePlacementBudgets, place_sparse_formula,
 )
 from .structured_auxiliary import StructuredAuxiliary, build_structured_auxiliary
+from .tensor_count import ContractionBudgets, count_placed_formula_by_contraction
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,10 @@ class ComponentCountResult:
     boolean_vectors: int = 0
     measurement_tuples: int = 0
     factor_evaluations: int = 0
+    backend: str = 'common'
+    jet_products: int = 0
+    peak_table_entries: int = 0
+    peak_table_coefficients: int = 0
 
     @property
     def counted(self) -> bool:
@@ -50,6 +55,7 @@ def count_cnf_components(
     max_variables: int = 1_000_000, max_component_variables: int = 20,
     vector_budget: int = COMMON_VECTOR_BUDGET, total_vector_budget: int = 5_000_000,
     memo_entries: int = 4096, placement_budgets: SparsePlacementBudgets = SparsePlacementBudgets(),
+    backend: str = 'common', tensor_budgets: ContractionBudgets = ContractionBudgets(),
 ) -> ComponentCountResult:
     """Count components exactly, with an explicit refusal and no partial count.
 
@@ -57,6 +63,8 @@ def count_cnf_components(
     only a completed exact count. Components are placed afresh, since their
     H(t) need not factor from a placement of the global formula.
     """
+    if backend not in ('common', 'tensor'):
+        raise ValueError("backend must be 'common' or 'tensor'")
     max_variables, max_component_variables, vector_budget, total_vector_budget, memo_entries = (
         operator.index(value) for value in
         (max_variables, max_component_variables, vector_budget, total_vector_budget, memo_entries)
@@ -64,7 +72,7 @@ def count_cnf_components(
     if min(max_variables, max_component_variables, vector_budget, total_vector_budget, memo_entries) < 0:
         raise ValueError("component budgets must be nonnegative integers")
     if cnf.n > max_variables:
-        return ComponentCountResult("refused", None, f"declared variables exceed budget {max_variables}")
+        return ComponentCountResult("refused", None, f"declared variables exceed budget {max_variables}", backend=backend)
 
     normalized = set()
     for clause in cnf.clauses:
@@ -72,11 +80,11 @@ def count_cnf_components(
         if any((var, not neg) in literals for var, neg in literals):
             continue
         if not literals:
-            return ComponentCountResult("counted", 0, "an empty clause makes the formula unsatisfiable")
+            return ComponentCountResult("counted", 0, "an empty clause makes the formula unsatisfiable", backend=backend)
         normalized.add(tuple(sorted(literals)))
     clauses = tuple(sorted(normalized))
     if not clauses:
-        return ComponentCountResult("counted", 2 ** cnf.n, "all declared variables are free", free_variables=cnf.n)
+        return ComponentCountResult("counted", 2 ** cnf.n, "all declared variables are free", free_variables=cnf.n, backend=backend)
 
     parent = list(range(cnf.n))
     sizes = [1] * cnf.n
@@ -110,7 +118,8 @@ def count_cnf_components(
     largest = max(map(len, variables.values()))
     stats = dict(components=len(components), components_counted=0, free_variables=free,
                  largest_component=largest, normalized_clauses=len(clauses), local_evaluations=0,
-                 memo_hits=0, boolean_vectors=0, measurement_tuples=0, factor_evaluations=0)
+                 memo_hits=0, boolean_vectors=0, measurement_tuples=0, factor_evaluations=0,
+                 backend=backend, jet_products=0, peak_table_entries=0, peak_table_coefficients=0)
     if largest > max_component_variables:
         return ComponentCountResult("refused", None,
                                     f"largest component has {largest} variables, above budget {max_component_variables}; no local enumeration started", **stats)
@@ -140,10 +149,18 @@ def count_cnf_components(
             except SparsePlacementBudgetExceeded as exc:
                 return ComponentCountResult("refused", None, str(exc), **stats)
             remaining = total_vector_budget - stats['boolean_vectors']
-            result = count_placed_formula(placed, vector_budget=min(vector_budget, remaining))
+            if backend == 'tensor':
+                result = count_placed_formula_by_contraction(placed, budgets=replace(
+                    tensor_budgets, max_boolean_vectors=min(tensor_budgets.max_boolean_vectors, vector_budget, remaining),
+                ))
+                stats['jet_products'] += result.jet_products
+                stats['peak_table_entries'] = max(stats['peak_table_entries'], result.peak_table_entries)
+                stats['peak_table_coefficients'] = max(stats['peak_table_coefficients'], result.peak_table_coefficients)
+            else:
+                result = count_placed_formula(placed, vector_budget=min(vector_budget, remaining))
+                stats['measurement_tuples'] += result.measurement_tuples
             stats['local_evaluations'] += 1
             stats['boolean_vectors'] += result.boolean_vectors
-            stats['measurement_tuples'] += result.measurement_tuples
             stats['factor_evaluations'] += result.factor_evaluations
             if not result.counted:
                 return ComponentCountResult(result.status, None, result.reason, **stats)
