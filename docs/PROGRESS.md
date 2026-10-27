@@ -1,6 +1,6 @@
 # Progress
 
-The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.14.0 completes Steps 9–13: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements and actual DIMACS counts by independent components. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`.
+The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.16.0 completes Steps 9–15: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements, actual DIMACS counts by independent components, contraction of the same global polynomial through its disjoint replacement supports, and finite Taylor tensor elimination on connected supports whose intermediate tables fit explicit budgets. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`. Theorem 1.1 is not proved, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false.
 
 The Step 0–8 sections below preserve historical measurements. Step 7/8 Boolean-budget refusals are reproduced through the explicit legacy mode. They no longer describe the default scheduler. The older Step 6 distance list is a historical snapshot, updated below by the new reference alignment.
 
@@ -448,7 +448,7 @@ The scan is a record of the pieces that exist. It is not a claim that the missin
 - Clauses that cross a Step 2 block partition are not factored by the blocked sum. Copying does not pull a crossing clause into one block, and it does not produce a Step 3 placement. The scan records that refusal and does not time a blocked sum on it.
 - Theorem 1.1 is not implemented. This repository does not refute ETH. No cell of the scan is a 2^{o(n)} counting algorithm.
 
-The original Step 7/8 paths preserve these stops in legacy Boolean mode. Steps 9–13 update the default design, common evaluator, auxiliary representation and supplied-CNF entry point; their remaining obligations are listed below.
+The original Step 7/8 paths preserve these stops in legacy Boolean mode. Steps 9–15 update the default design, common evaluator, auxiliary representation, supplied-CNF entry point, replacement-support contraction and finite connected Taylor elimination; their remaining obligations are listed below.
 
 ## Step 7 — larger slice and a balance-check scaffold
 
@@ -576,7 +576,7 @@ The n=16384 alternating-polarity unit-clause formula at r=2, Q=3, R=2, tau=1/2 p
 | pullback candidates | 34816 |
 | elimination entries | 10240 |
 
-`common_count.py` accepts this sparse placement. Its global plan has q=5461 and J=5462, with a Boolean-vector upper bound of 36697 bits. The evaluator refuses before enumeration, returns no count, and examines zero Boolean vectors. The sparse construction is completed, while the global sum is not. This record establishes finite storage usage, not an asymptotic space or time theorem.
+`common_count.py` accepts this sparse placement. Its global plan has q=5461 and J=5462, with a Boolean-vector upper bound of 36697 bits. The shared-measurement evaluator refuses before enumeration, returns no count, and examines zero Boolean vectors. Step 14 below completes the same placement's count through disjoint replacement supports. This record establishes finite storage usage, not an asymptotic space or time theorem.
 
 ## Step 13 — supplied CNFs and independent component counts
 
@@ -591,8 +591,57 @@ The example declares eight variables and has two disjoint three-literal clauses.
 
 On 10923 disjoint three-literal clauses and 32769 active variables, the result is exactly 7^10923. One local evaluation and 10922 memo hits produce this count; adding two declared free variables gives 4·7^10923. Tests disable the full-cube oracles while executing this path. The large input passes the Q=3, R=2 numerical hypotheses, but its global placement was not executed. Its count follows from independent components and does not establish a general connected-instance bound.
 
-All 163 regression tests and all 14 reference checks pass. Tests include disabled memoization, a local R=2 Taylor backend, normalization, random small formulas, declared free bits, exact DIMACS/JSON output and component/global budget refusals. `benches/reference_alignment.json` records the five reference suites without wall times and retains the incomplete theorem/proof flags.
+The Step 13 milestone passed 163 regression tests and 14 reference checks. Tests include disabled memoization, a local R=2 Taylor backend, normalization, random small formulas, declared free bits, exact DIMACS/JSON output and component/global budget refusals. Step 14 extends the saved reference report with the checks below.
+
+## Step 14 — local Taylor contraction of the same global placement
+
+`support_count.py` forms a dependency graph from the actual replacement-polynomial coefficients in each clause. This includes couplings that were absent from the original CNF. For disjoint support sets V_i, H(T)=2^free·product_i H_i(T). Each local cube is summed at T=1 with a Taylor jet covering the component's full degree bound, then Hermite evaluation recovers H_i(0). No original-CNF counter or global-cube oracle is used as the backend.
+
+The same admitted n=16384, r=2, Q=3, R=2 placement from Step 12 has 10240 support components, no free variables, largest component size four, largest component degree four and total degree bound 14336. Both modes restore exactly 1, independently checked against the unique assignment of alternating-polarity unit clauses:
+
+| quantity | memoization enabled | memoization disabled |
+| --- | --- | --- |
+| exact count | 1 | 1 |
+| completed support components | 10240 | 10240 |
+| local Taylor evaluations | 13 | 10240 |
+| memo hits | 10227 | 0 |
+| actual local Boolean vectors | 96 | 49152 |
+| planned vector upper bound | 49152 | 49152 |
+| factor evaluations | 288 | 128000 |
+
+The vector plan is sum_i 2^|V_i| and assumes no reuse. A budget of 49152 admits both modes; 49151 refuses before local enumeration even with caching enabled. A connected thirteen-variable replacement support exceeds the default component limit twelve and also refuses with no count and zero scanned vectors.
+
+Independent checks compare the original four small placements with shared-measurement recovery and brute force. A nonconstant coupled replacement is checked coefficient by coefficient against the full-cube Hasse oracle. Tests also cover free variables, empty clauses, invalid designs, disabled memoization and budget checks before contraction.
+
+The Step 14 milestone passed 181 pytest tests and 17 reference checks. `--step14` selects its three rows. Reports retain the exact counts, operation statistics, executed steps and failure status without wall times. Empty or failing suites cannot be marked as successful because earlier suites passed. The incomplete theorem and Lean proof flags remain false. Step 15 below is what the current `--reference` command adds.
+
+## Step 15 — finite Taylor elimination on connected supports
+
+`tensor_count.py` eliminates Boolean variables of the actual replaced factors over \(\mathbb Q[z]\). Each live table is a Taylor jet at T=1 through that component's full degree bound. Eliminating one Boolean variable preserves the sum-product polynomial. Every component is planned before any numerical table is built. A refused call returns no count. This backend does not memoize. Slot accounting excludes input polynomial storage, planner metadata, arithmetic temporaries and integer bit lengths.
+
+The same 13-variable connected path that Step 14 refuses, because its support exceeds the 12-variable component cap, is counted by Step 15:
+
+| quantity | value | label |
+| --- | --- | --- |
+| exact count | 610 | `COUNTED` |
+| Step 14 status on the same placement | refused | `REFUSED` |
+| components | 1 | |
+| largest component / max bucket width | 13 / 2 | |
+| local Boolean vectors | 98 | |
+| factor evaluations | 48 | |
+| jet products | 190 | |
+| peak table entries | 50 | |
+
+`examples/connected_path.cnf` through `count --backend tensor` returns the same 610. The closed form is the number of length-13 bit strings with no adjacent zeros, Fibonacci(15).
+
+A 1024-variable path of the same shape, plus two declared free variables, counts as 4·Fibonacci(1026). The plan has one component of 1024 variables, bucket width 2, 8186 local Boolean vectors and a peak of 4094 table entries. `count_cnf_components(..., backend='tensor', max_component_variables=1024)` returns the same count and the same vector total. The long-path test disables the global-cube, shared-measurement, component-count and Step 14 jet oracles while this contraction runs.
+
+Two coupled replacement factors on two variables recover count 1. The jet at T=1 is 7/4, 1/2, −1/4, matching the independent full-cube Hasse jet coefficient by coefficient. That coefficient comparison is `CHECKED`; the count is `COUNTED`. A single width-13 factor is `REFUSED` before any numerical table: the factor support bound 13 exceeds the budget 12, and the Boolean-vector counter stays at zero. An induced elimination bucket wider than 12, and a later oversized component, also refuse before numerical work.
+
+DIMACS accepts `--backend common|tensor`. `common` remains the shared-measurement default. `tensor` places each independent CNF component afresh and then calls this contraction, with `--max-tensor-width` defaulting to 12 and `--max-tensor-degree` defaulting to 64.
+
+All 205 pytest tests and all 21 reference checks pass at version 0.16.0. `--reference` writes Steps 9–15 to `benches/reference_alignment.json`. `--step15` selects the four rows also saved in `artifacts/step15-verification.json`. Both reports keep `theorem_1_1_complete=false` and `lean_proof_complete=false`.
 
 ## Current distance to the reference conclusion
 
-The structured operator now connects to sparse placements, measurement construction and the common counting entry point. Supplied CNFs can be counted when their independently placed components fit the budgets. To obtain the reference's general-input bound, the full asymptotic parameter family must be selected and executed; Sections 5–6 require sparse polynomial systems, equation selection and disjoint sparsification. Appendix D is needed for the sharper Theorem 1.1 bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.
+The structured operator now connects to sparse placements, measurement construction and the common counting entry point. Supplied CNFs can be counted when their independently placed components fit the budgets; the same global placement can also be counted when its actual replacement supports split into small components. Some connected supports can be counted when every elimination bucket fits the explicit table budgets. To obtain the reference's general-input bound, the full asymptotic parameter family must be selected and executed; Sections 5–6 require sparse polynomial systems, equation selection and disjoint sparsification. Step 14's finite disjoint-support contraction and Step 15's finite Taylor elimination do not supply Appendix D's general modular contraction or its asymptotic bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.

@@ -3,9 +3,11 @@
 Steps 0–8 preserve the original finite checks. Steps 9–11 implement the
 reference's conditional-expectation schedules, exact rational design checks,
 streamed shared-measurement Taylor recovery, and structured auxiliary entry
-queries even at R=32, Q=192. Step 12 connects those entries to sparse admitted placements. Step 13 counts
-independent components and supports DIMACS input. The dense matrix remains
-limited to side 256.
+queries even at R=32, Q=192. Step 12 connects those entries to sparse admitted
+placements. Step 13 counts independent components and supports DIMACS input.
+Step 14 contracts disjoint supports of the actual replaced factors. Step 15
+uses finite Taylor tensor elimination on connected supports. The dense matrix
+remains limited to side 256.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
@@ -33,6 +35,8 @@ from .sparse_placement import (
     check_sparse_design, place_sparse_formula, schedule_sparse_placement,
 )
 from .component_count import ComponentCountResult, count_cnf_components
+from .support_count import SupportCountPlan, SupportCountResult, count_placed_formula_by_support
+from .tensor_count import ContractionBudgets, ContractionPlan, ContractionResult, count_placed_formula_by_contraction
 from .dimacs import parse_dimacs, read_dimacs, format_dimacs
 from .hermite import (
     HermiteRecovery,
@@ -80,6 +84,13 @@ __all__ = [
     "SparsePlacementBudgets",
     "SparseScheduleOutcome",
     "ComponentCountResult",
+    "SupportCountPlan",
+    "SupportCountResult",
+    "ContractionBudgets",
+    "ContractionPlan",
+    "ContractionResult",
+    "count_placed_formula_by_contraction",
+    "count_placed_formula_by_support",
     "check_sparse_design",
     "place_sparse_formula",
     "schedule_sparse_placement",
@@ -140,4 +151,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.14.0"
+__version__ = "0.16.0"

@@ -1,11 +1,21 @@
 {
   "schema_version": 1,
-  "version": "0.14.0",
+  "version": "0.16.0",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements and independent component counts; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports and finite connected Taylor contraction; no general-input asymptotic claim.",
   "wall_times_recorded": false,
+  "steps": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "failed_step": null,
   "all_checks_passed": true,
   "rows": [
     {
@@ -307,6 +317,26 @@
       "count": null,
       "q": 5461,
       "J": 5462,
+      "substitution_pair_bound_bits": 20500,
+      "measurement_tuple_bound_bits": [
+        8002,
+        8002,
+        8002
+      ],
+      "local_cube_bound_bits": [
+        [
+          8193,
+          8193
+        ],
+        [
+          8193,
+          8193
+        ],
+        [
+          8193,
+          8193
+        ]
+      ],
       "boolean_vector_bound_bits": 36697,
       "boolean_vectors": 0,
       "reason": "Boolean vector bound an integer of 36697 bits exceeds budget 500000; no enumeration started"
@@ -339,6 +369,192 @@
       "local_evaluations": 1,
       "memo_hits": 10922,
       "boolean_vectors": 74
+    },
+    {
+      "name": "n16384-support-contraction",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "expected_count": 1,
+      "count_validation": "one assignment for independent alternating-polarity unit clauses",
+      "global_placement_checked": true,
+      "numerical_hypotheses_admitted": true,
+      "same_replacement_polynomials": true,
+      "memo_enabled": true,
+      "plan": {
+        "components": 10240,
+        "free_variables": 0,
+        "largest_component": 4,
+        "degree_cap": 14336,
+        "max_component_degree": 4,
+        "boolean_vector_bound": 49152
+      },
+      "components_counted": 10240,
+      "local_evaluations": 13,
+      "memo_hits": 10227,
+      "boolean_vectors": 96,
+      "factor_evaluations": 288
+    },
+    {
+      "name": "n16384-support-no-memo",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "expected_count": 1,
+      "count_validation": "one assignment for independent alternating-polarity unit clauses",
+      "global_placement_checked": true,
+      "numerical_hypotheses_admitted": true,
+      "same_replacement_polynomials": true,
+      "memo_enabled": false,
+      "count_matches_memoized": true,
+      "plan": {
+        "components": 10240,
+        "free_variables": 0,
+        "largest_component": 4,
+        "degree_cap": 14336,
+        "max_component_degree": 4,
+        "boolean_vector_bound": 49152
+      },
+      "components_counted": 10240,
+      "local_evaluations": 10240,
+      "memo_hits": 0,
+      "boolean_vectors": 49152,
+      "factor_evaluations": 128000
+    },
+    {
+      "name": "connected-support-budget",
+      "n": 13,
+      "m": 12,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "plan": {
+        "components": 1,
+        "free_variables": 0,
+        "largest_component": 13,
+        "degree_cap": 0,
+        "max_component_degree": 0,
+        "boolean_vector_bound": 8192
+      },
+      "boolean_vectors": 0,
+      "reason": "support component size bound 13 exceeds budget 12; no enumeration started"
+    },
+    {
+      "name": "connected-support-n13",
+      "n": 13,
+      "m": 12,
+      "brute": 610,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 610,
+      "previous_support_status": "refused",
+      "same_replacement_polynomials": true,
+      "plan": {
+        "components": 1,
+        "free_variables": 0,
+        "largest_component": 13,
+        "max_component_degree": 0,
+        "max_bucket_variables": 2,
+        "boolean_vector_bound": 98,
+        "jet_product_bound": 190,
+        "peak_table_entries": 50,
+        "peak_table_coefficients": 50,
+        "planning_steps": 170
+      },
+      "components_counted": 1,
+      "boolean_vectors": 98,
+      "factor_evaluations": 48,
+      "jet_products": 190,
+      "peak_table_entries": 50,
+      "peak_table_coefficients": 50
+    },
+    {
+      "name": "connected-path-n1024-free2",
+      "n": 1026,
+      "m": 1023,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count_hex": "0x230c287d6da8c0e720100c4d5a264c8977b6eb3ade59c11a85335f436d37753ccf6c6003ad39a7017ccc53877433fa2113f07028d4b4e7e08e8063aa9edeba7c209ae45a80b414e34247e539972f8d5bc2870c5929bdc2a6d60",
+      "expected_count": "4*Fibonacci(1026)",
+      "count_validation": "independent recurrence for bit strings with no adjacent zeros",
+      "component_backend_count_matches": true,
+      "component_backend_boolean_vectors": 8186,
+      "same_replacement_polynomials": true,
+      "plan": {
+        "components": 1,
+        "free_variables": 2,
+        "largest_component": 1024,
+        "max_component_degree": 0,
+        "max_bucket_variables": 2,
+        "boolean_vector_bound": 8186,
+        "jet_product_bound": 16366,
+        "peak_table_entries": 4094,
+        "peak_table_coefficients": 4094,
+        "planning_steps": 14324
+      },
+      "components_counted": 1,
+      "boolean_vectors": 8186,
+      "factor_evaluations": 4092,
+      "jet_products": 16366,
+      "peak_table_entries": 4094,
+      "peak_table_coefficients": 4094
+    },
+    {
+      "name": "coupled-support-full-taylor",
+      "n": 2,
+      "m": 2,
+      "brute": 1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "jet": [
+        "7/4",
+        "1/2",
+        "-1/4"
+      ],
+      "independent_jet": [
+        "7/4",
+        "1/2",
+        "-1/4"
+      ],
+      "coefficient_validation_vectors": 14,
+      "plan": {
+        "components": 1,
+        "free_variables": 0,
+        "largest_component": 2,
+        "max_component_degree": 2,
+        "max_bucket_variables": 2,
+        "boolean_vector_bound": 14,
+        "jet_product_bound": 18,
+        "peak_table_entries": 10,
+        "peak_table_coefficients": 30,
+        "planning_steps": 25
+      },
+      "components_counted": 1,
+      "boolean_vectors": 14,
+      "factor_evaluations": 8,
+      "jet_products": 18,
+      "peak_table_entries": 10,
+      "peak_table_coefficients": 30
+    },
+    {
+      "name": "wide-tensor-budget",
+      "n": 13,
+      "m": 1,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "reason": "factor support bound 13 exceeds budget 12; no numerical tables created"
     }
   ]
 }

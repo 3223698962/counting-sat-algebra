@@ -119,13 +119,33 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Verify no cube-oracle backend, free-bit factors, disabled memoization and refusals without partial counts
 - This completes a finite supplied-CNF counter within component budgets. General large connected instances and the reference's asymptotic bounds remain open
 
+### Step 14 — count the same global placement by replacement supports
+
+- [x] Form components from every nonzero coefficient of the actual replaced factors, including dependencies introduced by replacement
+- [x] Sum each small support cube at T=1 in a Taylor algebra covering the component's degree; recover each local H(0) and multiply with the free-variable factor
+- [x] Count the admitted n=16384, Q=3, R=2 global placement as 1, with 10240 support components of at most four variables and degree at most four
+- [x] Verify the same placement with and without memoization: 96 and 49152 actual local Boolean vectors, both giving count 1; the uncached run attains the planned bound
+- [x] Check local nonconstant jets against an independent cube oracle, replacements coupling original CNF components, free bits and refusals before enumeration
+- [x] Pass the Step 14 milestone of 181 regression tests and 17 reference checks, including export of the executed checks and failure status
+- Large connected replacement supports still refuse within the configured budgets. This finite contraction does not implement the general Appendix D algorithm or establish its asymptotic bound
+
+### Step 15 — finite Taylor tensor elimination on connected supports
+
+- [x] Eliminate Boolean variables of the actual replaced factors over \(\mathbb Q[z]\), keeping a Taylor jet at T=1 through each component's degree bound
+- [x] Plan every component before building a numerical table; a budget refusal returns no count and creates no table. This backend does not memoize
+- [x] Count the 13-variable connected path as 610 after Step 14 refuses that same placement; bucket width 2 and 98 local Boolean vectors
+- [x] Count a 1024-variable connected path plus two free bits as 4·Fibonacci(1026), with bucket width 2, 8186 local Boolean vectors and peak table size 4094; `count --backend tensor` matches that count
+- [x] Check the coupled-replacement jet 7/4, 1/2, −1/4 against the independent full-cube Hasse jet, and refuse a width-13 factor before enumeration
+- [x] Expose DIMACS `--backend common|tensor`, with tensor width and degree caps. The current suite is 205 pytest tests and 21 reference checks at version 0.16.0
+- Step 15 is finite variable elimination on connected supports whose intermediate tables fit explicit budgets. It is not Appendix D's general modular contraction, and it does not establish that asymptotic bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
+
 ## Remaining work toward the reference conclusion
 
 - [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
 - [ ] Choose and run the full asymptotic parameter family
 - [ ] Implement Section 5's sparse polynomial systems and coefficient algebra
 - [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control
-- [ ] Implement Appendix D's tensor contraction to reach Theorem 1.1's sharper bound
+- [ ] Implement Appendix D's general modular contraction to reach Theorem 1.1's sharper bound. Step 15's finite Taylor elimination is not this algorithm
 - [ ] Establish exact bit-operation and space bounds; complete the Lean machine and proof without the existing sorry
 
 Unsupported claims of theorem completion are not an acceptance criterion. Results must distinguish counted formulas, checked hypotheses or coordinates, and budget refusals.
@@ -147,7 +167,10 @@ src/counting_sat_algebra/
   structured_auxiliary.py, reference_verify.py                           # Step 11 and alignment checks
   sparse_placement.py                                                   # Step 12
   component_count.py, dimacs.py, cli.py                                  # Step 13
+  support_count.py                                                      # Step 14
+  tensor_count.py                                                       # Step 15
 benches/
 examples/count_demo.cnf
+examples/connected_path.cnf
 docs/PROGRESS.md
 ```

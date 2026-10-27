@@ -88,8 +88,11 @@ DISTANCE_TO_FULL_ALGORITHM: tuple[str, ...] = (
     "Step 11 provides structured coordinate queries at those parameters. "
     "Step 12 connects them to finite sparse placements and the common count "
     "entry point: n=16384, Q=3, R=2 uses 59392 polynomial entries and passes "
-    "all numerical hypotheses and design checks. Its global sum is refused "
-    "before enumeration; execution of the full parameter family remains open.",
+    "all numerical hypotheses and design checks. Its shared-measurement sum is "
+    "refused before enumeration. Step 14 recovers count 1 from the same global "
+    "placement through disjoint replacement supports, scanning 96 local Boolean "
+    "vectors with memoization and 49152 without it. Execution of the full "
+    "parameter family remains open.",
     "The default scheduler now uses exact reference conditional expectations and "
     "rational kernels; the admitted n=1024 placement passes. The legacy Boolean "
     "mode preserves the 2**32 budget refusal. Lemma 4.7's exact tail is now checked: "
@@ -107,15 +110,21 @@ DISTANCE_TO_FULL_ALGORITHM: tuple[str, ...] = (
     "arithmetic per assignment. Step 10 instead recovers jets through restricted "
     "local sums and fixed substitutions, checked on supplied finite designs. "
     "Step 13 uses it on independently placed CNF components and counts "
-    "10923 disjoint three-literal clauses as 7**10923. General large connected "
-    "components still face resource limits; the general-input reduction remains open.",
+    "10923 disjoint three-literal clauses as 7**10923. Step 15 counts one "
+    "connected 1024-variable path plus two free bits as 4*Fibonacci(1026) with "
+    "elimination width 2, and refuses a width-13 factor before building tables. "
+    "Independent-component counts and disjoint-support counts are not a general "
+    "connected-instance bound. General large connected components still face "
+    "resource limits; the general-input reduction remains open.",
     "A crossing clause still fails the Step 2 block factorization. Step 10 can "
     "count crossing clauses on supplied designs, and Step 13 places small "
     "components afresh. Copying does not "
     "construct those placements for a general reduced formula.",
     "Theorem 1.1 is not implemented. This repository does not refute ETH. "
-    "Appendix D tensor contraction, full bit-complexity and space analysis, "
-    "and the Lean machine proof remain open.",
+    "Step 15's finite Taylor tensor elimination counts connected supports only "
+    "when intermediate tables fit explicit budgets; it is not Appendix D's "
+    "general modular contraction or its asymptotic bound. Full bit-complexity "
+    "and space analysis, and the Lean machine proof, remain open.",
 )
 
 _PROFILES = ("quick", "full")
