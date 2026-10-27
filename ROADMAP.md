@@ -151,12 +151,22 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] A candidate-trial budget of 1 refuses before the schedule search. `build_auxiliary_slice(2, 192, 32)` still refuses before allocation; the dense side-length cap is unchanged
 - [x] Running these finite tuples is not a proof of Lemma 4.8's asymptotic time or space bound. Step 16 does not implement Sections 5–6 or Appendix D. Step 15 remains finite Taylor elimination. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general 2^{o(n)} algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
 
+### Step 17 — finite sparse systems and Lemma 5.1
+
+- [x] Represent each equation as square-free monomials. Duplicate monomials cancel modulo 2. The empty monomial is 1, and the empty list is 0. Degree and the exact bound \((log_2 n)^c\) are checked on the supplied list
+- [x] The integer lift is the sum of the monomial products. On every Boolean point of the checked systems, the lift is even exactly when the equation is zero over \(\mathbb F_2\)
+- [x] Lemma 5.1 builds \(p_\ell(Y)=(1-Y)^\ell\sum_{j<\ell}\binom{\ell+j-1}{j}Y^j\) in \(\mathbb Z[Y]\) and divides by the monic \(h(Y)=Y^2-Y\). For \(\ell=2\) the coefficients are \(1-3Y^2+2Y^3=(1-Y)+(2Y-1)h(Y)\). Even integers are congruent to 1 and odd integers to 0 modulo \(2^\ell\)
+- [x] The truncated product multiplies one equation at a time and keeps only terms whose total number of \(h\) factors is less than \(\ell\). Each retained term has at most \(m_{test}\) linear factors and at most \(\ell-1\) quadratic factors. Term count, coefficient bits, accumulator bits, and the Boolean cube are refused before the corresponding allocation. A refusal returns no count
+- [x] On a 4-variable system the exhaustive residue modulo \(2^5\) is 4, matching the independent \(\mathbb F_2\) scan of all 16 points. An empty system is \(2^n\) and a constant equation \(1=0\) is 0, both without a scan
+- [x] This is Sections 5.1–5.2 on a budgeted cube. Sections 5.3–5.5 replacement forms, Section 6 equation selection, and Appendix D are not implemented. The scan is not Theorem 2.2's running time. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
+
 ## Remaining work toward the reference conclusion
 
 - [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
 - [x] Choose and run finite members of the asymptotic parameter family. Lemma 4.8's closed form is checked exactly; at every n this repository can place, that closed form fails before D is formed. One budget-feasible tuple that passes Lemma 4.7 is placed and counted or refused. This is not a proof of the asymptotic bound
-- [ ] Implement Section 5's sparse polynomial systems and coefficient algebra
-- [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control
+- [x] Implement the finite Section 5.1–5.2 sparse-system algebra: monomial lists, integer lifts, Lemma 5.1, and the truncated product, with budget refusals. The common-zero check enumerates a tiny cube. It does not build Section 5.3 replacement forms or prove Theorem 2.2
+- [ ] Run Sections 5.3–5.5: build replacement forms for the equation factors and sum them with the Section 3 routine in \(A_\ell\). Step 17 stops before that sum
+- [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control. That reduction is the handoff after Step 17
 - [ ] Implement Appendix D's general modular contraction to reach Theorem 1.1's sharper bound. Step 15's finite Taylor elimination is not this algorithm
 - [ ] Establish exact bit-operation and space bounds; complete the Lean machine and proof without the existing sorry
 
@@ -181,6 +191,7 @@ src/counting_sat_algebra/
   component_count.py, dimacs.py, cli.py                                  # Step 13
   support_count.py                                                      # Step 14
   tensor_count.py                                                       # Step 15
+  sparse_systems.py                                                     # Step 17, Sections 5.1–5.2
 benches/
 examples/count_demo.cnf
 examples/connected_path.cnf

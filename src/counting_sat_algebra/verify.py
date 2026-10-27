@@ -19,6 +19,7 @@ Usage:
   python -m counting_sat_algebra.verify --step14
   python -m counting_sat_algebra.verify --step15
   python -m counting_sat_algebra.verify --step16
+  python -m counting_sat_algebra.verify --step17
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1055,7 +1056,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–R): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–S): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1108,12 +1109,14 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
-    if any(step in steps for step in (9, 10, 11, 12, 13, 14, 15, 16)):
+    if any(step in steps for step in (9, 10, 11, 12, 13, 14, 15, 16, 17)):
         parts.append(
             "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
             "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
             "replacement supports and finite connected Taylor contraction. Step 16 chooses Lemma 4.8's "
             "schedule and runs a budget-feasible finite member when Lemma 4.7 accepts it. "
+            "Step 17 checks sparse F2 systems, Lemma 5.1, and a truncated product on a tiny cube. "
+            "Section 6 and Appendix D are not implemented. "
             "Complete Theorem 1.1 alignment remains open."
         )
     parts.append("No Theorem 1.1, no 2^{o(n)} claim.")
@@ -1126,7 +1129,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–16. The full path stays in ``main``."""
+    """Run a subset of Steps 2–17. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1234,7 +1237,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 16)"
+        description="Counting algorithm reference verifier (Steps 0 through 17)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1290,8 +1293,9 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step14', action='store_true', help='count the global placed polynomial through disjoint replacement supports')
     parser.add_argument('--step15', action='store_true', help='count connected replacement supports by budgeted Taylor tensor elimination')
     parser.add_argument('--step16', action='store_true', help='choose Lemma 4.8 parameters and run a budget-feasible finite member')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–16 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step16)')
+    parser.add_argument('--step17', action='store_true', help='check Section 5 sparse systems, Lemma 5.1, and the truncated product')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–17 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step17)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1323,11 +1327,12 @@ def main(argv: List[str] | None = None) -> int:
             (14, args.step14 or args.reference),
             (15, args.step15 or args.reference),
             (16, args.step16 or args.reference),
+            (17, args.step17 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step16')
+        parser.error('--output requires --reference or --step9 through --step17')
     if selected:
         return _run_selected(
             selected,
@@ -1336,7 +1341,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 16")
+    print("counting_sat_algebra.verify — Steps 0 through 17")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
@@ -1491,7 +1496,8 @@ def main(argv: List[str] | None = None) -> int:
         "eliminates variables in connected supports within intermediate-table budgets. Step 16 "
         "evaluates Lemma 4.8's closed form and, where the sparse budgets allow, places and counts "
         "one finite tuple that passes every Lemma 4.7 numerical hypothesis. That execution is not "
-        "a proof of the asymptotic time or space bound. Complete "
+        "a proof of the asymptotic time or space bound. Step 17 checks the finite Section 5.1–5.2 "
+        "sparse-system algebra on a tiny cube; it does not run Section 6 or Appendix D. Complete "
         "Theorem 1.1 alignment remains open. "
         f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "
         f"2**{FULL_M0_LOG2_DIMENSION_AT_R2} at r=2); structured entry queries pass. "
