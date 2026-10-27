@@ -1,6 +1,6 @@
 # Progress
 
-Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, a Step 5 occurrence reduction, and a Step 6 parameter scan are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point. Step 6 runs those pieces on one fixed grid and records a match or a refusal. A refusal is not timed. The scan does not close the distance listed at the end of this file.
+Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, a Step 5 occurrence reduction, and a Step 6 parameter scan are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 256. Step 7 checks two placements above the old cap of 64 and refuses to choose schedules when the balance inequalities fail. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point. Step 6 runs those pieces on one fixed grid and records a match or a refusal. A refusal is not timed. The scan does not close the distance listed at the end of this file.
 
 ## Step 0
 
@@ -184,7 +184,7 @@ Summing the four assignments gives H(T) = 1 − 2T + T²/4. The same polynomial 
 
 ### Obstacle
 
-Full M0 is still absent. The parameter list that accompanies that matrix asks for R ≥ 32 and 6R ≤ Q before a tail bound is invoked. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses every side length above 64 and says so in the error. A scheduler that would also keep groups of size at most 2n/r and label multiplicity at most 2M/D needs n on the order of D². That inequality is already false for every formula this repository compares with brute force, so the scheduler is not run. The four placements above are the simplification: the same matrix formulas, hand-written schedules, and direct checks. Nothing in this step runs in 2^{o(n)}.
+Full M0 is still absent. The parameter list that accompanies that matrix asks for R ≥ 32 and 6R ≤ Q before a tail bound is invoked. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses that call before it allocates the matrix. The four placements above are the Step 3 simplification: the same matrix formulas, hand-written schedules, and direct checks. Step 7 raises the cap from 64 to 256 and adds the balance-check scaffold. It still does not choose those schedules. Nothing in this step runs in 2^{o(n)}.
 
 ## Step 4 — Hermite / multi-coefficient interpolation
 
@@ -335,7 +335,7 @@ H(1) is a value of the counting polynomial at t ≠ 0. It is not a model count. 
 
 ### Obstacle
 
-Step 3 is not applied. Its schedules are written out by hand for four placements, and this reduction does not produce a schedule. The cycle clauses have width 2. The side-length cap remains 64, and full M0 at R ≥ 32 and 6R ≤ Q is still not built.
+Step 3 is not applied. Its schedules are written out by hand for four placements, and this reduction does not produce a schedule. The cycle clauses have width 2. Step 7 later raises the side-length cap from 64 to 256; this reduction still does not place a formula on that matrix. Full M0 at R ≥ 32 and 6R ≤ Q is still not built.
 
 The reduction does not keep n' close to n. At B = 3 a variable in d clauses becomes d variables whenever d > 3, and a 3-CNF with 3m − 2n > 20 leaves the brute-force window no matter how the clauses are arranged. The n = 5, m = 12 row is that situation at a tiny source. Nothing in this step runs in 2^{o(n)}. Theorem 1.1 is not implemented.
 
@@ -432,27 +432,67 @@ The matrix cells:
 | cell | what ran |
 |------|----------|
 | matrix-swap-4 | agreed. Side length 4, the hand-written exchange, n = 2, #F = 1, observed degree 0. The degree report walked 20 cube assignments. This is not full M0 |
-| matrix-full-m0 | refused before allocation. `build_auxiliary_slice(2, 192, 32)` raises. The side length is 2^384, above the slice cap 64. No scheduler is invoked. No timing was recorded |
+| matrix-full-m0 | refused before allocation. `build_auxiliary_slice(2, 192, 32)` raises. The side length is 2^384, above the slice cap. Step 7 later set that cap to 256; the refusal is unchanged. No timing was recorded |
 
 ### Distance to a full counting algorithm
 
 The scan is a record of the pieces that exist. It is not a claim that the missing pieces are close, and it is not a 2^{o(n)} algorithm. The unfinished list:
 
 - Full M0 at R ≥ 32 and 6R ≤ Q is not built. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses that call before it allocates the matrix. The scan records the refusal and does not time a matrix.
-- A scheduler that would place variables and clauses into those coordinates, with group size at most 2n/r and label multiplicity at most 2M/D, is not implemented. The four Step 3 placements are hand-written. That size bound needs n on the order of D^2, which is already false for every formula this repository compares with brute force, so the scheduler is not run.
+- A Step 7 scheduler scaffold checks the balance inequalities 2(b+w)D² ≤ M and 2Qr² ≤ n. They need n on the order of D². They fail for every formula this repository compares with brute force, and the scaffold then refuses: it does not choose schedules and it does not invent a random placement. The conditional-expectation balancer is not implemented. Caller-supplied schedules can still be checked, including the hand-written Step 3 placements, against group size at most 2n/r and, as a recorded bound, label multiplicity at most 2M/D.
 - Sparsification that keeps n' = n + o(n) is not implemented. Implication-cycle copying at B = 3 replaces a variable of occurrence d > 3 by d variables. The scan records `random_3cnf(5, 12, seed 0)` at n' = 36, past the brute-force wall n ≤ 20, and does not enumerate that reduced cube.
 - A subexponential measurement space is not implemented. The popcount design enumerates (r+1)^b tuples. For blocks of size 2 that is 3^{n/2}. On the rows this scan runs, the local-evaluation count is often larger than the cube. The scan does not claim a 2^{o(n)} measurement loop.
 - Hermite interpolation does not remove the 2^n pass. The paired scheme packs D+1 conditions into fewer distinct t, and each t still sums the cube. A full jet of order D does quadratic arithmetic per assignment. The scan runs the paired scheme only inside the assignment budget. It does not run the single-point jet as a substitute for the cube, and it does not treat either scheme as a subexponential evaluation.
 - Clauses that cross a Step 2 block partition are not factored by the blocked sum. Copying does not pull a crossing clause into one block, and it does not produce a Step 3 placement. The scan records that refusal and does not time a blocked sum on it.
 - Theorem 1.1 is not implemented. This repository does not refute ETH. No cell of the scan is a 2^{o(n)} counting algorithm.
 
-There is no further step in `ROADMAP.md`. The list above is the remaining work.
+Step 7, below, is the balance scaffold and the two larger slices. It does not remove this list.
+
+## Step 7 — larger slice and a balance-check scaffold
+
+Shipped in `scheduler.py`, with the cap constant in `replacement_matrix.py`. The slice cap is 256. Two explicit placements that the cap of 64 refused were checked with the same identities as Step 3: `auxiliary_problems`, T = 0 restoration of X_v, degree at most R−1, the support bound on nonzero M0 entries, the measurement rows, the kernel condition, H(0) against brute force, and both degree caps. Schedules are frozen data. They are not the output of a balancer. Theorem 1.1 is not implemented.
+
+The cap is 256 because that is r**(2Q) for r = 2, Q = 4, and the eigenbasis walk in `auxiliary_problems` finishes on one machine. The next pure powers are 729 (r = 3, Q = 3) and 1024 (r = 2, Q = 5). Both are refused before a matrix is stored. Full M0 stays at 2^384 and is refused before allocation, including when the caller passes a larger `max_dimension`. `verify --quick` runs the side-length-81 point and the refusals. `verify --step7` also runs side length 256. The clock on that check is not a complexity result.
+
+### What was checked
+
+Both points use one width-3 clause on n = 3. `r3-q2` is the positive clause x_0 ∨ x_1 ∨ x_2. `r2-q4` is x_0 ∨ x_1 ∨ ¬x_2, the same clause as `r2-q3`. R < Q holds at both points. The interval is the default one.
+
+| instance | r | Q | R | D | C rows | n | m | #F | deg H | M(R−1) | m·k·R | t checked |
+|----------|---|---|---|---|--------|---|---|----|-------|--------|-------|-----------|
+| r3-q2 | 3 | 2 | 1 | 81 | 45 | 3 | 1 | 7 | 0 | 0 | 3 | 1, 2 |
+| r2-q4 | 2 | 4 | 3 | 256 | 13 | 3 | 1 | 7 | 1 | 6 | 9 | 1, 2, 3, 4 |
+
+`r3-q2` has degree 0, so H is the constant 7. `r2-q4` has measured degree 1 under a cap of 6. At t = 1 the `r3-q2` groups are (0, 1), (2,), and an empty third group, and the clause is assigned to group 0, so variable 2 sits outside that group. At t = 4 the `r2-q4` groups are (0, 1) and (2,), and the clause is assigned to group 0. The kernel condition was checked at every t, not only at those two.
+
+Sample values, all equal to the full-cube sum:
+
+| instance | H(0) | H(1) | H(2) | other |
+|----------|------|------|------|-------|
+| r3-q2 | 7 | 7 | 7 | |
+| r2-q4 | 7 | 29/4 | 15/2 | H(3) = 31/4, H(4) = 8 |
+
+`r3-q2` schedules are ((0, 0), (0, 0), (1, 1)) for the variables and (0, 0) for the clause. `r2-q4` schedules are ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 1)) for the variables and (0, 0, 0, 0) for the clause. Label multiplicity is 2 on both. The bound 2M/D is 6/81 and 6/256, so both placements sit above it. The scaffold records that and still accepts the caller-supplied schedules, because `design_problems_at` and the T = 0 restoration passed. It does not call them a balancer output.
+
+### Balance checks
+
+The inequalities are the Lemma 4.5 package used in the obstacle above: n ≤ M ≤ bn, 2(b+w)D² ≤ M, and 2Qr² ≤ n. Here b is the largest number of clause-scopes containing one variable, w is the largest scope, and M is the sum of the scope sizes. A repeated variable inside one clause counts once. With b ≥ 1 the two displayed inequalities force n ≥ 2(b+w)D²/b ≥ 2D², which is the “n on the order of D²” bound. Lemma 4.7 also asks for 1 ≤ R < Q. That gap is recorded. The binomial tail in that lemma is not checked.
+
+On the two unit clauses of `swap-4`, r = 2, Q = 1, D = 4, one has b = w = 1, M = 2, n = 2. Then 2(b+w)D² = 64 > 2 and 2Qr² = 8 > 2, and the weak order bound is n ≥ 32. The call with no schedules returns no placement. The same refusal is what the four Step 3 formulas produce. Passing the hand-written schedules anyway places them and `design_problems_at` passes. `swap-4` meets multiplicity 2M/D = 1. `remark-4-4` has 2M/D = 1/4 and multiplicity 1, so that bound fails and the design check still passes.
+
+Thirty-two disjoint unit clauses give n = M = 32, b = w = 1, and the same r, Q, D. Then n = 2D², so the weak order bound holds, and 2(b+w)D² = 64 > 32, so the mass inequality still fails. The factor (b+w)/b is 2, and the tight necessary n is 64. Sixty-four disjoint unit clauses meet every Lemma 4.5 inequality at these parameters: 2(b+w)D² = 64 ≤ M and 2Qr² = 8 ≤ n. R = 1 is not strictly below Q = 1, so the Lemma 4.7 degree gap fails, and the call with R omitted records the balance package only. In both cases `schedule_placement` chooses no schedules, does not call `build_auxiliary_slice`, and does not call `brute_count`. n = 64 is past the brute-force wall of 20. That cube was not enumerated. A passing numerical check is not a placement.
+
+`schedule_placement` on r = 2, Q = 192, R = 32 refuses before allocation. The side length it reports is 2^384. `build_auxiliary_slice` raises on the same parameters, including when `max_dimension` is set far above 256, because Q > 30 is refused before the matrix is stored. No timing is attached to either refusal.
+
+### Obstacle
+
+The conditional-expectation construction that would choose the schedules, in polynomial time, when the inequalities hold, is not implemented. The binomial tail bound that Lemma 4.7 uses to control the number of measurement rows is not checked. Full M0 is not built. Sparsification with n' = n + o(n) is not implemented. Nothing in this step runs in 2^{o(n)}.
 
 ## Known gaps
 
-Step 6 records these on its grid. Recording them does not remove them.
+Step 6 records these on its grid. Step 7 raises the slice cap and adds the balance refusal. Recording them does not remove them.
 
-- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64. Step 5 does not hand the copied formula to that matrix. The scan refuses the call and does not time it.
+- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 256. Step 5 does not hand the copied formula to that matrix. The scan and the Step 7 scaffold both refuse the call and do not time it. The conditional-expectation balancer is not implemented.
 - The occurrence reduction checks #F' = #F inside the brute-force window and records the rows that leave it. It is not a reduction with n' = n + o(n), and it does not remove the 2^{n'} pass inside `interpolate_H0` or the 2^n pass inside each Hermite sample.
 - The copied formula is mixed width. `check_bounded_occurrence` accepts it only when the reduction added no cycle, which is the case already inside the Step 1 testbed. A general copied instance is not an exact 3-CNF with m ≤ n.
 - Step 2 matches the full sum on the instances in the Step 2 section and on `two-block-copies`. It refuses a copied clause that still crosses blocks. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.

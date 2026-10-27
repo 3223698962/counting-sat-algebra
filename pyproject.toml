@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "counting-sat-algebra"
-version = "0.7.0"
-description = "Algebraic #SAT testbed: interpolation, bounded-occurrence checks, a blocked-sum identity, a tiny replacement matrix, exact Hermite recovery of H(0), a counting-preserving occurrence reduction, and a machine-limited parameter scan. Does not refute ETH."
+version = "0.8.0"
+description = "Algebraic #SAT testbed: interpolation, bounded-occurrence checks, a blocked-sum identity, a replacement matrix up to side length 256, exact Hermite recovery of H(0), a counting-preserving occurrence reduction, a machine-limited parameter scan, and a balance-check scaffold that refuses to choose schedules. Does not refute ETH."
 readme = "README.md"
 requires-python = ">=3.10"
 

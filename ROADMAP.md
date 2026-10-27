@@ -58,9 +58,17 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] The reproducible record is the operation counts: 2^n, (r+1)^b, the local-evaluation count, and the assignment budget. Wall times are one machine's clock. A refused pipeline has no timing
 - Not claimed: Theorem 1.1, a subexponential runtime, 2^{o(n)}, or that the scan closes the distance to a full counting algorithm. That distance is the list in `docs/PROGRESS.md`
 
+### Step 7 — larger slice and a balance-check scaffold
+
+- [x] The slice cap is 256. `auxiliary_problems` passes on two points the cap of 64 refused: r = 3, Q = 2, R = 1, D = 81, and r = 2, Q = 4, R = 3, D = 256. Both have R < Q. T = 0 restoration, degree ≤ R−1, support, the measurement rows, and the kernel condition were checked, and on one explicit placement each, H(0) matches brute force inside M·(R−1) and m·k·R
+- [x] `schedule_placement` checks 2(b+w)D² ≤ M and 2Qr² ≤ n, with n ≤ M ≤ bn. Those inequalities need n on the order of D². They fail for every formula this repository compares with brute force, and the call then refuses. It does not draw a placement
+- [x] When the inequalities hold (64 unit clauses, r = 2, Q = 1, D = 4), the same call still refuses to choose schedules. The conditional-expectation balancer is not implemented. Caller-supplied schedules, including the four Step 3 placements and the two new points, are placed and `design_problems_at` is run
+- [x] `build_auxiliary_slice(2, 192, 32)` and `schedule_placement` at those parameters both refuse before a matrix is allocated. The next pure powers, 729 and 1024, stay above the cap. `verify --quick` runs the D = 81 point and the refusals. `verify --step7` also runs D = 256
+- Not claimed: Theorem 1.1, a refutation of ETH, a subexponential runtime, or 2^{o(n)}. A passing balance check is not a schedule
+
 ## Not started
 
-No further step is listed. Relative to this roadmap the repository is complete. What a full counting algorithm would still need is recorded in `docs/PROGRESS.md` under "Distance to a full counting algorithm". Those constructions are not implemented here.
+No further step is listed. The distance to a full counting algorithm is still the list in `docs/PROGRESS.md`: full M0, the conditional-expectation balancer, sparsification with n' = n + o(n), a measurement space that is not exponential in the number of blocks, and a Hermite evaluation that does not walk the cube. Those constructions are not implemented here.
 
 ## Out of scope
 
@@ -79,6 +87,7 @@ src/counting_sat_algebra/
   hermite.py                                                           # Step 4
   sparsify.py                                                          # Step 5
   parameter_scan.py                                                    # Step 6
+  scheduler.py                                                         # Step 7
 benches/
 docs/PROGRESS.md
 ```
