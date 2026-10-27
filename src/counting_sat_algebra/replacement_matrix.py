@@ -29,9 +29,13 @@ What this module does not build
 The parameter list associated with a full matrix asks for R ≥ 32 and 6R ≤ Q
 before its tail bound is applied. The smallest integers are R = 32 and
 Q = 192. At r = 2 the side length is then 2**384. ``SLICE_MAX_DIMENSION``
-refuses anything above 64, so that matrix is not stored, not factored, and not
-run. Schedules below are written out by hand. The balancing argument that
-would choose them for large n needs n on the order of D**2 and is not run.
+refuses anything above 256, and Q > 30 is refused before a matrix is stored,
+so that matrix is not allocated, not factored, and not run. The Step 3
+schedules below are written out by hand. Step 7 checks two further explicit
+placements, at side lengths 81 and 256, and a balance-check scaffold that
+refuses to choose schedules when 2(b+w)D**2 ≤ M and 2Qr**2 ≤ n fail. That
+scaffold does not run the conditional-expectation balancer. The inequalities
+need n on the order of D**2.
 Sparsification and a subexponential count are not implemented. Hermite
 interpolation of H is a separate exact check in ``hermite.py``; it is not
 part of this matrix, and each of its sample points still enumerates the cube.
@@ -66,7 +70,10 @@ from .replacements import (
 )
 
 # Side length r**(2Q). Above this the slice refuses to allocate M0.
-SLICE_MAX_DIMENSION = 64
+# 256 admits the Step 7 point r=2, Q=4. The next pure powers, 729 (r=3, Q=3)
+# and 1024 (r=2, Q=5), stay above the cap. Q > 30 is refused before allocation
+# even if a caller passes a larger max_dimension, so full M0 is not stored.
+SLICE_MAX_DIMENSION = 256
 
 # Smallest integers with R ≥ 32 and 6R ≤ Q. At r = 2 the side length is 2**384.
 FULL_M0_MIN_R = 32

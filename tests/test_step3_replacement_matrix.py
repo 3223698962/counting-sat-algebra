@@ -1,6 +1,7 @@
 """Step 3: tiny M0 = V0 f_I(W0), restoration, degree, and a legal design.
 
-The side length is r**(2Q) and the slice stops at 64. These tests do not claim
+The examples in this file have side length at most 64. The slice cap itself is
+``SLICE_MAX_DIMENSION`` (raised in Step 7). These tests do not claim
 Theorem 1.1, a subexponential runtime, or the matrix at R ≥ 32, 6R ≤ Q.
 """
 
@@ -293,10 +294,11 @@ def test_side_length_above_the_cap_names_the_obstacle() -> None:
     assert FULL_M0_MIN_R == 32
     assert FULL_M0_MIN_Q == 192
     assert FULL_M0_LOG2_DIMENSION_AT_R2 == 384
-    assert SLICE_MAX_DIMENSION == 64
+    assert SLICE_MAX_DIMENSION >= 64
     assert 2**FULL_M0_LOG2_DIMENSION_AT_R2 > SLICE_MAX_DIMENSION
+    # Q=5 is side length 1024, above the Step 7 cap. The error still names full M0.
     with pytest.raises(ValueError, match=r"2\*\*384"):
-        build_auxiliary_slice(2, 4, 1)
+        build_auxiliary_slice(2, 5, 1)
     with pytest.raises(ValueError, match="cannot sit inside"):
         build_auxiliary_slice(2, 1, 3)
     with pytest.raises(ValueError, match="r must"):

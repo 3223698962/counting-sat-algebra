@@ -3,7 +3,7 @@
   "disclaimer": "Wall times are machine-local. They are not a complexity result and they are not a 2^{o(n)} bound. The reproducible figures are the operation counts: the cube 2^n, the popcount tuple count (r+1)^b, the local-evaluation count, and the planned cube-assignment budget. A refused pipeline has no timing.",
   "distance": [
     "Full M0 at R \u2265 32 and 6R \u2264 Q is not built. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. build_auxiliary_slice refuses that call before it allocates the matrix. The scan records the refusal and does not time a matrix.",
-    "A scheduler that would place variables and clauses into those coordinates, with group size at most 2n/r and label multiplicity at most 2M/D, is not implemented. The four Step 3 placements are hand-written. That size bound needs n on the order of D^2, which is already false for every formula this repository compares with brute force, so the scheduler is not run.",
+    "A Step 7 scheduler scaffold checks the balance inequalities 2(b+w)D^2 <= M and 2Qr^2 <= n before it would choose a placement. Those inequalities need n on the order of D^2. They fail for every formula this repository compares with brute force, and the scaffold then refuses: it does not choose schedules and it does not invent a random placement. The conditional-expectation balancer is not implemented. Caller-supplied schedules can still be checked, including the hand-written Step 3 placements, against group size at most 2n/r and, as a recorded bound, label multiplicity at most 2M/D.",
     "Sparsification that keeps n' = n + o(n) is not implemented. Implication-cycle copying at B = 3 replaces a variable of occurrence d > 3 by d variables. The scan records random_3cnf(5, 12, seed 0) at n' = 36, past the brute-force wall n \u2264 20, and does not enumerate that reduced cube.",
     "A subexponential measurement space is not implemented. The popcount design enumerates (r+1)^b tuples. For blocks of size 2 that is 3^{n/2}. On the rows this scan runs, the local-evaluation count is often larger than the cube. The scan does not claim a 2^{o(n)} measurement loop.",
     "Hermite interpolation does not remove the 2^n pass. The paired scheme packs D+1 conditions into fewer distinct t, and each t still sums the cube. A full jet of order D does quadratic arithmetic per assignment. The scan runs the paired scheme only inside the assignment budget. It does not run the single-point jet as a substitute for the cube, and it does not treat either scheme as a subexponential evaluation.",
@@ -669,7 +669,7 @@
       "status": "refused",
       "expect": "refused",
       "measured": false,
-      "reason": "build_auxiliary_slice(r=2, Q=192, R=32) refused before allocating the matrix. The side length is 2^384, above the slice cap 64. No scheduler was invoked. No timing was recorded.",
+      "reason": "build_auxiliary_slice(r=2, Q=192, R=32) refused before allocating the matrix. The side length is 2^384, above the slice cap 256. No scheduler was invoked. No timing was recorded.",
       "note": "R = 32, Q = 192, side length 2^384. Refused before allocation.",
       "n": null,
       "brute": null,

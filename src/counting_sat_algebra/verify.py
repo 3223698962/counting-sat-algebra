@@ -14,6 +14,7 @@ Usage:
   python -m counting_sat_algebra.verify --step4
   python -m counting_sat_algebra.verify --step5
   python -m counting_sat_algebra.verify --step6
+  python -m counting_sat_algebra.verify --step7
 """
 
 from __future__ import annotations
@@ -38,12 +39,20 @@ from .hermite import analyze_step4_case, recovery_problems, step4_cases
 from .independent import run_independent_suite
 from .replacement_matrix import (
     FULL_M0_LOG2_DIMENSION_AT_R2,
+    FULL_M0_MIN_Q,
+    FULL_M0_MIN_R,
     SLICE_MAX_DIMENSION,
     auxiliary_problems,
+    build_auxiliary_slice,
     degree_cap_report,
     design_problems_at,
     restoration_problems,
     step3_examples,
+)
+from .scheduler import (
+    placed_identity_problems,
+    schedule_placement,
+    step7_examples,
 )
 from .parameter_scan import TIMING_DISCLAIMER, format_distance, format_scan_line, run_parameter_scan
 from .replacements import eval_H_at, interpolate_H0
@@ -262,13 +271,16 @@ def run_step2_suite(group_counts: Sequence[int]) -> tuple[list[dict], list[dict]
 def run_step3_suite() -> list[dict]:
     """Tiny M0 slices: restoration, degree caps, and a legal design at every t.
 
-    Side length r**(2Q) is at most 64. The parameter list with R ≥ 32 and
-    6R ≤ Q is not built. Schedules are the hand-written ones in ``step3_examples``.
+    The Step 3 examples have side length at most 64. The slice cap is
+    ``SLICE_MAX_DIMENSION``. Points above 64 are Step 7. The parameter list
+    with R ≥ 32 and 6R ≤ Q is not built. Schedules are the hand-written ones
+    in ``step3_examples``.
     """
     print("=== (E) Replacement matrix M0 at tiny parameters ===")
     print(
         "  M0 = V0 f_I(W0), side length D = r**(2Q). "
-        f"This run stops at D ≤ {SLICE_MAX_DIMENSION}."
+        "The Step 3 examples have side length at most 64. "
+        f"The slice cap is {SLICE_MAX_DIMENSION}; larger checked points are Step 7."
     )
     print(
         "  The parameter list with R≥32 and 6R≤Q is not built "
@@ -556,6 +568,153 @@ def _format_step5_line(index: int, total: int, report: Step5Report, row: dict) -
     )
 
 
+def _units(n: int):
+    from .cnf import CNF
+
+    return CNF(n, [[(i, False)] for i in range(n)])
+
+
+def run_step7_suite(*, heavy: bool) -> list[dict]:
+    """Higher slice cap, explicit new points, and balance refusals.
+
+    ``heavy=False`` skips the side-length-256 identity. Refusals are not timed.
+    The clock on an identity that did run is not a complexity result.
+    """
+    print("=== (I) Slice cap, new points, and the balance scaffold ===")
+    print(
+        f"  Slice cap D ≤ {SLICE_MAX_DIMENSION}. "
+        "The side-length-256 point runs only outside --quick."
+        if heavy
+        else f"  Slice cap D ≤ {SLICE_MAX_DIMENSION}. This quick run skips side length 256."
+    )
+    print(
+        "  Balance checks are 2(b+w)D^2 <= M and 2Qr^2 <= n. "
+        "When they fail, no schedule is chosen."
+    )
+    print(
+        "  Caller-supplied schedules are placed and checked. "
+        "The conditional-expectation balancer is not implemented."
+    )
+    print("  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm.")
+    rows: list[dict] = []
+
+    def add(name: str, n: int, m: int, brute: int, ok: bool, label: str) -> None:
+        rows.append(
+            {
+                "name": name,
+                "n": n,
+                "m": m,
+                "brute": brute,
+                "ok": ok,
+                "label": label,
+            }
+        )
+
+    examples = step7_examples(heavy=heavy)
+    for index, example in enumerate(examples, start=1):
+        started = time.perf_counter()
+        problems = placed_identity_problems(example.placed)
+        outcome = schedule_placement(
+            example.placed.cnf,
+            auxiliary=example.auxiliary,
+            variable_schedules=example.placed.variable_schedules,
+            clause_schedules=example.placed.clause_schedules,
+        )
+        elapsed = time.perf_counter() - started
+        ok = not problems and outcome.accepted and not outcome.balance.admitted
+        sl = example.auxiliary
+        add(example.name, example.placed.cnf.n, example.placed.cnf.m, brute_count(example.placed.cnf), ok, "OK" if ok else "FAIL")
+        status = "OK" if ok else "FAIL"
+        print(
+            f"  [I {index:02d}] {example.name}  "
+            f"r={sl.r} Q={sl.Q} R={sl.R} D={sl.dimension}  "
+            f"rows={len(sl.C_rows)}  "
+            f"{status}  ({elapsed:.3f}s)",
+            flush=True,
+        )
+        if not ok:
+            for problem in problems:
+                print(f"    {problem}", flush=True)
+            if not outcome.accepted:
+                print(f"    schedule: {outcome.reason}", flush=True)
+            return rows
+
+    for example in step3_examples():
+        outcome = schedule_placement(
+            example.placed.cnf,
+            auxiliary=example.auxiliary,
+            variable_schedules=example.placed.variable_schedules,
+            clause_schedules=example.placed.clause_schedules,
+        )
+        ok = outcome.accepted and not outcome.balance.admitted and not outcome.built_slice
+        add(f"supplied-{example.name}", example.placed.cnf.n, example.placed.cnf.m, brute_count(example.placed.cnf), ok, "OK" if ok else "FAIL")
+        print(
+            f"  [I] supplied {example.name}  "
+            f"{'OK' if ok else 'FAIL'}  balance admitted={outcome.balance.admitted}",
+            flush=True,
+        )
+        if not ok:
+            print(f"    {outcome.reason}", flush=True)
+            return rows
+
+    small = schedule_placement(_units(2), r=2, Q=1, R=1)
+    small_ok = (
+        small.placed is None
+        and not small.accepted
+        and not small.balance.admitted
+        and not small.built_slice
+        and "No placement was invented" in small.reason
+    )
+    add("refuse-n2", 2, 2, -1, small_ok, "REFUSED" if small_ok else "FAIL")
+    print(f"  [I] refuse n=2  {'REFUSED' if small_ok else 'FAIL'}", flush=True)
+    if not small_ok:
+        print(f"    {small.reason}", flush=True)
+        return rows
+
+    admitted = schedule_placement(_units(64), r=2, Q=1, R=1)
+    admitted_ok = (
+        admitted.balance.admitted
+        and admitted.placed is None
+        and not admitted.built_slice
+        and "no schedules were chosen" in admitted.reason
+    )
+    add("admit-n64-no-schedule", 64, 64, -1, admitted_ok, "REFUSED" if admitted_ok else "FAIL")
+    print(
+        f"  [I] n=64 meets the inequalities and no schedule is chosen  "
+        f"{'REFUSED' if admitted_ok else 'FAIL'}",
+        flush=True,
+    )
+    if not admitted_ok:
+        print(f"    {admitted.reason}", flush=True)
+        return rows
+
+    try:
+        build_auxiliary_slice(2, FULL_M0_MIN_Q, FULL_M0_MIN_R)
+    except ValueError as exc:
+        full_message = str(exc)
+    else:
+        full_message = ""
+    full = schedule_placement(_units(1), r=2, Q=FULL_M0_MIN_Q, R=FULL_M0_MIN_R)
+    full_ok = (
+        full.placed is None
+        and full.allocation_refused
+        and not full.built_slice
+        and "not allocated" in full.reason
+        and "2**384" in full_message
+        and "not built" in full_message
+    )
+    add("refuse-full-m0", 1, 1, -1, full_ok, "REFUSED" if full_ok else "FAIL")
+    print(
+        f"  [I] full M0 refused before allocation  {'REFUSED' if full_ok else 'FAIL'}",
+        flush=True,
+    )
+    if not full_ok:
+        print(f"    build: {full_message}", flush=True)
+        print(f"    schedule: {full.reason}", flush=True)
+        return rows
+    return rows
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
@@ -565,13 +724,21 @@ def print_summary_table(
     hermite_rows: List[dict] | None = None,
     sparse_rows: List[dict] | None = None,
     scan_rows: List[dict] | None = None,
+    step7_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
     print("SUMMARY")
     print("=" * 72)
     numeric = bool(
-        interp_rows or indep_rows or bounded_rows or blocked_rows or matrix_rows or hermite_rows or sparse_rows
+        interp_rows
+        or indep_rows
+        or bounded_rows
+        or blocked_rows
+        or matrix_rows
+        or hermite_rows
+        or sparse_rows
+        or step7_rows
     )
     if numeric:
         print(f"{'kind':<8} {'n':>4} {'m':>4} {'#F':>8} {'match':>6}")
@@ -617,6 +784,13 @@ def print_summary_table(
             f"{'sparse':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
             f"{r['label']:>6}"
         )
+    for r in step7_rows or []:
+        brute = r["brute"]
+        brute_cell = f"{brute:8d}" if isinstance(brute, int) and brute >= 0 else f"{'—':>8}"
+        print(
+            f"{'step7':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
+            f"{r['label']:>6}"
+        )
     if numeric:
         print("-" * 72)
     if interp_rows:
@@ -658,6 +832,12 @@ def print_summary_table(
         )
         for row in scan_rows:
             print(f"  {row['label']:<8} {row['name']}")
+    if step7_rows:
+        refused = sum(1 for row in step7_rows if row["label"] == "REFUSED")
+        print(
+            f"Balance/slice (I): {sum(1 for row in step7_rows if row['ok'])}/{len(step7_rows)} passed"
+            + (f" ({refused} refused as recorded)" if refused else "")
+        )
     print("=" * 72)
 
 
@@ -690,6 +870,14 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "unfinished construction stopped the cell. Refused pipelines were not "
             "timed. The scan does not close the distance to a full counting algorithm."
         )
+    if 7 in steps:
+        parts.append(
+            f"Step 7 checks slices up to side length {SLICE_MAX_DIMENSION}. "
+            "Balance inequalities that fail are refused without choosing a schedule. "
+            "Caller-supplied schedules, including the hand-written Step 3 placements, "
+            "are checked with design_problems_at. Full M0 was refused before allocation. "
+            "The conditional-expectation balancer is not implemented."
+        )
     parts.append("No Theorem 1.1, no 2^{o(n)} claim.")
     return " ".join(parts)
 
@@ -711,6 +899,7 @@ def _run_selected(
     hermite_rows: list[dict] = []
     sparse_rows: list[dict] = []
     scan_rows: list[dict] = []
+    step7_rows: list[dict] = []
 
     if 2 in steps:
         example_rows, growth_rows = run_step2_suite(growth_groups)
@@ -751,6 +940,13 @@ def _run_selected(
             print("FAIL: parameter scan disagreed with its checks", file=sys.stderr)
             return 1
         print()
+    if 7 in steps:
+        step7_rows = run_step7_suite(heavy=scan_profile == "full")
+        print()
+        if not step7_rows or not all(row["ok"] for row in step7_rows):
+            print("FAIL: Step 7 slice or balance check disagreed", file=sys.stderr)
+            return 1
+        print()
 
     print_summary_table(
         [],
@@ -761,6 +957,7 @@ def _run_selected(
         hermite_rows or None,
         sparse_rows or None,
         scan_rows or None,
+        step7_rows or None,
     )
     print()
     print("ALL TESTS PASSED")
@@ -770,7 +967,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0 through 6)"
+        description="Counting-polynomial skeleton verifier (Steps 0 through 7)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -802,6 +999,14 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="run the Step 6 parameter scan (full grid; --quick keeps the small grid)",
     )
+    parser.add_argument(
+        "--step7",
+        action="store_true",
+        help=(
+            "run the Step 7 slice and balance checks "
+            "(--quick skips the side-length-256 point)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -823,6 +1028,7 @@ def main(argv: List[str] | None = None) -> int:
             (4, args.step4),
             (5, args.step5),
             (6, args.step6),
+            (7, args.step7),
         )
         if enabled
     ]
@@ -833,12 +1039,13 @@ def main(argv: List[str] | None = None) -> int:
             "quick" if args.quick else "full",
         )
 
-    print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, 5, and 6")
+    print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, 5, 6, and 7")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
     print("occurrence copying with #F' = #F inside the brute-force window,")
-    print("and a parameter scan of those pieces against brute force.")
+    print("a parameter scan of those pieces against brute force,")
+    print("and a balance-check scaffold for placements into a larger slice.")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
 
@@ -920,6 +1127,13 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (H) all {len(scan_rows)} parameter-scan cells passed")
     print()
 
+    step7_rows = run_step7_suite(heavy=not args.quick)
+    if not step7_rows or not all(row["ok"] for row in step7_rows):
+        print("FAIL: Step 7 slice or balance check disagreed", file=sys.stderr)
+        return 1
+    print(f"  (I) all {len(step7_rows)} Step 7 rows passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
@@ -933,21 +1147,25 @@ def main(argv: List[str] | None = None) -> int:
         hermite_rows,
         sparse_rows,
         scan_rows,
+        step7_rows,
     )
     print()
     print("ALL TESTS PASSED")
     print(
         "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
         "identity, degree-cap checks on occurrence-≤3 3-CNFs, blocked-sum agreement "
-        "with full-space H(t) on hand-built replacements, a tiny replacement "
+        "with full-space H(t) on hand-built replacements, a replacement "
         f"matrix of side length at most {SLICE_MAX_DIMENSION}, Hermite recovery "
         "of H(0) from Hasse coefficients at fewer distinct sample points than D+1, "
-        "occurrence copying with #F' = #F inside the brute-force window, and a "
-        "parameter scan that records matches and refusals on a machine-limited grid. "
+        "occurrence copying with #F' = #F inside the brute-force window, a "
+        "parameter scan that records matches and refusals on a machine-limited grid, "
+        "and a balance scaffold that refuses to choose schedules when either of "
+        "2(b+w)D^2 <= M and 2Qr^2 <= n fails. "
         "The Hermite condition count stays D+1, and each of those points still "
         "enumerates 2^n assignments. Copying can push the reduced n past 20; those "
         "rows are recorded and not counted. Popcount measurement tuples grow as (r+1)^b. "
-        "Refused scan cells were not timed. "
+        "Refused scan cells were not timed. Caller-supplied schedules are checked; "
+        "the conditional-expectation balancer is not implemented. "
         f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
         "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
     )

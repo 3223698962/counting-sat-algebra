@@ -88,11 +88,14 @@ DISTANCE_TO_FULL_ALGORITHM: tuple[str, ...] = (
     "R = 32 and Q = 192. At r = 2 the side length is 2^384. "
     "build_auxiliary_slice refuses that call before it allocates the matrix. "
     "The scan records the refusal and does not time a matrix.",
-    "A scheduler that would place variables and clauses into those coordinates, "
-    "with group size at most 2n/r and label multiplicity at most 2M/D, is not "
-    "implemented. The four Step 3 placements are hand-written. That size bound "
-    "needs n on the order of D^2, which is already false for every formula this "
-    "repository compares with brute force, so the scheduler is not run.",
+    "A Step 7 scheduler scaffold checks the balance inequalities 2(b+w)D^2 <= M "
+    "and 2Qr^2 <= n before it would choose a placement. Those inequalities need "
+    "n on the order of D^2. They fail for every formula this repository compares "
+    "with brute force, and the scaffold then refuses: it does not choose schedules "
+    "and it does not invent a random placement. The conditional-expectation balancer "
+    "is not implemented. Caller-supplied schedules can still be checked, including "
+    "the hand-written Step 3 placements, against group size at most 2n/r and, as a "
+    "recorded bound, label multiplicity at most 2M/D.",
     "Sparsification that keeps n' = n + o(n) is not implemented. "
     "Implication-cycle copying at B = 3 replaces a variable of occurrence d > 3 "
     "by d variables. The scan records random_3cnf(5, 12, seed 0) at n' = 36, "
