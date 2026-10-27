@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "counting-sat-algebra"
-version = "0.20.0"
-description = "Exact algebraic #SAT reference implementation with finite Section 6 equation selection and disjoint sparsification, a finite Section 5.3–5.5 replacement sum in A_ell, Section 5.1–5.2 sparse-system checks, a Lemma 4.8 parameter chooser, sparse placements, shared-measurement Taylor recovery, finite tensor contraction and DIMACS component counting. Complete theorem and asymptotic alignment remains open."
+version = "0.22.0"
+description = "Exact algebraic #SAT reference implementation with finite Appendix D modular rings, CNF networks, tapered Hermite recovery, collision packing and child topologies, finite Section 5–6 sparse systems and equation selection, sparse placements and DIMACS counting. General modular recursion, theorem completion and asymptotic alignment remain open."
 readme = "README.md"
 requires-python = ">=3.10"
 

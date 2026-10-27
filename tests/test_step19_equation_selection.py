@@ -233,7 +233,7 @@ def test_step19_reference_rows_and_cli(tmp_path, capsys):
     output = tmp_path / 'step19.json'
     assert main(['verify', '--step19', '--output', str(output)]) == 0
     report = json.loads(output.read_text(encoding='utf-8'))
-    assert report['version'] == __version__ == '0.20.0'
+    assert report['version'] == __version__
     assert report['steps'] == [19] and report['all_checks_passed'] is True
     assert report['theorem_1_1_complete'] is report['lean_proof_complete'] is False
     assert 'Appendix D' in report['scope'] and 'Section 6' in report['scope']

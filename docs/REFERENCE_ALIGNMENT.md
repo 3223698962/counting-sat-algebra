@@ -1,6 +1,6 @@
 # 与 references 的实现对齐
 
-目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.20.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 19 没有完成 Theorem 1.1。
+目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.22.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。
 
 ## 需要达到的结论
 
@@ -35,6 +35,11 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 | Section 5.1–5.2 的有限系数代数 | `sparse_systems.py`；`verify --step17` | 稀疏 \(\mathbb F_2\) 单项式、整数提升、Lemma 5.1 的精确除法，以及按 \(h\) 次截断的乘积。公共零点在预算内的立方上穷举。不是 Section 5.3 的替换求和，也不是 Theorem 2.2 的运行时间。拒绝发生在项表或扫描之前，且不返回部分计数 |
 | Section 5.3–5.5 的有限替换求和 | `algebra_count.py`；`common_count.py` 的 `separated_group_sum`；`verify --step18` | 方程因子 \(B_i\) 在 \(A_\ell\) 中按 (5.4) 构造，并加上值为 1 的中性因子。Section 3 的测量扫描在 \(A_\ell[z]/(z^J)\) 中求和，再对每个 \(V\) 系数做 Hermite 插值。有限设计满足 Definition 3.1，但不是 Lemma 4.8 的行。高出现变量按 Section 5.5 分支。拒绝发生在枚举或分配喷射之前，且不返回部分计数。不是 Section 6，也不是 Theorem 2.2 的运行时间 |
 | Section 6 的有限方程选择与互不重叠稀疏化 | `equation_selection.py`；`verify --step19` | 子句违反多项式、Lemma 6.1 的整数和预算内的 \(A(0)\)、贪心选行、同一声明 \(n\) 上的互不重叠叶，以及 Proposition 6.4 的整数。拒绝发生在分配或枚举之前，且不返回部分计数。不是 \(O_k(\rho(n))\)，也不是 Appendix D。Step 5 的蕴涵环复制会增加 \(n\)，不是 Lemma 6.3 |
+| Appendix D.1–D.2 的有限网络 | `modular_network.py` | 有序端口、平行边、三价相等树和逐边细分；直接模叶求和保留自由变量因子。示例计数 196。扫描预算在图分配前核对 |
+| Appendix D.4.1 的有限系数环 | `modular_ring.py` | 不可约扩张、Newton 单位求逆、剩余域插值、创建时精度的逐坐标提升。环参数和搜索受预算限制 |
+| Appendix D.4.3–D.4.4 的局部恢复 | `modular_recovery.py`；`verify --step20` | 整性 Cauchy 坐标、预算内 D.8 扫描和 D.9 分层恢复；值为 9+4V，精度 101/149。给定包布局不证明 Lemma D.3 的分组结论；不是 D.16 的递归收缩 |
+| Appendix D.4.2 的有限日程与碰撞分包 | `modular_packing.py`；`verify --step21` | 精确整数日程及 D.6 平方守卫；邻接重数直方图处理共享端点和平行边的条件期望；统一填充和相等坐标副本位；数值前提与实际结论分别检查。标签与包的资源预算在搜索前核对 |
+| Appendix D.4.6 的子网络端口拓扑 | `modular_packing.py` 的 `child_topology` | 保留原端口顺序和孤立顶点，检查有限子图的边数和度数。8192 边匹配的最大子拓扑有 256 条边、度数 4；未构造包张量，也未执行递归收缩 |
 
 `count_placed_formula` 使用安全次数上界 \(d_H=M(R-1)\)，取 \(q=\lfloor d_H/Q\rfloor\)、\(J=q+1\)，因此 \(QJ>d_H\)。它只调用局部扫描，不调用 `brute_count`、`eval_H_at` 或 `eval_H_hasse_jet`。这些全空间函数用于独立验证。
 
@@ -83,7 +88,11 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 - Proposition 6.4 在 \(n=20\)：\(\lambda_n=5\)、\(\nu_n=3\)、\(s=0\)，因此是穷举情形（`CHECKED`）。\(s=2\) 只是 \(\lambda=521284\)、\(\nu=19\) 上的整数见证。\(k=2\)、\(\sigma=1\) 时 Appendix A 的 2 的幂是 \(M=64\)。不声称 \(O_k(\rho(n))\)。
 - 这些检查不是 Appendix D，也不是 Theorem 1.1。Step 19 没有完成 Theorem 1.1。
 
-249 项 pytest 全部通过；`--reference` 的 56 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.20.0，步骤为 9–19。它区分 `COUNTED`、`CHECKED`、`REFUSED`，分别记录两种复用模式、Step 15 的实际结果、Step 16 的参数选择、Step 17 的九行有限检查、Step 18 的七行替换求和和 Step 19 的九行方程选择，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`，不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。Step 19 的九行保存在 `artifacts/step19-verification.json`。
+Step 20 的十四项检查覆盖模系数环、CNF 网络计数 196、相等树计数 4、空公式与空子句、创建时精度、Cauchy 坐标、两种行张量的恢复、两层精度，以及网络扫描、恢复扫描、精度、喷射存储和剩余域点数不足的拒绝。模网络的恢复结果为 9+4V 或 8+5V（模 32，V²=0），属于 `CHECKED`；CNF 的计数属于 `COUNTED`。拒绝不返回值，扫描为零。详细接口和对应公式见 [APPENDIX_D.md](APPENDIX_D.md)。
+
+Step 21 的十四项检查覆盖整数日程、对数见证、D.6 平方守卫、共享端点与平行边的精确期望、统一填充、多坐标副本位、实际子拓扑、自动布局恢复，以及标签、跟踪、分数更新、填充和子图预算拒绝。128 边匹配在 `r=2,a=1,Δ=4` 上通过 D.6，得到 64 个包，但不缩减到 `M/8`。8192 边匹配在 `r=64,a=1,Δ=4` 上默认拒绝；显式有限模式生成 4096 个包，最大子拓扑 256 条边、度数 4，张量求值为零。后者实际结论为 `CHECKED`，但 D.6 第一条件要求 `M≥134217728`，依旧不成立，且该元组不是 D.4 日程成员。自动布局接入 Step 20 后，两条重复单元子句加自由变量的精确计数为 2（`COUNTED`），扫描 6656 个端口赋值对，求值 33280 次条目。详见 [PACKET_PACKING.md](PACKET_PACKING.md)。
+
+322 项 pytest 全部通过；`--reference` 的 84 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.22.0，步骤为 9–21。它区分 `COUNTED`、`CHECKED`、`REFUSED`，记录原有计数、参数、设计检查，以及 Step 20 和 Step 21 各十四行的有限 Appendix D 检查，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`；Appendix D 结果的 `recursive_contraction=false`。报告不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。Step 19 的九行保存在 `artifacts/step19-verification.json`。Step 20 与 Step 21 的十四行分别保存在 `artifacts/step20-verification.json` 和 `artifacts/step21-verification.json`。`verify --quick` 和两项 CI 报告校验也已通过。
 
 命令：
 
@@ -97,18 +106,20 @@ python -m counting_sat_algebra.verify --step16
 python -m counting_sat_algebra.verify --step17
 python -m counting_sat_algebra.verify --step18
 python -m counting_sat_algebra.verify --step19
+python -m counting_sat_algebra.verify --step20
+python -m counting_sat_algebra.verify --step21
 python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
 python -m counting_sat_algebra count examples/connected_path.cnf --backend tensor --output benches/connected_path.json
 ```
 
-`--step9` 至 `--step19` 可以分别运行上述十一组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Step 16、Step 17、Step 18 和 Step 19 的同一组有限检查。Step 17、Step 18 和 Step 19 不改变 DIMACS 计数命令。
+`--step9` 至 `--step21` 可以分别运行上述十三组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Steps 16–21 的同一组有限检查。Steps 17–21 不改变 DIMACS 计数命令；模网络和自动分包通过独立 Python API 提供。
 
 ## 尚未完成的条件
 
 1. Lemma 4.8 的闭式已能精确计算，并在预算允许时执行一个通过 Lemma 4.7 的有限成员。机器可放置的 n 上，闭式在形成 D 之前失败；n=16384 的有限成员是 r=2、Q=3、R=2、τ=5/16，不满足 R≥32 或 6R≤Q。这次执行没有证明渐近时间或空间界，也没有让一般输入自动获得该界。共享测量路线在该放置上仍超出预算。桶宽不超过预算的连通支持可由 Step 15 计数；更宽的因子或消除桶仍在建表前拒绝。调用者仍可直接提供参数。
 2. Section 5.1–5.5 的有限对象已经可以在预算内核对：单项式、Lemma 5.1、截断乘积，以及在显式有限设计上的 \(A_\ell\) 替换求和。该设计不是 Lemma 4.8 的行，这次求和也不是 Theorem 2.2 的运行时间。Section 6 的有限方程选择和互不重叠稀疏化也已经在预算内核对：小实例上 \(A(0)\) 满足权重下界，贪心计数与 \(\#F\) 一致，叶计数之和等于输入 \(\#F\)，且子公式保持声明的 \(n\)。超预算的搜索和候选表在分配前拒绝。Proposition 6.4 的整数可以计算；\(n=20\) 是穷举情形，不声称 \(O_k(\rho(n))\)。Step 5 的蕴涵环复制会增加 \(n\)，不是 Lemma 6.3。Step 17 的穷举和 Step 18 的有限求和都不是这套构造。
-3. 实现 Appendix D 的一般模收缩，才能对齐 Theorem 1.1 的较强时间界。Step 14 的有限不相交支持集收缩，以及 Step 15 在小中间表上的有限 Taylor 变量消去，都没有给出这一一般算法或复杂度证明。
+3. Steps 20–21 已实现 Appendix D 的有限模环、CNF 网络、Cauchy 变形、分层恢复、D.4.2 日程与碰撞分包，以及 D.4.6 子网络拓扑。仍需完成 D.4.5 的加权模式、D.4.6 的包张量系数及其不可变创建时描述、D.4.7 的递归收缩与不变量，以及 D.3 的稀疏系统编码，才能对齐 Theorem 1.1 的较强时间界。Step 14 的有限不相交支持集收缩，以及 Step 15 在小中间表上的有限 Taylor 变量消去，都没有给出这一一般算法或复杂度证明。
 4. 完成精确位复杂度、总空间的分析，以及 Lean 主定理中的实际机器构造与证明。有限存储统计、独立分量计数、不相交支持集计数和有限连通收缩都不能证明这些界。
 
-这些是完成参考结论的验收条件。当前实现已推进 Sections 3、4、Section 5 的有限检查，以及 Section 6 的有限里程碑，但尚未达到 Theorem 1.1 或 Lean 主定理。Appendix D 仍未实现。Step 19 没有完成 Theorem 1.1。
+这些是完成参考结论的验收条件。当前实现已推进 Sections 3、4、Section 5 的有限检查，以及 Section 6 的有限里程碑，但尚未达到 Theorem 1.1 或 Lean 主定理。Appendix D 的有限局部部件与分包已在 Steps 20–21 核对，一般递归收缩仍未实现。

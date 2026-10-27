@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "version": "0.21.0",
+  "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation and tapered Hermite recovery. Proposition 6.4 does not claim an O_k(rho(n)) bound. Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    20
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "appendix-d-coefficient-ring",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "s": 2,
+      "precision": 5,
+      "ell": 2,
+      "extension_degree": 4,
+      "polynomial_bits": "0b10011",
+      "interpolation_points": 7,
+      "all_coordinates_checked": true,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-cnf-network",
+      "n": 8,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 196,
+      "refused": false,
+      "reason": "D.2 encoding with direct modular leaf contraction",
+      "precision": 9,
+      "edges": 12,
+      "vertices": 14,
+      "free_variables": 2,
+      "max_degree": 3,
+      "boolean_vectors_scanned": 4096,
+      "tensor_evaluations": 57344,
+      "network_allocated": true,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false,
+      "clause_ports": 6,
+      "backend": "direct modular leaf",
+      "recursive_contraction": false
+    },
+    {
+      "name": "appendix-d-equality-tree",
+      "n": 3,
+      "m": 4,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 4,
+      "refused": false,
+      "reason": "D.2 encoding with direct modular leaf contraction",
+      "precision": 4,
+      "edges": 10,
+      "vertices": 11,
+      "free_variables": 2,
+      "max_degree": 3,
+      "boolean_vectors_scanned": 1024,
+      "tensor_evaluations": 11264,
+      "network_allocated": true,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false,
+      "clause_ports": 4,
+      "trivalent_equality_vertices": 2,
+      "recursive_contraction": false
+    },
+    {
+      "name": "appendix-d-trivial-formulas",
+      "n": 5,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "counts": [
+        32,
+        0
+      ],
+      "edges": 0,
+      "tensor_evaluations": 0,
+      "empty_network_assignments": 1,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-creation-precision",
+      "n": 0,
+      "m": 1,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "creation_precision": 2,
+      "call_precision": 8,
+      "value": [
+        12
+      ],
+      "lifted_entry_values": [
+        3,
+        2
+      ],
+      "boolean_vectors_scanned": 2,
+      "note": "Each entry is reduced at precision 2 and lifted separately; the two edge terms sum to 12.",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-integral-cauchy-coordinates",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "a": 1,
+      "L": 2,
+      "alpha": 4,
+      "t": 1,
+      "row": 0,
+      "column": 1,
+      "exact_scalar_coefficients": [
+        -3,
+        -22,
+        -48,
+        -32
+      ],
+      "precision": 9,
+      "identity_at_zero_checked": true,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-local-recovery",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "coefficients": [
+        9,
+        4
+      ],
+      "value_at_one": [
+        26,
+        13
+      ],
+      "precision": 5,
+      "ell": 2,
+      "plan": {
+        "edges": 2,
+        "a": 1,
+        "u": 1,
+        "precision": 5,
+        "h": 6,
+        "degree_bound": 6,
+        "interpolation_points": 7,
+        "nodes": [
+          {
+            "t": -1,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 133
+          },
+          {
+            "t": 1,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 133
+          }
+        ],
+        "port_pair_bound": 224,
+        "tensor_evaluation_bound": 448,
+        "jet_coordinate_bound": 752,
+        "recovery_bit_bound": 841
+      },
+      "port_pairs_scanned": 224,
+      "tensor_evaluations": 448,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-nonlinear-row-recovery",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "coefficients": [
+        8,
+        5
+      ],
+      "precision": 5,
+      "ell": 2,
+      "port_pairs_scanned": 224,
+      "tensor_evaluations": 448,
+      "note": "The degree-6 rational deformation is checked coefficientwise by the independent pytest oracle.",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-tapered-precision-levels",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "coefficients": [
+        9,
+        4
+      ],
+      "precision": 5,
+      "ell": 2,
+      "plan": {
+        "edges": 2,
+        "a": 2,
+        "u": 2,
+        "precision": 5,
+        "h": 3,
+        "degree_bound": 14,
+        "interpolation_points": 15,
+        "nodes": [
+          {
+            "t": -3,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 149
+          },
+          {
+            "t": -2,
+            "valuation": 1,
+            "multiplicity": 3,
+            "precision": 101
+          },
+          {
+            "t": -1,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 149
+          },
+          {
+            "t": 1,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 149
+          },
+          {
+            "t": 2,
+            "valuation": 1,
+            "multiplicity": 3,
+            "precision": 101
+          },
+          {
+            "t": 3,
+            "valuation": 0,
+            "multiplicity": 6,
+            "precision": 149
+          }
+        ],
+        "port_pair_bound": 1440,
+        "tensor_evaluation_bound": 2880,
+        "jet_coordinate_bound": 1408,
+        "recovery_bit_bound": 4620
+      },
+      "port_pairs_scanned": 1440,
+      "tensor_evaluations": 2880,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-network-vector-budget",
+      "n": 8,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "refused": true,
+      "reason": "edge assignments 2^12 exceeds budget 4095; no network allocated",
+      "precision": 9,
+      "edges": 12,
+      "vertices": 14,
+      "free_variables": 2,
+      "max_degree": 0,
+      "boolean_vectors_scanned": 0,
+      "tensor_evaluations": 0,
+      "network_allocated": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false,
+      "recursive_contraction": false
+    },
+    {
+      "name": "appendix-d-recovery-precision-budget",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "value": null,
+      "reason": "child precision bits 133 exceeds budget 132; no jets allocated or port pairs scanned",
+      "port_pairs_scanned": 0,
+      "tensor_evaluations": 0,
+      "jets_allocated": false,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-recovery-port-pairs-budget",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "value": null,
+      "reason": "port pairs per evaluation 2^4 exceeds budget 15; no jets allocated or port pairs scanned",
+      "port_pairs_scanned": 0,
+      "tensor_evaluations": 0,
+      "jets_allocated": false,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-recovery-jet-storage-budget",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "value": null,
+      "reason": "jet coordinate slots 752 exceeds budget 751; no jets allocated or port pairs scanned",
+      "port_pairs_scanned": 0,
+      "tensor_evaluations": 0,
+      "jets_allocated": false,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "appendix-d-insufficient-residue-points",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "value": null,
+      "reason": "residue field has too few distinct interpolation points; no jets allocated or port pairs scanned",
+      "field_size": 2,
+      "required_points": 7,
+      "port_pairs_scanned": 0,
+      "jets_allocated": false,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}
