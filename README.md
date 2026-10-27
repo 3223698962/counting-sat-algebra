@@ -4,13 +4,14 @@ Small Python package that checks the counting-polynomial skeleton for #3-SAT on 
 
 > **Honesty banner**
 >
-> This repository checks three things on instances small enough to brute-force:
+> This repository checks four things on instances small enough to brute-force:
 >
 > 1. **Step 0.** Write #F as a sum of clause polynomials, replace each literal input by a rational linear form that restores the original variable at T = 0, and recover H(0) = #F by Lagrange interpolation.
 > 2. **Step 1.** Generate and recognize 3-CNFs in which every variable occurs in at most three clauses, and check the degree caps D = m·k·R and D = 3·n·R on those formulas.
 > 3. **Step 2.** On a hand-built replacement family whose higher coefficients lie in τ shared linear measurements, partition the variables into blocks of size at most r and check that the blocked sum equals the full sum H(t). The integer D is carried as a degree cap and is not used to build a matrix.
+> 4. **Step 3.** Build the replacement matrix M0 = V0 f_I(W0) and the rows that come from it, only when the side length r**(2Q) is at most 64. Check that T = 0 restores the variable, that the degree stays inside M·(R−1) and m·k·R, and that a legal design holds at every sample t on four explicit placements.
 >
-> H(t) for a general replacement is still a sum over all 2^n assignments. The Step 2 measurement enumeration is exponential in the number of blocks: for one popcount measurement and blocks of size r it walks (r+1)^b tuples. The matrix M0 and sparsification are not in this tree. Theorem 1.1 is not implemented. Nothing here refutes the exponential-time hypothesis or runs in 2^{o(n)} time.
+> H(t) for a general replacement is still a sum over all 2^n assignments. The Step 2 measurement enumeration is exponential in the number of blocks: for one popcount measurement and blocks of size r it walks (r+1)^b tuples. The matrix at the parameter list R ≥ 32 and 6R ≤ Q is not built: at r = 2 that side length is 2^384. Sparsification is not in this tree. Theorem 1.1 is not implemented. Nothing here refutes the exponential-time hypothesis or runs in 2^{o(n)} time.
 
 ## Layout
 
@@ -30,9 +31,10 @@ python -m pip install -e ".[dev]"
 pytest -q
 python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra.verify --step2
+python -m counting_sat_algebra.verify --step3
 ```
 
-`python -m counting_sat_algebra.verify` without `--quick` draws more random 3-CNFs (n up to 10) and extends the Step 2 group scan by one block. That path is exact but slow, because each Step 0 sample still costs 2^n. `--step2` runs only the blocked-sum checks.
+`python -m counting_sat_algebra.verify` without `--quick` draws more random 3-CNFs (n up to 10) and extends the Step 2 group scan by one block. That path is exact but slow, because each Step 0 sample still costs 2^n. `--step2` runs only the blocked-sum checks. `--step3` runs only the tiny replacement-matrix checks. `--quick` includes Step 3; those four slices are small.
 
 Exit code 0 and the line `ALL TESTS PASSED` mean the checks in that run agreed with brute force.
 
@@ -46,6 +48,7 @@ Exit code 0 and the line `ALL TESTS PASSED` mean the checks in that run agreed w
 | `bounded_occurrence.py` | 3-CNF, ≤ 3 occurrences per variable; degree caps m·k·R and 3·n·R |
 | `design.py` | Simplified (r, τ, D) block partition and τ shared linear measurements |
 | `blocked_sum.py` | Hand-built replacements in that span; blocked sum versus full H(t) |
+| `replacement_matrix.py` | Tiny M0 = V0 f_I(W0) and the rows built from it; not the full matrix |
 | `self_reduce.py` | Optional search for one satisfying assignment by fixing bits |
 
 The degree cap used for a width-k formula is `m * k * R`. On the bounded-occurrence testbed, `M = Σ |I_e| ≤ 3n`, so `M R ≤ 3 n R` is a second, sometimes looser, cap. Step 1 records both.
@@ -54,8 +57,10 @@ Step 2's design is a simplification. Blocks partition the variables, each block 
 
 `⟨P, X⟩ = X_v + Σ_{j≥1} T^j ⟨α_j, μ(X)⟩`.
 
-After the local measurements are fixed, the sum factors into a product of block sums. That identity is checked against the full sum on small n. D is stored and not read. A full design that would feed the matrix M0, and a measurement space small enough for a subexponential count, are not part of this step.
+After the local measurements are fixed, the sum factors into a product of block sums. That identity is checked against the full sum on small n. D is stored and not read. A measurement space small enough for a subexponential count is not part of this step.
+
+Step 3 builds M0 = V0 f_I(W0) when D = r**(2Q) ≤ 64. The rows restore the auxiliary coordinate at T = 0 and have degree at most R−1. On four hand-written placements they restore X_v, H(0) matches brute force, and the measured degree sits inside both caps. One of those placements is a single 3-clause whose variables sit in three different groups; Step 2 rejects that shape, and the Step 3 kernel condition accepts it. The point Q = R = 2 is checked as an identity. It does not satisfy R < Q. The matrix at R ≥ 32 and 6R ≤ Q is not built.
 
 ## Next step
 
-Step 3 in `ROADMAP.md`: one runnable slice of the low-degree replacement / matrix construction. That step is not in this tree.
+Step 4 in `ROADMAP.md`: Hermite or multi-coefficient interpolation. That step is not in this tree.

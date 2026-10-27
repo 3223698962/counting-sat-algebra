@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Verification CLI: Step 0 (product identity + H(T) interpolation), a small
-Step 1 bounded-occurrence degree check, and Step 2 blocked-sum agreement.
+Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, and a
+Step 3 tiny replacement-matrix slice.
 
 Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
   python -m counting_sat_algebra.verify --step2
+  python -m counting_sat_algebra.verify --step3
 """
 
 from __future__ import annotations
@@ -28,6 +30,15 @@ from .blocked_sum import (
 from .bounded_occurrence import random_bounded_3cnf, run_degree_bound_experiment
 from .cnf import brute_count, random_3cnf
 from .independent import run_independent_suite
+from .replacement_matrix import (
+    FULL_M0_LOG2_DIMENSION_AT_R2,
+    SLICE_MAX_DIMENSION,
+    auxiliary_problems,
+    degree_cap_report,
+    design_problems_at,
+    restoration_problems,
+    step3_examples,
+)
 from .replacements import eval_H_at, interpolate_H0
 from .self_reduce import find_assignment_by_self_reduction
 
@@ -240,11 +251,83 @@ def run_step2_suite(group_counts: Sequence[int]) -> tuple[list[dict], list[dict]
     return example_rows, growth_rows
 
 
+def run_step3_suite() -> list[dict]:
+    """Tiny M0 slices: restoration, degree caps, and a legal design at every t.
+
+    Side length r**(2Q) is at most 64. The parameter list with R ≥ 32 and
+    6R ≤ Q is not built. Schedules are the hand-written ones in ``step3_examples``.
+    """
+    print("=== (E) Replacement matrix M0 at tiny parameters ===")
+    print(
+        "  M0 = V0 f_I(W0), side length D = r**(2Q). "
+        f"This run stops at D ≤ {SLICE_MAX_DIMENSION}."
+    )
+    print(
+        "  The parameter list with R≥32 and 6R≤Q is not built "
+        f"(at r=2 that side length is 2**{FULL_M0_LOG2_DIMENSION_AT_R2}). "
+        "Schedules are written out by hand. "
+        "Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm."
+    )
+    rows: list[dict] = []
+    examples = step3_examples()
+    for index, example in enumerate(examples, start=1):
+        started = time.perf_counter()
+        matrix_problems = auxiliary_problems(example.auxiliary)
+        restored = restoration_problems(example.placed)
+        design: list[str] = []
+        for t in range(1, example.auxiliary.Q + 1):
+            design.extend(design_problems_at(example.placed, t))
+        report = degree_cap_report(example.placed)
+        elapsed = time.perf_counter() - started
+        ok = not matrix_problems and not restored and not design and report.ok
+        sl = example.auxiliary
+        row = {
+            "name": example.name,
+            "n": example.placed.cnf.n,
+            "m": example.placed.cnf.m,
+            "r": sl.r,
+            "Q": sl.Q,
+            "R": sl.R,
+            "D": sl.dimension,
+            "measurements": len(sl.C_rows),
+            "brute": report.brute,
+            "degree": report.observed_degree,
+            "cap_m": report.cap_occurrences,
+            "cap_step1": report.cap_step1,
+            "ok": ok,
+            "sec": elapsed,
+        }
+        rows.append(row)
+        status = "OK" if ok else "FAIL"
+        print(
+            f"  [E {index:02d}/{len(examples)}] {example.name}  "
+            f"r={sl.r} Q={sl.Q} R={sl.R} D={sl.dimension}  "
+            f"rows={len(sl.C_rows)}  n={row['n']} m={row['m']}  "
+            f"#F={report.brute}  deg={report.observed_degree}  "
+            f"caps={report.cap_occurrences}/{report.cap_step1}  "
+            f"{status}  ({elapsed:.3f}s)",
+            flush=True,
+        )
+        if not ok:
+            for problem in matrix_problems + restored + design:
+                print(f"    {problem}", flush=True)
+            if not report.ok:
+                print(
+                    f"    degree report H(0)={report.direct_at_zero} "
+                    f"interpolated={report.h0_occurrences} #F={report.brute} "
+                    f"deg={report.observed_degree}",
+                    flush=True,
+                )
+            return rows
+    return rows
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
     bounded_rows: List[dict],
     blocked_rows: List[dict] | None = None,
+    matrix_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -276,6 +359,11 @@ def print_summary_table(
             f"{'blocked':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
             f"{'OK' if r['ok'] else 'FAIL':>6}"
         )
+    for r in matrix_rows or []:
+        print(
+            f"{'matrix':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
+            f"{'OK' if r['ok'] else 'FAIL':>6}"
+        )
     print("-" * 72)
     if interp_rows:
         print(
@@ -293,12 +381,16 @@ def print_summary_table(
         print(
             f"Blocked sum   (D): {sum(1 for r in blocked_rows if r['ok'])}/{len(blocked_rows)} passed"
         )
+    if matrix_rows:
+        print(
+            f"Matrix slice  (E): {sum(1 for r in matrix_rows if r['ok'])}/{len(matrix_rows)} passed"
+        )
     print("=" * 72)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0, 1, and 2)"
+        description="Counting-polynomial skeleton verifier (Steps 0, 1, 2, and 3)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -309,6 +401,11 @@ def main(argv: List[str] | None = None) -> int:
         "--step2",
         action="store_true",
         help="run only the Step 2 blocked-sum checks",
+    )
+    parser.add_argument(
+        "--step3",
+        action="store_true",
+        help="run only the Step 3 tiny replacement-matrix checks",
     )
     args = parser.parse_args(argv)
 
@@ -323,16 +420,42 @@ def main(argv: List[str] | None = None) -> int:
         bounded_specs = [(6, 4, 1), (6, 6, 1)]
         growth_groups = (1, 2, 3, 4)
 
-    if args.step2:
+    only_step2 = args.step2 and not args.step3
+    only_step3 = args.step3 and not args.step2
+    only_steps_2_and_3 = args.step2 and args.step3
+    if only_step2:
         print("counting_sat_algebra.verify — Step 2 only")
+    elif only_step3:
+        print("counting_sat_algebra.verify — Step 3 only")
+    elif only_steps_2_and_3:
+        print("counting_sat_algebra.verify — Steps 2 and 3 only")
     else:
-        print("counting_sat_algebra.verify — Steps 0, 1, and 2")
+        print("counting_sat_algebra.verify — Steps 0, 1, 2, and 3")
         print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
-        print("and a blocked sum on hand-built replacements.")
+        print("a blocked sum on hand-built replacements, and a tiny replacement matrix.")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
 
-    if args.step2:
+    if only_step3:
+        matrix_rows = run_step3_suite()
+        print()
+        if not matrix_rows or not all(row["ok"] for row in matrix_rows):
+            print("FAIL: replacement-matrix slice disagreed with its checks", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], None, matrix_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: Step 3 only. On these tiny parameters M0 restores the coordinate at "
+            "T = 0, the placed rows restore X_v, H(0) matches the brute-force count, the "
+            "measured degree sits inside M·(R-1) and m·k·R, and a legal design holds at "
+            f"every t in {{1, ..., Q}}. Side length is at most {SLICE_MAX_DIMENSION}. "
+            f"The parameter list with R≥32 and 6R≤Q is not built (2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
+            "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
+        )
+        return 0
+
+    if only_step2:
         example_rows, growth_rows = run_step2_suite(growth_groups)
         print()
         if (
@@ -351,6 +474,35 @@ def main(argv: List[str] | None = None) -> int:
             "full-space H(t), including H(0) = #F. For popcount blocks of size 2 the "
             "measurement tuple count is 3^b, exponential in the number of groups. "
             "No matrix M0, no Theorem 1.1, no 2^{o(n)} claim."
+        )
+        return 0
+
+    if only_steps_2_and_3:
+        example_rows, growth_rows = run_step2_suite(growth_groups)
+        if (
+            not example_rows
+            or not all(row["ok"] for row in example_rows)
+            or len(growth_rows) != len(growth_groups)
+            or not all(row["ok"] for row in growth_rows)
+        ):
+            print("FAIL: blocked sum disagreed with the full sum", file=sys.stderr)
+            return 1
+        print()
+        matrix_rows = run_step3_suite()
+        print()
+        if not matrix_rows or not all(row["ok"] for row in matrix_rows):
+            print("FAIL: replacement-matrix slice disagreed with its checks", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], example_rows, matrix_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: Steps 2 and 3 only. Blocked sums match full-space H(t) on the "
+            "hand-built families, and the tiny replacement matrices restore T = 0, "
+            "match the brute-force count, and meet their degree caps. "
+            f"Side length is at most {SLICE_MAX_DIMENSION}. "
+            f"The parameter list with R≥32 and 6R≤Q is not built. "
+            "No Theorem 1.1, no 2^{o(n)} claim."
         )
         return 0
 
@@ -404,19 +556,28 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (D) all {len(example_rows)} hand-built instances passed")
     print()
 
+    matrix_rows = run_step3_suite()
+    if not matrix_rows or not all(row["ok"] for row in matrix_rows):
+        print("FAIL: replacement-matrix slice disagreed with its checks", file=sys.stderr)
+        return 1
+    print(f"  (E) all {len(matrix_rows)} replacement-matrix slices passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
 
-    print_summary_table(interp_rows, indep_rows, bounded_rows, example_rows)
+    print_summary_table(interp_rows, indep_rows, bounded_rows, example_rows, matrix_rows)
     print()
     print("ALL TESTS PASSED")
     print(
         "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
-        "identity, degree-cap checks on occurrence-≤3 3-CNFs, and blocked-sum "
-        "agreement with full-space H(t) on hand-built replacements. "
+        "identity, degree-cap checks on occurrence-≤3 3-CNFs, blocked-sum agreement "
+        "with full-space H(t) on hand-built replacements, and a tiny replacement "
+        f"matrix of side length at most {SLICE_MAX_DIMENSION}. "
         "Popcount measurement tuples grow as (r+1)^b. "
-        "No matrix M0, no Theorem 1.1, no 2^{o(n)} claim."
+        f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
+        "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
     )
     return 0
 
