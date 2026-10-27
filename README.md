@@ -1,100 +1,78 @@
 # counting-sat-algebra
 
-Small Python package that checks the counting-polynomial skeleton for #3-SAT on tiny instances.
+以 `references/` 中的计数算法为对照，逐步实现确定性的精确 #SAT 计数，并核验时间与空间结论。当前版本为 **0.14.0**。
 
-> **Honesty banner**
->
-> This repository checks nine things on instances small enough to brute-force:
->
-> 1. **Step 0.** Write #F as a sum of clause polynomials, replace each literal input by a rational linear form that restores the original variable at T = 0, and recover H(0) = #F by Lagrange interpolation.
-> 2. **Step 1.** Generate and recognize 3-CNFs in which every variable occurs in at most three clauses, and check the degree caps D = m·k·R and D = 3·n·R on those formulas.
-> 3. **Step 2.** On a hand-built replacement family whose higher coefficients lie in τ shared linear measurements, partition the variables into blocks of size at most r and check that the blocked sum equals the full sum H(t). The integer D is carried as a degree cap and is not used to build a matrix.
-> 4. **Step 3.** Build the replacement matrix M0 = V0 f_I(W0) and the rows that come from it on four explicit placements of side length at most 64. Check that T = 0 restores the variable, that the degree stays inside M·(R−1) and m·k·R, and that a legal design holds at every sample t.
-> 5. **Step 4.** Read several Hasse coefficients of H at each sample point and recover H(0) = #F from fewer distinct points than the D+1 value samples of the Lagrange path. The number of conditions stays D+1.
-> 6. **Step 5.** Replace a variable that occurs more than three times by one copy per occurrence, tied together by an implication cycle, and check #F' = #F where both formulas fit in the brute-force window. Pass the reduced formula through `interpolate_H0`, and through the Step 2 blocked sum when the source clauses already sit inside blocks.
-> 7. **Step 6.** On a fixed machine-limited grid of n, time brute force against the popcount blocked sum, and record the other steps as a match or as a refusal. A refusal is what the grid does when the cube passes the brute-force wall, the assignment budget, or the measurement-tuple cap, and when the construction is unfinished: full M0, a crossing clause with no Step 3 placement, copying that pushes n' past 20, a Hermite jet that would still walk the cube. Wall times are one machine's clock. The reproducible record is the operation counts.
-> 8. **Step 7.** Raise the slice cap to 256 and check two further explicit placements (side lengths 81 and 256) with the same restoration, degree, support, and kernel checks as Step 3. Check the balance inequalities 2(b+w)D² ≤ M and 2Qr² ≤ n. When they fail, refuse instead of choosing a schedule. When a caller supplies schedules, place them and run the design check. Full M0 stays refused before allocation.
-> 9. **Step 8.** When those inequalities hold and the slice is under the cap, choose schedules by successive choice over {0, …, r−1}^Q. On the admitted rows the multiplicity and group bounds hold, and the call refuses before `design_problems_at` because that walk is above a Boolean-point budget. The schedule cube is not enumerated. Formulas that fail the inequalities still refuse with no placement.
->
-> H(t) for a general replacement is still a sum over all 2^n assignments. A Hermite node is one such pass: the jet is produced inside it, and a full jet of order D does quadratic arithmetic per assignment. The Step 2 measurement enumeration is exponential in the number of blocks: for one popcount measurement and blocks of size r it walks (r+1)^b tuples. The matrix at the parameter list R ≥ 32 and 6R ≤ Q is not built: at r = 2 that side length is 2^384. Step 5's copying can make the reduced length larger than the source length; past n' = 20 the model counts are recorded as unchecked. The cycle clauses have width 2, so the exact-width-3 checker does not accept a formula that used the cycle. The Step 6 scan writes those stops down. It does not remove them, and it does not time a construction it refused. Step 8 runs a successive-choice search on the one parameter point in this tree where the balance inequalities hold, meets the multiplicity and group bounds, and refuses before `design_problems_at`: an outside group has size 32, and that walk is 2^32 Boolean points. The schedule cube is not enumerated. Theorem 1.1 is not implemented. Nothing here refutes the exponential-time hypothesis or runs in 2^{o(n)} time.
+当前已实现参考文献 Sections 3、4 的若干部件：精确条件期望日程、线性代数设计检查、共享测量求和、Taylor 系数恢复、完整参数下的辅助算子条目查询和有限参数的稀疏放置。新增 DIMACS 计数入口，通过独立连通分量调用代数计数后端。一般 k-CNF 的整条管线与渐近复杂度结论仍未完成。
 
-## Layout
-
-```
-src/counting_sat_algebra/   # import name counting_sat_algebra
-tests/                      # pytest
-benches/                    # fixed-seed formulas and the Step 6 scan record
-docs/STATUS.md              # short orientation of the current tip (Chinese)
-docs/PROGRESS.md            # what was actually checked
-ROADMAP.md                  # steps 0–8 and the distance still open
-references/                 # offline preprint and Lean scaffold; not executed
-```
-
-Core arithmetic uses `fractions.Fraction` from the standard library.
-
-## Documentation
-
-- [`docs/STATUS.md`](docs/STATUS.md) — short orientation of the current tip, in Chinese. What this repository is, the honesty limits, Steps 0–8 in one line each, and the distance still open.
-- [`ROADMAP.md`](ROADMAP.md) — the step checklist. Refuting ETH is not a success criterion.
-- [`docs/PROGRESS.md`](docs/PROGRESS.md) — the instances, counts, refusals, and operation counts that were actually recorded.
-- [`references/`](references/README.md) — local copies of the preprint and of a separate Lean scaffold. The Python package does not prove that paper. The Lean file’s main theorem ends in `sorry`, which is an unfinished-proof placeholder.
-
-## Run
+## 运行
 
 ```bash
 python -m pip install -e ".[dev]"
 pytest -q
+python -m counting_sat_algebra.verify --reference
 python -m counting_sat_algebra.verify --quick
-python -m counting_sat_algebra.verify --step2
-python -m counting_sat_algebra.verify --step3
-python -m counting_sat_algebra.verify --step4
-python -m counting_sat_algebra.verify --step5
-python -m counting_sat_algebra.verify --step6
-python -m counting_sat_algebra.verify --step7
-python -m counting_sat_algebra.verify --step8
+python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
 ```
 
-`python -m counting_sat_algebra.verify` without `--quick` draws more random 3-CNFs (n up to 10), extends the Step 2 group scan by one block, runs the full Step 6 grid, and runs the Step 7 side-length-256 identity. That path is exact but slow, because each Step 0 sample still costs 2^n. `--step2` runs only the blocked-sum checks. `--step3` runs only the tiny replacement-matrix checks. `--step4` runs only the Hermite checks. `--step5` runs only the occurrence-copying checks. `--step6` runs only the parameter scan, on the full grid. `--step7` runs the larger-slice identities, the balance refusals, and the caller-supplied placements. `--step8` runs the successive-choice balancer: the admitted refusals, full M0, and a direct design check on eight units that are not admitted. `--quick` includes Steps 3, 4, 5, the small Step 6 grid, the cheap Step 7 checks (side length 81 and the refusals), and Step 8. It skips side length 256. Step 5 records a row instead of counting it when the reduced n is above 20. Step 6 records a cell as refused, and does not time it, when the construction is unfinished or the enumeration is past a rail. Step 7 and Step 8 record a refusal the same way and do not time it. Step 8 does not start a design walk that is above its Boolean-point budget.
+`--reference` 运行 Steps 9–13，共 14 项检查：1024 变量实例的日程和设计检查、精确尾界检查、四个小实例的共享测量计数、结构化矩阵查询、16384 变量的稀疏放置和预算拒绝，以及实际 CNF 计数。`--step9` 至 `--step13` 可单独运行。
 
-Exit code 0 and the line `ALL TESTS PASSED` mean the checks in that run agreed with brute force, or were the refusals the scan records. A Step 5 row whose reduced n is above 20 is recorded as unchecked and still passes under that line. A Step 6 refusal is the same kind of recorded stop. A Step 8 refusal is too: the admitted rows are not placements, and they are not timed.
+`--quick` 运行 Steps 0–13 的较小网格。Steps 2–8 的单独命令继续可用。`--step8` 保留原布尔枚举预算模式；默认日程 API 使用精确线性代数。
 
-## What the checks correspond to
+核验结果中的 `COUNTED` 表示确实恢复了计数，并与独立暴力计数或已知闭式核对；`CHECKED` 表示设计、参数或条目核对；`REFUSED` 表示预算或前提导致停止。大实例的设计通过不会被当成计数完成。
 
-| Code | Idea being checked |
-|------|--------------------|
-| `cnf.py` | Clause polynomial Φ_e and brute-force #F |
-| `independent.py` | If no clause crosses variable groups, #F = ∏ N_g |
-| `replacements.py` | Degree-≤ R replacements with value X_v at T = 0; H(0) by Lagrange |
-| `bounded_occurrence.py` | 3-CNF, ≤ 3 occurrences per variable; degree caps m·k·R and 3·n·R |
-| `design.py` | Simplified (r, τ, D) block partition and τ shared linear measurements |
-| `blocked_sum.py` | Hand-built replacements in that span; blocked sum versus full H(t) |
-| `replacement_matrix.py` | Tiny M0 = V0 f_I(W0) and the rows built from it; not the full matrix |
-| `hermite.py` | Hasse jets of H and Hermite recovery of H(0); still one 2^n pass per node |
-| `sparsify.py` | Implication-cycle copying to occurrence ≤ 3; #F' = #F inside the brute window |
-| `parameter_scan.py` | Machine-limited grid: matches, refusals, operation counts; not a complexity result |
-| `scheduler.py` | Balance inequalities, then a successive-choice balancer that refuses past its budget |
-| `self_reduce.py` | Optional search for one satisfying assignment by fixing bits |
+## 新的计数接口
 
-The degree cap used for a width-k formula is `m * k * R`. On the bounded-occurrence testbed, `M = Σ |I_e| ≤ 3n`, so `M R ≤ 3 n R` is a second, sometimes looser, cap. Step 1 records both.
+直接读取 DIMACS：
 
-Step 2's design is a simplification. Blocks partition the variables, each block has size at most r, and τ rational linear measurements are shared across blocks. Clauses may not cross blocks. The replacement is hand-built so that
+```bash
+counting-sat-algebra count examples/count_demo.cnf --json
+python -m counting_sat_algebra count INPUT.cnf --no-memo
+```
 
-`⟨P, X⟩ = X_v + Σ_{j≥1} T^j ⟨α_j, μ(X)⟩`.
+示例返回 **196**：两个独立三文字子句各有 7 个满足赋值，另有两个声明的自由变量。解析器保留声明变量数，支持注释、跨行子句和空子句。计数器去除重言式和重复文字/子句，为每个连通分量重新稀疏放置，以共享测量求和恢复局部计数，再乘以自由变量因子。相同编号化分量可复用已经完成的计数；`--no-memo` 可关闭复用。
 
-After the local measurements are fixed, the sum factors into a product of block sums. That identity is checked against the full sum on small n. D is stored and not read. A measurement space small enough for a subexponential count is not part of this step.
+默认每个分量最多 20 个变量，每次代数计数最多扫描 500000 个局部布尔向量，总扫描预算为 5000000；可用 `--max-component-variables`、`--vector-budget`、`--total-vector-budget` 调整。预算拒绝返回退出码 2，计数和可满足性均为空。大整数用精确十六进制输出，并标记 `count_encoding`。
 
-Step 3 builds M0 = V0 f_I(W0) on four placements with D = r**(2Q) ≤ 64. The rows restore the auxiliary coordinate at T = 0 and have degree at most R−1. On those hand-written placements they restore X_v, H(0) matches brute force, and the measured degree sits inside both caps. One of those placements is a single 3-clause whose variables sit in three different groups; Step 2 rejects that shape, and the Step 3 kernel condition accepts it. The point Q = R = 2 is checked as an identity. It does not satisfy R < Q. The matrix at R ≥ 32 and 6R ≤ Q is not built. Step 7 raises the cap to 256 and checks two further explicit placements. It does not build full M0.
+已放置公式仍可直接调用：
 
-Step 4 differentiates the clause product in the jet ring and sums over the cube. The Hasse coefficient of index k is the Taylor coefficient divided by k!. Newton interpolation with repeated nodes then evaluates H(0). Three patterns are checked: at most two coefficients per point, at most three, and every coefficient at the single point t = 1. Each pattern uses D+1 conditions, and each uses fewer distinct points than Lagrange on t = 1, …, D+1. On the recorded draws the measured degree equalled the cap, so no condition was dropped for a slack bound. The single-point jet replaces D+1 passes by one pass whose arithmetic per assignment grows quadratically with D.
+```python
+from counting_sat_algebra import count_placed_formula, step3_examples
 
-Step 5 copies variables. For the default cap B = 3, a variable in d > 3 clauses becomes d variables, and the copies are forced equal by a cycle of d binary clauses. The recovery on a counted instance is #F' = #F. `interpolate_H0` is run when the sample window fits a fixed assignment budget. The Step 2 blocked sum is run when the caller supplies a partition of the source variables that already contains every clause; copies stay in the owner's block, and a clause that already crossed blocks still crosses. A 3-CNF with 3m − 2n > 20 has reduced length above the brute-force wall n ≤ 20, and that equality is not checked. The numbers are in `docs/PROGRESS.md`.
+placed = step3_examples()[1].placed
+result = count_placed_formula(placed)
+assert result.counted
+assert result.count == 1
+print(result.plan.boolean_vector_bound, result.boolean_vectors)
+```
 
-Step 6 does not add an algorithm. It runs the pieces above on one fixed grid and writes down the result of each cell. Where the popcount blocks fit, blocked H(0) equals the brute-force count. Where a sample window, a measurement tuple count, or n itself is past a rail already used in this repository, the cell is refused before that loop. Full M0 is one of those refusals: the call is the parameter list R ≥ 32 and 6R ≤ Q, and it raises before the matrix is allocated. A copied clause that still meets two blocks is another: Step 2 refuses it, and the scan does not invent a Step 3 placement. The single-point Hermite jet is not run. It would still be one pass over the cube. Pytest locks the small grid. `benches/parameter_scan.json` is the full grid, including wall times from the run that wrote the file.
+该函数先检查恢复和核条件，再执行 Lemma 3.2 的局部扫描与 Lemma 3.3 的固定替换，最后用 Hermite 插值恢复 H(0)。它返回操作预算、实际局部扫描次数和系数；预算不足时不启动枚举。
 
-Step 7 checks the Lemma 4.5 balance inequalities before any schedule it would choose. The two inequalities are 2(b+w)D² ≤ M and 2Qr² ≤ n, together with n ≤ M ≤ bn. They force n to be at least on the order of D². On every formula this repository compares with brute force they fail, and `schedule_placement` returns without a placement and without allocating a matrix it was not already given. Caller-supplied schedules are accepted when `design_problems_at` and the T = 0 restoration pass. The four Step 3 rows and the two new rows are that kind of data. Several of them have label multiplicity above 2M/D; the scaffold records the gap and does not describe the row as a balancer output. The group-size bound, size · r ≤ 2n, is the check already inside `design_problems_at`.
+它不存可达测量表，也不调用全空间计数作为计算后端。测量元组、局部组和替换对仍可能很多，是否得到次指数界取决于完整参数选择、输入约化和剩余管线。
 
-Step 8 is the search that runs when the inequalities hold. It tries one alphabet symbol at a time. On 64 disjoint units at r = 2, Q = 1, D = 4 it meets multiplicity 16 ≤ 32 and group size 32, then refuses: an outside group has size 32, so `design_problems_at` would enumerate 2^32 Boolean points, above the budget 4096. `place_formula` is not called. The same refusal, with R < Q, is what 1024 units give at r = 2, Q = 2. The schedule cube is not enumerated. A direct check on eight units, which fail the inequalities, passes design and T = 0; `schedule_placement` does not make that call. The numbers are in `docs/PROGRESS.md`.
+## 对齐结果
 
-## Next step
+| 检查 | 结果 |
+| --- | --- |
+| 1024 变量，r=2、Q=2、R=1 | 条件期望日程、重数、组大小、核条件、T=0 恢复通过 |
+| 同一参数的 Lemma 4.7 尾界 | 7/16 > 1/4，前提不成立 |
+| 16384 变量，r=2、Q=3、R=2、τ=1/2 | 全部数值前提、稀疏设计、恢复和系数检查通过；全局求和在枚举前拒绝 |
+| 四个 Step 3 小实例 | 共享测量恢复 #F 为 1、1、7、7；Taylor 系数与全空间对照一致 |
+| 结构化 M0 | 小矩阵所有条目一致；R=32、Q=192、D=2^384 可作有限条目查询 |
+| DIMACS 示例，8 个声明变量 | 精确计数 196，两个连通分量，两个自由变量 |
+| 10923 个独立三文字子句，32769 变量 | 精确计数 7^10923；1 次局部代数计数、10922 次复用 |
 
-There is no further step in `ROADMAP.md`. The remaining distance to a full counting algorithm is the unfinished list in `docs/PROGRESS.md`: full M0, a placement of an admitted formula inside the design budget, sparsification that keeps n' close to n, a measurement space that is not exponential in the number of blocks, and a Hermite evaluation that costs less than a pass over the cube. The Step 8 search meets the Lemma 4.5 bounds on the admitted rows and stops before the design walk. It does not close that list. Theorem 1.1 is not implemented.
+16384 变量放置仅存 **59392** 个多项式条目和 **14336** 个测量条目，对应稠密多项式位置数为 **536870912**。其全局计数计划为 q=5461、J=5462，超过扫描预算，实际扫描为零。32769 变量结果来自独立分量分解；该实例通过数值前提，但未执行全局放置。
+
+[对齐说明](docs/REFERENCE_ALIGNMENT.md) 区分 Theorem 1.1 的较强时间界、Sections 3–6 的较弱时间界和未完成的 Lean 主定理。当前测试不能作为 ETH 结论或完整形式化证明。
+
+## 文件
+
+- [ROADMAP.md](ROADMAP.md)：已完成步骤与剩余管线。
+- [docs/STATUS.md](docs/STATUS.md)：中文现状。
+- [docs/PROGRESS.md](docs/PROGRESS.md)：原始检查记录与新步骤结果。
+- [docs/REFERENCE_ALIGNMENT.md](docs/REFERENCE_ALIGNMENT.md)：与参考定理逐项对齐。
+- `src/counting_sat_algebra/`：精确有理数实现。
+- `tests/`：独立对照及预算检查。
+- `references/`：本地预印本与 Lean 脚手架。
+
+核心算术使用 Python 标准库的 `fractions.Fraction`。稠密矩阵切片上限仍为 256；结构化接口提供有限坐标查询，不分配整个巨大矩阵。

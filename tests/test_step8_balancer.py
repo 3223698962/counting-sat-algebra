@@ -14,6 +14,7 @@ import ast
 import inspect
 from dataclasses import replace
 from fractions import Fraction
+from functools import partial
 
 import pytest
 
@@ -31,10 +32,12 @@ from counting_sat_algebra.scheduler import (
     _search_block_reason,
     _search_schedules,
     check_balance,
-    schedule_placement,
+    schedule_placement as _schedule_placement,
     scopes_from_cnf,
 )
 
+
+schedule_placement = partial(_schedule_placement, design_method="boolean")
 
 def _units(n: int) -> CNF:
     return CNF(n, [[(i, False)] for i in range(n)])
@@ -207,9 +210,10 @@ def test_multiplicity_group_alphabet_and_trial_refusals(monkeypatch: pytest.Monk
 
 
 def test_search_enumerates_only_the_alphabet() -> None:
-    source = inspect.getsource(_search_schedules)
+    from counting_sat_algebra.conditional_balance import choose_schedules
+    source = inspect.getsource(choose_schedules)
     assert source.count("product(") == 1
-    assert "repeat=check.Q" in source or "repeat=Q" in source or "repeat=check.Q" in source
+    assert "repeat=Q" in source
     assert "import random" not in source and "Random(" not in source
     tree = ast.parse(
         (

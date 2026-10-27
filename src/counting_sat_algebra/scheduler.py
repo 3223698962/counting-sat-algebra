@@ -1,5 +1,5 @@
 """
-Balance checks and a machine-limited schedule balancer (Steps 7 and 8).
+Balance checks and exact conditional-expectation schedules (Steps 7–9).
 
 Lemma 4.5 of the October 2026 preprint asks for schedules whose label
 multiplicity is at most 2M/D and whose groups have size at most 2n/r, provided
@@ -25,13 +25,14 @@ minimizes a quadratic load potential. Ties break toward the lexicographically
 first symbol. Nothing is sampled. The schedule cube, of size (r^Q)^(n+m), is
 not enumerated.
 
-The search aims at label multiplicity at most 2M/D and group size at most
-2n/r. If it meets both and the Boolean walk inside ``design_problems_at`` fits
-a fixed budget, the schedules are placed with ``place_formula`` and checked
-with ``design_problems_at`` and the T = 0 restoration. A supplied R that fails
-1 <= R < Q, and Q = 1 (where no positive R is strictly below Q), blocks
-acceptance. If a bound fails, or the alphabet, the trial count, or the Boolean
-budget is too large, the call refuses and does not invent a placement.
+The search minimizes the exact conditional expectation of Phi/(M(b+w))
++ Xi/(Qn), including dependencies of incidences sharing variables or factors.
+Its potential is checked with rational arithmetic at the initial and final
+states, and each choice must preserve monotonicity. The default design check
+uses a cached rational row span, so there is no Boolean-point walk. The
+legacy ``design_method="boolean"`` enables that extra check and retains the
+Step 8 Boolean budget. Placement coefficients have their own allocation
+budget. A supplied R that fails 1 <= R < Q blocks balancer acceptance.
 
 Caller-supplied schedules are placed with ``place_formula`` and checked with
 ``design_problems_at`` and the T = 0 restoration. That is how the hand-written
@@ -49,12 +50,12 @@ by itself, a schedule, and a schedule this search returns is not a count.
 
 from __future__ import annotations
 
-import itertools
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Sequence
 
 from .cnf import CNF
+from .conditional_balance import choose_schedules
 from .replacement_matrix import (
     FULL_M0_LOG2_DIMENSION_AT_R2,
     FULL_M0_MIN_Q,
@@ -65,6 +66,8 @@ from .replacement_matrix import (
     auxiliary_problems,
     build_auxiliary_slice,
     degree_cap_report,
+    binomial_exceptional_count,
+    default_interval_start,
     design_problems_at,
     groups_at,
     place_formula,
@@ -80,6 +83,7 @@ BALANCER_MAX_ALPHABET = 32
 BALANCER_MAX_TRIALS = 100_000
 # ``design_problems_at`` walks 2**(group size) Boolean points on an outside group.
 BALANCER_DESIGN_BOOLEAN_BUDGET = 4096
+BALANCER_PLACEMENT_ENTRY_BUDGET = 4_000_000
 
 
 def _as_index(value: object, what: str) -> int:
@@ -338,11 +342,11 @@ def _unplaced_reason(check: BalanceCheck) -> str:
 class ScheduleOutcome:
     """Result of a balance check, plus an optional caller-supplied placement.
 
-    ``accepted`` means the supplied schedules restored T = 0 and passed
-    ``design_problems_at`` at every t in {1, ..., Q}. It does not mean the
-    balance inequalities hold, and it does not mean a balancer chose the
-    schedules. ``built_slice`` is true only when this call itself allocated a
-    slice. A refusal leaves it false.
+    ``accepted`` means restoration and design checks passed. For balancer
+    output it additionally requires the degree gap and load bounds. It does
+    not certify Lemma 4.7's tail or Theorem 1.1. ``design_method`` records the
+    checker used. ``design_boolean_points`` is a hypothetical legacy walk,
+    not an executed count. ``built_slice`` tracks allocation by this call.
     """
 
     balance: BalanceCheck
@@ -365,6 +369,9 @@ class ScheduleOutcome:
     outside_group_size: int | None = None
     design_boolean_points: int | None = None
     trials: int | None = None
+    design_method: str | None = None
+    initial_potential: Fraction | None = None
+    final_potential: Fraction | None = None
 
 
 def _blank_outcome(check: BalanceCheck, *, caller_supplied: bool) -> ScheduleOutcome:
@@ -430,18 +437,16 @@ class _SearchResult:
     design_boolean_points: int | None
     trials: int | None
     reason: str
+    initial_potential: Fraction | None = None
+    final_potential: Fraction | None = None
 
 
 def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
-    """Pick schedules by successive minimization of a quadratic load.
+    """Choose the exact conditional expectation from reference Lemma 4.5.
 
-    Variables are fixed first, one alphabet symbol at a time, so that no group
-    exceeds size ``floor(2n/r)`` and the symbols spread across the alphabet.
-    Clauses are fixed second. A clause symbol is scored by the increase it
-    causes in the sum of squares of label loads, which is the one-step
-    conditional expectation of that potential when the remaining clause symbols
-    would have been uniform. The final multiplicity and group sizes are then
-    compared with the Lemma 4.5 bounds. This is not a proof of that lemma.
+    ``choose_schedules`` aggregates collision probabilities and checks the
+    potential's monotonicity and final value with exact rational arithmetic.
+    The alphabet and trial budgets are checked before the search runs.
     """
     bound = Fraction(2 * check.M, check.D)
     blocked = _search_block_reason(cnf.n, cnf.m, check.r, check.Q)
@@ -461,70 +466,18 @@ def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
             trials=None,
             reason=blocked,
         )
-    alphabet = list(itertools.product(range(check.r), repeat=check.Q))
-    capacity = (2 * check.n) // check.r
+    schedules = choose_schedules(cnf.n, scopes_from_cnf(cnf), check.r, check.Q)
+    variable_schedules = schedules.variables
+    clause_schedules = schedules.factors
     group_counts = [[0 for _ in range(check.r)] for _ in range(check.Q)]
-    schedule_hist: dict[tuple[int, ...], int] = {}
-    variable_schedules: list[tuple[int, ...]] = []
-    for _var in range(cnf.n):
-        best_score: tuple[int, int, int] | None = None
-        best_sigma: tuple[int, ...] | None = None
-        for sigma in alphabet:
-            projected = [group_counts[t][sigma[t]] + 1 for t in range(check.Q)]
-            if any(size > capacity for size in projected):
-                continue
-            score = (max(projected), sum(projected), schedule_hist.get(sigma, 0))
-            if best_score is None or score < best_score:
-                best_score = score
-                best_sigma = sigma
-        if best_sigma is None:
-            return _SearchResult(
-                attempted=True,
-                chosen=False,
-                variable_schedules=None,
-                clause_schedules=None,
-                multiplicity=None,
-                multiplicity_bound=bound,
-                multiplicity_ok=None,
-                max_group_size=None,
-                group_size_ok=False,
-                outside_group_size=None,
-                design_boolean_points=None,
-                trials=(cnf.n + cnf.m) * len(alphabet),
-                reason=(
-                    "The successive-choice balancer stopped. Every alphabet symbol "
-                    f"would put a group above size {capacity}, and size * r <= 2n "
-                    f"is the group bound (2n = {2 * check.n}, r = {check.r}). "
-                    "No placement was invented. The schedule cube was not enumerated."
-                ),
-            )
-        for t, symbol in enumerate(best_sigma):
+    for sigma in variable_schedules:
+        for t, symbol in enumerate(sigma):
             group_counts[t][symbol] += 1
-        schedule_hist[best_sigma] = schedule_hist.get(best_sigma, 0) + 1
-        variable_schedules.append(best_sigma)
-
     label_counts: dict[tuple[tuple[int, ...], tuple[int, ...]], int] = {}
-    clause_schedules: list[tuple[int, ...]] = []
-    for clause in cnf.clauses:
-        masses: dict[tuple[int, ...], int] = {}
+    for clause, tau in zip(cnf.clauses, clause_schedules):
         for var, _neg in clause:
-            sigma = variable_schedules[var]
-            masses[sigma] = masses.get(sigma, 0) + 1
-        best_clause: tuple[int, tuple[int, ...]] | None = None
-        for tau in alphabet:
-            increment = 0
-            for sigma, amount in masses.items():
-                base = label_counts.get((sigma, tau), 0)
-                increment += 2 * base * amount + amount * amount
-            score = (increment, tau)
-            if best_clause is None or score < best_clause:
-                best_clause = score
-        assert best_clause is not None
-        tau = best_clause[1]
-        for sigma, amount in masses.items():
-            key = (sigma, tau)
-            label_counts[key] = label_counts.get(key, 0) + amount
-        clause_schedules.append(tau)
+            label = (variable_schedules[var], tau)
+            label_counts[label] = label_counts.get(label, 0) + 1
 
     multiplicity = max(label_counts.values(), default=0)
     multiplicity_ok = multiplicity <= bound
@@ -537,7 +490,7 @@ def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
         check.r,
         check.Q,
     )
-    trials = (cnf.n + cnf.m) * len(alphabet)
+    trials = schedules.trials
     if not multiplicity_ok or not group_ok:
         reason = _bound_failure_reason(
             check,
@@ -561,6 +514,8 @@ def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
             design_boolean_points=points,
             trials=trials,
             reason=reason,
+            initial_potential=schedules.initial_potential,
+            final_potential=schedules.final_potential,
         )
     return _SearchResult(
         attempted=True,
@@ -576,6 +531,8 @@ def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
         design_boolean_points=points,
         trials=trials,
         reason="",
+        initial_potential=schedules.initial_potential,
+        final_potential=schedules.final_potential,
     )
 
 
@@ -683,10 +640,12 @@ def _design_budget_reason(check: BalanceCheck, search: _SearchResult) -> str:
     )
 
 
-def _search_outcome(check: BalanceCheck, search: _SearchResult) -> ScheduleOutcome:
-    if search.chosen:
+def _search_outcome(
+    check: BalanceCheck, search: _SearchResult, *, reason: str | None = None
+) -> ScheduleOutcome:
+    if reason is None and search.chosen:
         reason = _design_budget_reason(check, search)
-    else:
+    elif reason is None:
         reason = search.reason + _gap_sentence(check)
     return ScheduleOutcome(
         balance=check,
@@ -709,6 +668,8 @@ def _search_outcome(check: BalanceCheck, search: _SearchResult) -> ScheduleOutco
         outside_group_size=search.outside_group_size,
         design_boolean_points=search.design_boolean_points,
         trials=search.trials,
+        initial_potential=search.initial_potential,
+        final_potential=search.final_potential,
     )
 
 
@@ -726,19 +687,30 @@ def _finish_chosen_placement(
     check: BalanceCheck,
     search: _SearchResult,
     auxiliary: AuxiliarySlice | None,
+    *,
+    design_method: str = "linear",
 ) -> ScheduleOutcome:
-    """Place schedules the search already accepted and run the existing checks.
+    """Place chosen schedules and check their rational kernels and restoration.
 
-    ``design_problems_at`` is called only after ``_design_budget_exceeded``
-    has returned false. This function does not re-check Lemma 4.5 admission.
-    ``schedule_placement`` is the gate for that.
+    The Boolean comparison is optional and is budgeted by the calling gate.
+    Dense placement entries are budgeted before a slice is allocated.
     """
     assert search.variable_schedules is not None and search.clause_schedules is not None
-    built = False
+    R = auxiliary.R if auxiliary is not None else (check.R if check.R is not None else 1)
+    measurements = (len(auxiliary.C_rows) if auxiliary is not None else
+                    binomial_exceptional_count(check.r, check.Q,
+                        range(default_interval_start(check.r, check.Q, R),
+                              default_interval_start(check.r, check.Q, R) + R)))
+    entries = cnf.n * (check.M * R + (search.multiplicity or 0) * measurements)
+    if entries > BALANCER_PLACEMENT_ENTRY_BUDGET:
+        return _search_outcome(
+            check, search,
+            reason=(f"Placement would store at most {entries} coefficient entries, above "
+                    f"the budget {BALANCER_PLACEMENT_ENTRY_BUDGET}. place_formula was not called."),
+        )
+    built = auxiliary is None
     if auxiliary is None:
-        R = check.R if check.R is not None else 1
         auxiliary = build_auxiliary_slice(check.r, check.Q, R)
-        built = True
     placed = place_formula(
         cnf,
         auxiliary,
@@ -747,7 +719,7 @@ def _finish_chosen_placement(
     )
     design: list[tuple[int, str]] = []
     for t in range(1, auxiliary.Q + 1):
-        for problem in design_problems_at(placed, t):
+        for problem in design_problems_at(placed, t, boolean_check=design_method == "boolean"):
             design.append((t, problem))
     restored = tuple(restoration_problems(placed))
     multiplicity = placed.copies
@@ -822,6 +794,9 @@ def _finish_chosen_placement(
         outside_group_size=search.outside_group_size,
         design_boolean_points=search.design_boolean_points,
         trials=search.trials,
+        design_method=design_method,
+        initial_potential=search.initial_potential,
+        final_potential=search.final_potential,
     )
 
 
@@ -843,6 +818,8 @@ def schedule_placement(
     auxiliary: AuxiliarySlice | None = None,
     variable_schedules: Sequence[Sequence[int]] | None = None,
     clause_schedules: Sequence[Sequence[int]] | None = None,
+    *,
+    design_method: str = "linear",
 ) -> ScheduleOutcome:
     """Check balance, then place supplied schedules or run the successive-choice search.
 
@@ -851,10 +828,13 @@ def schedule_placement(
     when the Lemma 4.5 inequalities hold and the slice is under the cap. It
     tries one alphabet symbol at a time. It does not draw a placement, and it
     does not enumerate the schedule cube. A failed bound or an exhausted
-    budget returns no placement. With schedules, a slice above the cap is
+    budget returns no placement. Linear design checks are the default; the
+    Boolean comparison is an optional legacy mode. With schedules, a slice above the cap is
     refused before ``build_auxiliary_slice``. A slice at or under the cap is
     built only when the caller did not pass one.
     """
+    if design_method not in ("linear", "boolean"):
+        raise ValueError("design_method must be 'linear' or 'boolean'")
     supplied_var = variable_schedules is not None
     supplied_clause = clause_schedules is not None
     if supplied_var != supplied_clause:
@@ -874,9 +854,9 @@ def schedule_placement(
         if not check.admitted or _allocation_refused(check):
             return _blank_outcome(check, caller_supplied=False)
         search = _search_schedules(cnf, check)
-        if not search.chosen or _design_budget_exceeded(search):
+        if not search.chosen or (design_method == "boolean" and _design_budget_exceeded(search)):
             return _search_outcome(check, search)
-        return _finish_chosen_placement(cnf, check, search, auxiliary)
+        return _finish_chosen_placement(cnf, check, search, auxiliary, design_method=design_method)
     if auxiliary is None and R is None:
         raise ValueError("pass R when the schedules need a new slice, or pass an auxiliary slice")
     if auxiliary is None and _allocation_refused(check):
@@ -909,7 +889,7 @@ def schedule_placement(
     placed = place_formula(cnf, auxiliary, variable_schedules, clause_schedules)
     design: list[tuple[int, str]] = []
     for t in range(1, auxiliary.Q + 1):
-        for problem in design_problems_at(placed, t):
+        for problem in design_problems_at(placed, t, boolean_check=design_method == "boolean"):
             design.append((t, problem))
     restored = tuple(restoration_problems(placed))
     multiplicity = placed.copies
@@ -963,6 +943,7 @@ def schedule_placement(
         balancer_attempted=False,
         balancer_built=False,
         design_checked=True,
+        design_method=design_method,
     )
 
 

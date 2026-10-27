@@ -1,6 +1,8 @@
 # Progress
 
-Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, a Step 5 occurrence reduction, and a Step 6 parameter scan are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 256. Step 7 checks two placements above the old cap of 64 and refuses to choose schedules when the balance inequalities fail. Step 8 runs a successive-choice search when those inequalities hold. On the admitted rows it meets the multiplicity and group bounds and refuses before `design_problems_at`, because that walk would exceed a Boolean-point budget. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point. Step 6 runs those pieces on one fixed grid and records a match or a refusal. A refusal is not timed. The scan does not close the distance listed at the end of this file.
+The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.14.0 completes Steps 9–13: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements and actual DIMACS counts by independent components. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`.
+
+The Step 0–8 sections below preserve historical measurements. Step 7/8 Boolean-budget refusals are reproduced through the explicit legacy mode. They no longer describe the default scheduler. The older Step 6 distance list is a historical snapshot, updated below by the new reference alignment.
 
 ## Step 0
 
@@ -434,7 +436,7 @@ The matrix cells:
 | matrix-swap-4 | agreed. Side length 4, the hand-written exchange, n = 2, #F = 1, observed degree 0. The degree report walked 20 cube assignments. This is not full M0 |
 | matrix-full-m0 | refused before allocation. `build_auxiliary_slice(2, 192, 32)` raises. The side length is 2^384, above the slice cap. Step 7 later set that cap to 256; the refusal is unchanged. No timing was recorded |
 
-### Distance to a full counting algorithm
+### Historical distance recorded by the Step 6 scan
 
 The scan is a record of the pieces that exist. It is not a claim that the missing pieces are close, and it is not a 2^{o(n)} algorithm. The unfinished list:
 
@@ -446,7 +448,7 @@ The scan is a record of the pieces that exist. It is not a claim that the missin
 - Clauses that cross a Step 2 block partition are not factored by the blocked sum. Copying does not pull a crossing clause into one block, and it does not produce a Step 3 placement. The scan records that refusal and does not time a blocked sum on it.
 - Theorem 1.1 is not implemented. This repository does not refute ETH. No cell of the scan is a 2^{o(n)} counting algorithm.
 
-Step 7, below, is the balance scaffold and the two larger slices. Step 8 is the successive-choice search. Neither removes this list.
+The original Step 7/8 paths preserve these stops in legacy Boolean mode. Steps 9–13 update the default design, common evaluator, auxiliary representation and supplied-CNF entry point; their remaining obligations are listed below.
 
 ## Step 7 — larger slice and a balance-check scaffold
 
@@ -514,7 +516,7 @@ On the admitted rows this repository runs, the outside group is large enough tha
 
 The binomial tail bound is not checked. Full M0 is not built. Sparsification with n' = n + o(n) is not implemented. The measurement enumeration of Step 2 is still exponential in the number of groups. Hermite interpolation still walks the cube. Nothing in this step runs in 2^{o(n)}.
 
-## Known gaps
+## Historical gaps through Step 8
 
 Step 6 records these on its grid. Step 7 raises the slice cap and adds the balance refusal. Step 8 runs the successive-choice search on the admitted rows and refuses them before `design_problems_at`. Recording them does not remove them.
 
@@ -525,3 +527,72 @@ Step 6 records these on its grid. Step 7 raises the slice cap and adds the balan
 - The Step 0/1 Lagrange path is still Θ(2^n · D) scalar evaluations. The Step 4 paired path is about half as many cube passes, with a jet of width 2. The single-point path is one pass with Θ(D²) arithmetic per assignment. The Step 5 degree rows are the same shape of cost on n' and on m'·k·R. None of these is subexponential.
 - The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table. The Step 4 degree column is the eight rows in that section; on each of them the measured degree equalled the cap. The Step 5 degree column is the six rows above; on each of them the measured degree equalled M'·R.
 - Self-reduction deletes fixed variables from clauses and then calls brute force on all 2^n bits, so the integer it sees is not the number of extensions. The CLI only needs a yes/no answer and checks the witness it returns.
+
+
+## Step 9 — exact reference schedules and rational design
+
+`conditional_balance.py` minimizes the exact normalized conditional expectation from Lemma 4.5. The pair probabilities include incidences sharing a variable or a factor. Tiny exhaustive-completion tests check the expectation at every prefix and the lexicographic minimum chosen at every step. The final potential is also computed directly from label and group loads.
+
+`design_problems_at` defaults to a cached exact rational row span. Membership implies invariance on the complete rational kernel, hence on Boolean inputs. Optional `boolean_check=True` retains the small-instance comparison. `schedule_placement(..., design_method="boolean")` retains the Step 8 budget gate.
+
+The admitted n=1024 unit-clause instance at r=2, Q=2, R=1 completes placement: multiplicity 64 <= 128, largest group 512, exact design and T=0 restoration pass. Its count is not evaluated. The tail probability is 7/16 > 1/4, so this parameter point fails Lemma 4.7. At n=16384, r=2, Q=3, R=2, tau=1/2, every numerical hypothesis passes and the tail is 5/32 <= 1/4. Step 12 below completes sparse placement at that point and records the global counting budget refusal.
+
+## Step 10 — streamed shared-measurement Taylor recovery
+
+`common_count.py` implements Lemmas 3.2–3.3 and equation (3.13), using the safe degree bound dH=M(R-1), q=floor(dH/Q), J=q+1. Independent integer rows are selected from each restricted measurement matrix. Measurement ranges use the sums of negative and positive row coefficients. Representatives are chosen before imposing E's fixed-bit restriction, as required by Lemma 3.2.
+
+Each requested jet matches the independent full-cube Hasse evaluator; H(0) matches brute force. The local scans are deliberately counted, not presented as a speedup:
+
+| example | count | substitution pairs | local vectors actually examined | planned upper bound |
+| --- | --- | --- | --- | --- |
+| swap-4 | 1 | 1 | 28 | 32 |
+| remark-4-4 | 1 | 5 | 260 | 310 |
+| cross-r3 | 7 | 1 | 40 | 48 |
+| r2-q3 | 7 | 7 | 371 | 504 |
+
+The evaluator streams tuples and representatives rather than storing an exponential table. It does not call brute force or full-cube Hasse evaluation as its backend. Those functions are independent test oracles. Second-order substitution recovery, negative literals, empty inputs, free variables, malformed designs and refusals before enumeration are tested.
+
+## Step 11 — structured auxiliary entries
+
+`structured_auxiliary.py` evaluates a coordinate of V0 fI(W0) by the Fourier eigenvalues on its commuting-swap orbit. Krawtchouk sums require polynomially many operations in Q and R per queried entry. The replacement coefficient is then equation (4.10).
+
+Every matrix and replacement entry agrees with dense side lengths 4, 9, 16, 64 and 81. Integer measurement descriptors agree with the original dense eigenbasis. At r=2, Q=192, R=32, D=2^384, coordinate restoration, support, sample-point cancellation and the interpolation values on I are checked without enumerating coordinates or measurements.
+
+## Step 12 — sparse placement and bounded rational kernels
+
+`sparse_placement.py` uses only occupied auxiliary coordinates and coalesces contributions that belong to the same original variable. It stores sparse polynomial and measurement rows, with predictive limits on placement entries, replacement support, measurement-mode queries, pullback candidates and elimination entries. `SparseRationalRowSpan` checks rational kernel membership without allocating dense group matrices. The checks also cover T=0 restoration, common denominator, absolute coefficient norms and all sample-point designs. `schedule_sparse_placement` requires every numerical hypothesis of Lemma 4.7.
+
+The n=16384 alternating-polarity unit-clause formula at r=2, Q=3, R=2, tau=1/2 passes those checks. Its concrete storage and query record is:
+
+| quantity | value |
+| --- | --- |
+| label copies | 256 |
+| largest group | 8192 |
+| group ranks at each of three nodes | (2048, 2048) |
+| sparse polynomial entries | 59392 |
+| corresponding dense polynomial slots | 536870912 |
+| sparse measurement entries | 14336 |
+| mode-coordinate queries | 163840 |
+| pullback candidates | 34816 |
+| elimination entries | 10240 |
+
+`common_count.py` accepts this sparse placement. Its global plan has q=5461 and J=5462, with a Boolean-vector upper bound of 36697 bits. The evaluator refuses before enumeration, returns no count, and examines zero Boolean vectors. The sparse construction is completed, while the global sum is not. This record establishes finite storage usage, not an asymptotic space or time theorem.
+
+## Step 13 — supplied CNFs and independent component counts
+
+`dimacs.py` preserves the declared variable count and parses comments, multiline clauses and empty clauses with header validation. `component_count.py` removes tautologies and duplicate literals/clauses, finds independent components by union-find, renumbers each component and places it afresh. Every nontrivial local count comes from sparse shared-measurement recovery. Identical renumbered components optionally reuse a completed count in a capped cache. Declared unused variables contribute 2^free. A refusal returns no partial count.
+
+```bash
+python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
+counting-sat-algebra count INPUT.cnf --json
+```
+
+The example declares eight variables and has two disjoint three-literal clauses. The result is 196 = 7·7·2², with two components, two free variables and 148 local Boolean vectors examined. The saved JSON includes the exact count and resource counters. Huge results use exact hex encoding to avoid Python's decimal-digit limit.
+
+On 10923 disjoint three-literal clauses and 32769 active variables, the result is exactly 7^10923. One local evaluation and 10922 memo hits produce this count; adding two declared free variables gives 4·7^10923. Tests disable the full-cube oracles while executing this path. The large input passes the Q=3, R=2 numerical hypotheses, but its global placement was not executed. Its count follows from independent components and does not establish a general connected-instance bound.
+
+All 163 regression tests and all 14 reference checks pass. Tests include disabled memoization, a local R=2 Taylor backend, normalization, random small formulas, declared free bits, exact DIMACS/JSON output and component/global budget refusals. `benches/reference_alignment.json` records the five reference suites without wall times and retains the incomplete theorem/proof flags.
+
+## Current distance to the reference conclusion
+
+The structured operator now connects to sparse placements, measurement construction and the common counting entry point. Supplied CNFs can be counted when their independently placed components fit the budgets. To obtain the reference's general-input bound, the full asymptotic parameter family must be selected and executed; Sections 5–6 require sparse polynomial systems, equation selection and disjoint sparsification. Appendix D is needed for the sharper Theorem 1.1 bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.

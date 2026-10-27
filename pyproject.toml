@@ -4,13 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "counting-sat-algebra"
-version = "0.9.0"
-description = "Algebraic #SAT testbed: interpolation, bounded-occurrence checks, a blocked-sum identity, a replacement matrix up to side length 256, exact Hermite recovery of H(0), a counting-preserving occurrence reduction, a machine-limited parameter scan, a balance-check scaffold, and a successive-choice balancer that refuses when its budget or the balance inequalities fail. Does not refute ETH."
+version = "0.14.0"
+description = "Exact algebraic #SAT reference implementation with sparse placements, shared-measurement Taylor recovery and DIMACS component counting. Complete theorem and asymptotic alignment remains open."
 readme = "README.md"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
+
+[project.scripts]
+counting-sat-algebra = "counting_sat_algebra.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

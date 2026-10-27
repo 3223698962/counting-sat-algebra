@@ -84,44 +84,38 @@ TIMING_DISCLAIMER = (
 )
 
 DISTANCE_TO_FULL_ALGORITHM: tuple[str, ...] = (
-    "Full M0 at R ≥ 32 and 6R ≤ Q is not built. The smallest such integers are "
-    "R = 32 and Q = 192. At r = 2 the side length is 2^384. "
-    "build_auxiliary_slice refuses that call before it allocates the matrix. "
-    "The scan records the refusal and does not time a matrix.",
-    "A Step 7 scheduler scaffold checks the balance inequalities 2(b+w)D^2 <= M "
-    "and 2Qr^2 <= n before it would choose a placement. Those inequalities need "
-    "n on the order of D^2. They fail for every formula this repository compares "
-    "with brute force, and the scaffold then refuses: it does not choose schedules "
-    "and it does not invent a random placement. Step 8 runs a successive-choice "
-    "search when the inequalities hold and the slice is under the cap. On 64 "
-    "disjoint units at r=2, Q=1, D=4 the search meets label multiplicity 16 <= "
-    "2M/D = 32 and group size 32, then refuses: design_problems_at would "
-    "enumerate 2**32 Boolean points, above the budget 4096, so place_formula is "
-    "not called. The schedule cube is not enumerated. That search is not a proof "
-    "of Lemma 4.5 and it is not a 2^{o(n)} count. Caller-supplied schedules can "
-    "still be checked, including the hand-written Step 3 placements, against "
-    "group size at most 2n/r and, as a recorded bound, label multiplicity at "
-    "most 2M/D.",
-    "Sparsification that keeps n' = n + o(n) is not implemented. "
-    "Implication-cycle copying at B = 3 replaces a variable of occurrence d > 3 "
-    "by d variables. The scan records random_3cnf(5, 12, seed 0) at n' = 36, "
-    "past the brute-force wall n ≤ 20, and does not enumerate that reduced cube.",
-    "A subexponential measurement space is not implemented. The popcount design "
-    "enumerates (r+1)^b tuples. For blocks of size 2 that is 3^{n/2}. On the "
-    "rows this scan runs, the local-evaluation count is often larger than the "
-    "cube. The scan does not claim a 2^{o(n)} measurement loop.",
-    "Hermite interpolation does not remove the 2^n pass. The paired scheme "
-    "packs D+1 conditions into fewer distinct t, and each t still sums the cube. "
-    "A full jet of order D does quadratic arithmetic per assignment. The scan "
-    "runs the paired scheme only inside the assignment budget. It does not run "
-    "the single-point jet as a substitute for the cube, and it does not treat "
-    "either scheme as a subexponential evaluation.",
-    "Clauses that cross a Step 2 block partition are not factored by the blocked "
-    "sum. Copying does not pull a crossing clause into one block, and it does "
-    "not produce a Step 3 placement. The scan records that refusal and does not "
-    "time a blocked sum on it.",
-    "Theorem 1.1 is not implemented. This repository does not refute ETH. No "
-    "cell of the scan is a 2^{o(n)} counting algorithm.",
+    "Full M0 dense allocation at R=32, Q=192, D=2^384 remains refused. "
+    "Step 11 provides structured coordinate queries at those parameters. "
+    "Step 12 connects them to finite sparse placements and the common count "
+    "entry point: n=16384, Q=3, R=2 uses 59392 polynomial entries and passes "
+    "all numerical hypotheses and design checks. Its global sum is refused "
+    "before enumeration; execution of the full parameter family remains open.",
+    "The default scheduler now uses exact reference conditional expectations and "
+    "rational kernels; the admitted n=1024 placement passes. The legacy Boolean "
+    "mode preserves the 2**32 budget refusal. Lemma 4.7's exact tail is now checked: "
+    "the n=1024, Q=2, R=1 point fails it and the n=16384, Q=3, R=2 point passes. "
+    "Complete asymptotic parameter selection "
+    "and execution on general formulas remain open.",
+    "Sparsification that keeps n' = n + o(n) is not implemented. Implication-cycle "
+    "copying can produce n'=36 from n=5; Section 6's disjoint sparsification and "
+    "the sparse-polynomial equation construction remain open.",
+    "A subexponential measurement space for general inputs is not implemented. "
+    "The Step 2 popcount tuples remain 3^{n/2} at r=2. Step 10 streams the "
+    "reference's measurement boxes; a completed parameter and reduction pipeline "
+    "is needed for the asymptotic bound.",
+    "The original Hermite oracle still walks 2^n and its full jet has quadratic "
+    "arithmetic per assignment. Step 10 instead recovers jets through restricted "
+    "local sums and fixed substitutions, checked on supplied finite designs. "
+    "Step 13 uses it on independently placed CNF components and counts "
+    "10923 disjoint three-literal clauses as 7**10923. General large connected "
+    "components still face resource limits; the general-input reduction remains open.",
+    "A crossing clause still fails the Step 2 block factorization. Step 10 can "
+    "count crossing clauses on supplied designs, and Step 13 places small "
+    "components afresh. Copying does not "
+    "construct those placements for a general reduced formula.",
+    "Theorem 1.1 is not implemented. This repository does not refute ETH. "
+    "Appendix D tensor contraction, full bit-complexity and space analysis, "
+    "and the Lean machine proof remain open.",
 )
 
 _PROFILES = ("quick", "full")

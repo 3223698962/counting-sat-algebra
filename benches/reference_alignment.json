@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "version": "0.14.0",
+  "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements and independent component counts; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "admit-n1024-linear",
+      "n": 1024,
+      "m": 1024,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "multiplicity": 64,
+      "multiplicity_bound": "128",
+      "max_group_size": 512,
+      "trials": 8192,
+      "initial_potential": "31/32",
+      "final_potential": "0",
+      "count_checked": false
+    },
+    {
+      "name": "lemma4.7-n1024",
+      "n": 1024,
+      "m": 1024,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "numerical_hypotheses_admitted": false,
+      "tail": "7/16",
+      "tail_limit": "1/4",
+      "placement_checked": false,
+      "count_checked": false,
+      "reasons": [
+        "binomial tail 7/16 exceeds tau/(rb) = 1/4"
+      ]
+    },
+    {
+      "name": "lemma4.7-n16384",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "numerical_hypotheses_admitted": true,
+      "tail": "5/32",
+      "tail_limit": "1/4",
+      "placement_checked": false,
+      "count_checked": false,
+      "reasons": []
+    },
+    {
+      "name": "swap-4",
+      "n": 2,
+      "m": 2,
+      "brute": 1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "jets": [
+        [
+          "1"
+        ]
+      ],
+      "plan": {
+        "degree_cap": 0,
+        "q": 0,
+        "J": 1,
+        "substitution_pairs": 1,
+        "measurement_counts": [
+          2
+        ],
+        "measurement_tuples": [
+          4
+        ],
+        "local_cube_sizes": [
+          [
+            2,
+            2
+          ]
+        ],
+        "boolean_vector_bound": 32
+      },
+      "boolean_vectors": 28,
+      "measurement_tuples": 4,
+      "factor_evaluations": 8
+    },
+    {
+      "name": "remark-4-4",
+      "n": 2,
+      "m": 2,
+      "brute": 1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "jets": [
+        [
+          "-3/4",
+          "-3/2"
+        ],
+        [
+          "-2",
+          "-1"
+        ]
+      ],
+      "plan": {
+        "degree_cap": 2,
+        "q": 1,
+        "J": 2,
+        "substitution_pairs": 5,
+        "measurement_counts": [
+          2,
+          1
+        ],
+        "measurement_tuples": [
+          4,
+          3
+        ],
+        "local_cube_sizes": [
+          [
+            2,
+            2
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "boolean_vector_bound": 310
+      },
+      "boolean_vectors": 260,
+      "measurement_tuples": 35,
+      "factor_evaluations": 58
+    },
+    {
+      "name": "cross-r3",
+      "n": 3,
+      "m": 1,
+      "brute": 7,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 7,
+      "jets": [
+        [
+          "7"
+        ]
+      ],
+      "plan": {
+        "degree_cap": 0,
+        "q": 0,
+        "J": 1,
+        "substitution_pairs": 1,
+        "measurement_counts": [
+          2
+        ],
+        "measurement_tuples": [
+          4
+        ],
+        "local_cube_sizes": [
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "boolean_vector_bound": 48
+      },
+      "boolean_vectors": 40,
+      "measurement_tuples": 4,
+      "factor_evaluations": 8
+    },
+    {
+      "name": "r2-q3",
+      "n": 3,
+      "m": 1,
+      "brute": 7,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 7,
+      "jets": [
+        [
+          "8",
+          "4/3"
+        ],
+        [
+          "29/3",
+          "2"
+        ],
+        [
+          "12",
+          "8/3"
+        ]
+      ],
+      "plan": {
+        "degree_cap": 3,
+        "q": 1,
+        "J": 2,
+        "substitution_pairs": 7,
+        "measurement_counts": [
+          1,
+          1,
+          1
+        ],
+        "measurement_tuples": [
+          2,
+          2,
+          2
+        ],
+        "local_cube_sizes": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "boolean_vector_bound": 504
+      },
+      "boolean_vectors": 371,
+      "measurement_tuples": 42,
+      "factor_evaluations": 88
+    },
+    {
+      "name": "structured-d16",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "dimension": 16,
+      "entry_comparisons": 256
+    },
+    {
+      "name": "structured-d64",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "dimension": 64,
+      "entry_comparisons": 4096
+    },
+    {
+      "name": "full-parameter-coordinate-queries",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "dimension": "39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816",
+      "measurement_modes": "316174224783804454539287153419759265722358236593061893503018532905172358109184598861253200387676721813486945683386",
+      "dense_matrix_allocated": false,
+      "modes_enumerated": false,
+      "count_checked": false
+    },
+    {
+      "name": "admit-n16384-sparse",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "numerical_hypotheses_admitted": true,
+      "tail": "5/32",
+      "storage": {
+        "occupied_coordinates": 16384,
+        "mode_coordinate_queries": 163840,
+        "pullback_candidates": 34816,
+        "polynomial_entries": 59392,
+        "measurement_entries": 14336,
+        "dense_polynomial_slots": 536870912
+      },
+      "multiplicity": 256,
+      "group_ranks": [
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "count_checked": false
+    },
+    {
+      "name": "n16384-common-budget",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "q": 5461,
+      "J": 5462,
+      "boolean_vector_bound_bits": 36697,
+      "boolean_vectors": 0,
+      "reason": "Boolean vector bound an integer of 36697 bits exceeds budget 500000; no enumeration started"
+    },
+    {
+      "name": "component-demo-n8",
+      "n": 8,
+      "m": 2,
+      "brute": 196,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 196,
+      "components": 2,
+      "free_variables": 2,
+      "boolean_vectors": 148
+    },
+    {
+      "name": "disjoint-3cnf-n32769",
+      "n": 32769,
+      "m": 10923,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count_hex": "0x1aaeae40f7096031cd75d8544dad7d447fb55f9e353b75c05dd0d5284a93906f317a69c3f7d0b3808dfa86f5d48580df79c9c67e98e378e1eb76ce562be2979ac918d5fa5408bee8caed5de9d72cb55d47c0650db738f071f7cf8865dd2636cc1f4c1871f83b711e1a875b8050ce0e29c31e094c98143d3a242661be4c7c11eda87a98caaa80c9067ac1a243b7bcaf8d32c0e6a39075807ff4b9c10bd4456d59e7c356f7b3d406c355fe8764f660413483db2a9ef529d449ef2aa79369eb5c3644a7bdcba2222e0a303b4914da2a56a79efb919f51b0e86dc58ee378c7efe3ce7616972db75fb55d85feedc844c1896d966e0b3842e43294499579f73a6739090645a34b44917c46abcd48c83fee3e4ba6a77d93b3a95b180582d3400a7978b9404480d5796569256f3f8febdcbdb1a84b736b865cea0aca097e07ec91ecc5205eb72f04eb72730b68f94467483455ffedbe48a10ac50b7057fa8c8d1e9d897c77faa6a71e2c06fe8aac4ef789c17478138e13b21ba262a1b732e5d24550deaa4a78264c55bcf2247d0698b1faf23cf2fecd8a83871f50f7fe0984137db3764b53d345ab69ad1583ad8f39df60985fbe30612bb50fb2fbbc26c0ec589de2f543d0da78371c851bfc5b134429d228b49d099066134aea8e0eae9e4cd82c22e1dabb02355a6aed39e4bff83264789da321c1f92b1dfce9792f9a924f0e06e8098b2adfc44f303c049fbb2335f4f3bb662784f6def50f736963434a98620d3261334215449466047c1b6130cb6e08fdd1866698c00e9807ac73dac2c43c9bad68dbc6f55716ca155773cd74c64ce5352a12e5a1c0a6a16a5448db5197cd4ddfda25f33203b5c70f9ae9965605a65ab50cc70cdbb11447a646baeaee74890ebb51e3aa36179918f4ab912be511baa6adfc55dc01cf93ecae61335bb35490cdef8b5094fee9aefca77f8e6a75faf731ec7bcec8cca8604c3b3444aa4b3f4da97c1709e776051a8b64e0be6c81736938ac06d059d0f885ffd67d1ff11dc1d6e8a4f3dc36a3194e3c67f1e8c80847709054ac545e7311f5a8b25d91c9117504683a2f1c58c7a57ca24ec14d22c137c046e3713b2c21bad2bccc1129f2f6f574947bd5e78906afd84fe52637a89c71940a7e1766694ff8eb133f7bf10a190f1e9ff418c90dc4289bd802062cbc00173d634d4b78699740eb3f4a71a9ee45ba84a85bd85890406dad837c1f3a237ac91d208584480a73f53fb1ac7845dfd2a1f57d6806b109b60a0a63de8cf726cd93fbe9263c1063e0ba767a67285e89e491aefe08fb0fa6a711d19a27aa4b3aa082af271a6fd9ff1f559859d38ee2985a8e0935958303d756a8b973200fa146072a4a202c123de3c54b0fc82c361f5134c142684b7028626a192a9b2602e848077c3d2688e14849b0ecb95a775d165e860aab3200d1d1572726d2155eff71397bcb224b1e2be803e19fa6eaf1fcfcf51c9932a25ee5dc165138d40a5afd888f932a283390311a7d42e17b01543fd795776ed88fbbb14a5577bddeeef5c646506d00cf40b2fa04e2e6345e59eae6c94baa01b859b1c86654b854415a249b6dfba8cfff84190f77654cd899e598e1a94c420b4efa3dc540db9b95819db390765d9093af08c2647d857dadb17f84a13e7dcbcd76ff6f3121043a9a3b76a430fb55c085c6bcebbb6bb187b291d79d35d142d2997dacbf9604c7cce95590dde40a15e5d36589808a1b59b1a58ca809a6e47cfecef32646d2b3c032bc5f913dfa62afa382491431c4bf5759f2e3067c6dcb3ec5d608c51c30107b54002fb041336d7bf663c69e4c7b684bc48ad865dbf81ea463b366406d7f3058a0f29222f880bca1a5a78ea682024c531237447d92c2197113efdf573775b171755dd596e419805d3ff8c8b5fa39f8b11ed630e55d4b076ca39da4ac989c74a887f8a0e634c5a1091a23d546a01840b7bdcd6e460ad4bbe3e1bb37e094df78e4930a6620c1367fb31f3e6f955d216fd23ae8672d6ff2d1489750aeffb301bc2b9e0ae58ec21b10eb3fdd52ab43197cb5cad1e3c3c19fb4507780e36ed1ed5b09f9cc05230759c552e71555a9f6150720b0349990d0a7442b053a340904a5485f42d7ae62f04e6a834c72ef1c0f81f13a5c2ebe63625fade91c9cbb8c6d78b62e79e6900c21d782fb930a03ac7bca7a3ab34d0450e82e6eb928af7d518a87688eeecc2f6b8ce12ca51851f460ff32b248524675eb24abcb3430b71dd220ebce377afdad26fdc5dab30d0c13fe682cd5fc29aad8c8aa04e399c7173098493ab24e9aa799efa6d79e2e8352acd29686ab48fa8492a8d1796b1afe61c3bc61d9fe210683a242dd9535d0ad70c6109899404e5dc4c48d1b6175414fc63e44ced36d3897b38d917fd0d87ba18a10f67396a12f4a5dcb3c50db42f90dd1e5b8a45777b43cdf0aa952879d30d33e919eb199fc7d9f4f4ac67b94dc004b0f82c80cf39475422f482086bf6c0dd9b9b556bb7c5c38dc5fca41a69a694390586d6ba7f7ae84d2437975e6562e2e74f96ccf6b581d2cdc9d36d599057e34a1bbc5dc240f162a6d98d9b36d370edfb6ca7df36117a07fded42c618c4243247c9912ea38e459b4f9dfe822b662d03762cfc236e50ac430a59a3bfb68adf0d9715931beb0428fcfcca4c23cf172959ffe76f950d27ec384be50bab4bfdbadfebc9c723153433a186a039cf4e0aa65c6291f785458909b28e845daabb1a72d7c843a1d9851c20da7d1ee3c51fcf58ee1a06a639e9dfc59dbff408eb1156e32f07bed21f88ccd8fd05639c9a4502e8f83564a8fb597a44dcd51aa49be4109f56e620b965c7e53f7a115d4fcbd803792fa4b97485a627ef9b79feabfb389c55422222f559764870e941a198bfd77561d40872155f651d023db5ce916c2729abad2e65d71806cf8cd62772074d5072bb2ee991ccc5ec03b4ea385f75d6de21aad335f602ac26a7ca0c627a34056c27bb85e08e89232d236214a59de32fc34758d3a8bf4656887171614988ffc0e43bee9815e780b0d6db4b24680fe1114be87af501f9fea2cae1d3f8e352d9b259412dcfcfa2c0252787babeaf0a61494f1daca9e758246ded9eebfb1779b1e90f141257bad8cbb23ee3834cfba453095d4abfe894d072ac7fe8bd29a68f08a7f009a094dfada8858eb2c08c752100f51eef35f6dbf849b108e37df2af3b00be5f40db10104d16305ff67d51f5b4e5f0eb06165675739a59cc95745297cfc7251efd4ae063f7926ce2556aabb50610810ffdec1496431cb4b52a877e8fa9f247e97936a1eb5ef48d42153fb2fa5c7477dd6733a6db958d61a143c3c14ef07c2921b7df1a2e9a70ac32dc9cdc136867bf62805739e1f3c37a8940a358e5acc8f08084dd31d9eca66841f4bdf686b3f201f429968a3f3f3d8dc711d9974279e4b2f2c4f9e42b97c06805ae63b3f9baf4644eee84388a3e635c3f073ddf588883da6c46847140f33ca97501a36884b6bbd58d94c77913ed7c50d4565c7d4c3f68f3b45ba77b46d0d36c7d2f5335889edfc0ca75bad59fb66cb984998112865497a76cb799d86a87ae7f554f649cdc0d0e380424304b894c3790798c2f5f56a61dad08bdd229b014115f86111dd2efab86c42ec579f7ea1600c69194cfb804cd3ff9ce9c65cb1c4183783ee0199919c8d471336a0a359799e009c2a05315ee93def43ec5ed36b85c6e3cab902bac089c4a4be7a9735803b799c6bdf76c91edd82bd21cb880c1762bbbaeb4f49b151f825c575ac75ce5ccd98cbcfe44d7b8728a3525c07aa646a0d967e0e2b9d36292a69ceb80d3d354f08d23c13c156622a4fb5564a73ba974c637c42fe895a49048e82a0f560fa25f95bb79262f6f86db04c99fddd82354e20d9957bd4bebcdf0c3bba859dd30bd11168a3f377dfded92e7b55e9001812801affc5703b6adab9f417d062293799621634d8f881b12a34d55b244f6e10baa5eb77779b864b1062a8db192682095ed6d08db268c1b30f48b4318e6f2efc408ed033554ddb098fb80fd365335b6555c119b836cd78a756ba30bb1578076dc0509e9a6c51f4d9785e1c0b89e05a2a3825df5ca431518750e0c457aad69a70a5ee78e915ef7ad6c9aebb1d08d1441e22d5f20045e39725053b3f152cca80e446c79b66ecf1a0f9451d3045db779c23096db60982dc1a6c0d958eb1c5710d30f93a13fd70195b43b8d327efd674f18d6c0241f1f98f46d4faa2792ffb53c584e07d3599cde0d8e937f528c6df0ab678933bb04fb436b7dd1d211c8969a53c6904ee9a7f5631082d8b778c37af048cd9fe848db267e9e88976615b8ac3bd78d2223bc42baf29db7a71ee6bec25ac31be647378ea6c1b0e34d2e3845ca74ca405f9ff32b4c6af551a5b612edb5ea54503bbe5cb272de698e20ec0763a837b836b334a47dffcde73c46dce4b8532c6cc6fd7720021c4b642f1b155874569e5d1a41ba148070e6e7005e382ffea9e26a6f94c159165bcc0f21d94da763633ce389abf777cbf8e853d301e05961c06f7dd10027b6bbb2707e44f7242039064cadcfa66e69ba4b3e32a265ddd84494de7a605379ad19596bdf8176aea04b9901bf57453e46b7582e11407940d974c57e9dc6d9a1ded35a83556c246bc88bcb4e099d9df0134bc76ee60782bf0abfbd8472149fbe9d303ecef03d15639687feffc45e7f8b190a5f5761d9367495bd68ccb9aafdea9d2e39eb58370c718a87142ea15767a9f66fe13d9a7503cad153826e85623bf2f12b324efdf8d3c356bb02a9aeadd5331187975460bf91d7bf603a219fe614a31e6a745f413a76f03371f6943f3841c1e8d49e88c7812022ed4eaf027834f55b7e1f67d2e0f3008db53f95380c20bf8ea5f8fed1540f05542bfa135c677fcf2925707fe5f2b8fb671cffa2530eac12745c69b5d6474b88871eb0ef42e3a557e7bd19d1a06137ed2e5b41474963d049c623e5817ec48fcd451695ad293be8a295ca3a533fba50fef1d71b62e658ec5678ca25185c843581cd9945a310ccbfd9c5034433cab2a156d45ea47c537c0d687ab9d6ca1bd549e5b991e0d51fc455cbe6ab8af21c5f5d153a1b8193162931f4169735c10323386ad420818344430e68cd7c822204863c1f1e01c4bea7a016f32b2fa21079fa0ad4230378a0467e0bf5e9300b813c9d3520400135fab7b9af48abcff8f1c797daa232ece388653c33bfce17042e11ce8aff7420fe742d2a4e4ad043beecb1f7fb3d86009e70110d8dc2fe5e97682361494640c87833478b8fb4b4d36c8ef22e281a4f4d5293989bc24bf95802830abf5a0b33b9493281c3537d77a3a5d95ce0a0c4d0a1f3da194873549cdebc7c195231bc82063f403b9ebf0a53cba101b9ab84b31227085b9e1393521bad97",
+      "expected_count": "7**10923",
+      "count_validation": "closed form for disjoint three-literal clauses",
+      "numerical_hypotheses_admitted": true,
+      "global_placement_checked": false,
+      "components": 10923,
+      "local_evaluations": 1,
+      "memo_hits": 10922,
+      "boolean_vectors": 74
+    }
+  ]
+}

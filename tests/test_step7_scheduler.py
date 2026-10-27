@@ -138,7 +138,7 @@ def test_admitted_toy_meets_the_bounds_and_refuses_the_design_budget(
     assert check.admitted
     assert check.mass_bound == 64 and check.variable_bound == 8
     assert check.degree_gap_ok is False
-    outcome = schedule_placement(cnf, r=2, Q=1, R=1)
+    outcome = schedule_placement(cnf, r=2, Q=1, R=1, design_method="boolean")
     assert outcome.balance.admitted and outcome.placed is None
     assert not outcome.built_slice and not outcome.accepted
     assert outcome.balancer_attempted and not outcome.balancer_built
@@ -152,7 +152,7 @@ def test_admitted_toy_meets_the_bounds_and_refuses_the_design_budget(
     assert "place_formula was not called" in outcome.reason
     assert "1 <= R < Q" in outcome.reason
     assert "not implemented" not in outcome.reason
-    again = schedule_placement(cnf, r=2, Q=1)
+    again = schedule_placement(cnf, r=2, Q=1, design_method="boolean")
     assert again.placed is None and again.balance.admitted
     assert again.balance.degree_gap_ok is None
     assert again.multiplicity == 16 and not again.accepted
