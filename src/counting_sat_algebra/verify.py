@@ -15,6 +15,7 @@ Usage:
   python -m counting_sat_algebra.verify --step5
   python -m counting_sat_algebra.verify --step6
   python -m counting_sat_algebra.verify --step7
+  python -m counting_sat_algebra.verify --step8
 """
 
 from __future__ import annotations
@@ -50,8 +51,13 @@ from .replacement_matrix import (
     step3_examples,
 )
 from .scheduler import (
+    BALANCER_DESIGN_BOOLEAN_BUDGET,
+    _finish_chosen_placement,
+    _search_schedules,
+    check_balance,
     placed_identity_problems,
     schedule_placement,
+    scopes_from_cnf,
     step7_examples,
 )
 from .parameter_scan import TIMING_DISCLAIMER, format_distance, format_scan_line, run_parameter_scan
@@ -592,8 +598,9 @@ def run_step7_suite(*, heavy: bool) -> list[dict]:
         "When they fail, no schedule is chosen."
     )
     print(
-        "  Caller-supplied schedules are placed and checked. "
-        "The conditional-expectation balancer is not implemented."
+        "  When they hold, Step 8's successive-choice search runs inside a "
+        "machine budget. This suite records the admitted point and does not "
+        "time the refusal."
     )
     print("  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm.")
     rows: list[dict] = []
@@ -676,11 +683,17 @@ def run_step7_suite(*, heavy: bool) -> list[dict]:
         admitted.balance.admitted
         and admitted.placed is None
         and not admitted.built_slice
-        and "no schedules were chosen" in admitted.reason
+        and admitted.balancer_attempted
+        and not admitted.balancer_built
+        and admitted.multiplicity == 16
+        and admitted.multiplicity_ok is True
+        and admitted.outside_group_size == 32
+        and "2**32" in admitted.reason
+        and "place_formula was not called" in admitted.reason
     )
-    add("admit-n64-no-schedule", 64, 64, -1, admitted_ok, "REFUSED" if admitted_ok else "FAIL")
+    add("admit-n64-budget", 64, 64, -1, admitted_ok, "REFUSED" if admitted_ok else "FAIL")
     print(
-        f"  [I] n=64 meets the inequalities and no schedule is chosen  "
+        f"  [I] n=64 meets the inequalities; design budget refuses the placement  "
         f"{'REFUSED' if admitted_ok else 'FAIL'}",
         flush=True,
     )
@@ -715,6 +728,180 @@ def run_step7_suite(*, heavy: bool) -> list[dict]:
     return rows
 
 
+def run_step8_suite() -> list[dict]:
+    """Successive-choice balancer. Refusals are not timed.
+
+    Every row here either refuses before a matrix is allocated, or is the
+    direct checker call on a formula the inequalities do not admit. That
+    direct call is timed because the design check did run. The clock is one
+    machine's measurement, not a complexity result.
+    """
+    print("=== (J) Successive-choice balancer ===")
+    print(
+        "  The search runs only when 2(b+w)D^2 <= M and 2Qr^2 <= n hold and "
+        f"the slice is under the cap {SLICE_MAX_DIMENSION}."
+    )
+    print(
+        "  It tries symbols in {0, ..., r-1}^Q. It does not enumerate the "
+        "schedule cube and it does not sample a placement."
+    )
+    print(
+        f"  design_problems_at is called only when its Boolean walk is at most "
+        f"{BALANCER_DESIGN_BOOLEAN_BUDGET} points. Above that, the call refuses."
+    )
+    print("  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm.")
+    rows: list[dict] = []
+
+    def add(name: str, n: int, m: int, brute: int, ok: bool, label: str) -> None:
+        rows.append(
+            {
+                "name": name,
+                "n": n,
+                "m": m,
+                "brute": brute,
+                "ok": ok,
+                "label": label,
+            }
+        )
+
+    small = schedule_placement(_units(2), r=2, Q=1, R=1)
+    small_ok = (
+        small.placed is None
+        and not small.accepted
+        and not small.balance.admitted
+        and not small.balancer_attempted
+        and "No placement was invented" in small.reason
+        and "was not run" in small.reason
+    )
+    add("refuse-n2", 2, 2, -1, small_ok, "REFUSED" if small_ok else "FAIL")
+    print(f"  [J] refuse n=2  {'REFUSED' if small_ok else 'FAIL'}", flush=True)
+    if not small_ok:
+        print(f"    {small.reason}", flush=True)
+        return rows
+
+    toy = schedule_placement(_units(64), r=2, Q=1, R=1)
+    toy_ok = (
+        toy.balance.admitted
+        and toy.placed is None
+        and not toy.built_slice
+        and not toy.accepted
+        and toy.balancer_attempted
+        and not toy.balancer_built
+        and toy.multiplicity == 16
+        and toy.multiplicity_ok is True
+        and toy.group_size_ok is True
+        and toy.outside_group_size == 32
+        and toy.trials == 256
+        and "2**32" in toy.reason
+        and str(BALANCER_DESIGN_BOOLEAN_BUDGET) in toy.reason
+        and "place_formula was not called" in toy.reason
+    )
+    add("admit-n64-budget", 64, 64, -1, toy_ok, "REFUSED" if toy_ok else "FAIL")
+    print(
+        f"  [J] n=64 admitted; multiplicity 16; design budget refuses  "
+        f"{'REFUSED' if toy_ok else 'FAIL'}",
+        flush=True,
+    )
+    if not toy_ok:
+        print(f"    {toy.reason}", flush=True)
+        return rows
+
+    wide = schedule_placement(_units(1024), r=2, Q=2, R=1)
+    wide_ok = (
+        wide.balance.admitted
+        and wide.balance.degree_gap_ok is True
+        and wide.placed is None
+        and not wide.built_slice
+        and wide.multiplicity == 64
+        and wide.multiplicity_ok is True
+        and wide.outside_group_size == 512
+        and "2**512" in wide.reason
+        and "place_formula was not called" in wide.reason
+    )
+    add("admit-n1024-budget", 1024, 1024, -1, wide_ok, "REFUSED" if wide_ok else "FAIL")
+    print(
+        f"  [J] n=1024, R<Q, admitted; design budget refuses  "
+        f"{'REFUSED' if wide_ok else 'FAIL'}",
+        flush=True,
+    )
+    if not wide_ok:
+        print(f"    {wide.reason}", flush=True)
+        return rows
+
+    over = schedule_placement(_units(1), r=2, Q=5, R=1)
+    over_ok = (
+        over.balance.D == 1024
+        and over.allocation_refused
+        and over.placed is None
+        and not over.balancer_attempted
+        and "not allocated" in over.reason
+    )
+    add("refuse-d1024", 1, 1, -1, over_ok, "REFUSED" if over_ok else "FAIL")
+    print(f"  [J] side length 1024 refused before allocation  {'REFUSED' if over_ok else 'FAIL'}", flush=True)
+    if not over_ok:
+        print(f"    {over.reason}", flush=True)
+        return rows
+
+    try:
+        build_auxiliary_slice(2, FULL_M0_MIN_Q, FULL_M0_MIN_R)
+    except ValueError as exc:
+        full_message = str(exc)
+    else:
+        full_message = ""
+    full = schedule_placement(_units(1), r=2, Q=FULL_M0_MIN_Q, R=FULL_M0_MIN_R)
+    full_ok = (
+        full.placed is None
+        and full.allocation_refused
+        and not full.balancer_attempted
+        and "not allocated" in full.reason
+        and "2**384" in full_message
+    )
+    add("refuse-full-m0", 1, 1, -1, full_ok, "REFUSED" if full_ok else "FAIL")
+    print(
+        f"  [J] full M0 refused before allocation  {'REFUSED' if full_ok else 'FAIL'}",
+        flush=True,
+    )
+    if not full_ok:
+        print(f"    build: {full_message}", flush=True)
+        print(f"    schedule: {full.reason}", flush=True)
+        return rows
+
+    wiring_cnf = _units(8)
+    wiring_check = check_balance(wiring_cnf.n, scopes_from_cnf(wiring_cnf), 2, 2, 1)
+    wiring_search = _search_schedules(wiring_cnf, wiring_check)
+    started = time.perf_counter()
+    wiring = _finish_chosen_placement(wiring_cnf, wiring_check, wiring_search, None)
+    elapsed = time.perf_counter() - started
+    gate = schedule_placement(wiring_cnf, r=2, Q=2, R=1)
+    wiring_ok = (
+        not wiring_check.admitted
+        and wiring.accepted
+        and wiring.balancer_built
+        and not wiring.caller_supplied
+        and wiring.design_problems == ()
+        and wiring.restoration_problems == ()
+        and wiring.multiplicity == 1
+        and gate.placed is None
+        and not gate.balancer_attempted
+        and "were not the gate" in wiring.reason
+    )
+    add("wiring-n8-not-admitted", 8, 8, -1, wiring_ok, "OK" if wiring_ok else "FAIL")
+    print(
+        f"  [J] n=8 is not admitted; a direct check passed design and T=0  "
+        f"{'OK' if wiring_ok else 'FAIL'}  ({elapsed:.3f}s)",
+        flush=True,
+    )
+    print(
+        "  [J] schedule_placement on that formula refuses before the search",
+        flush=True,
+    )
+    if not wiring_ok:
+        print(f"    direct: {wiring.reason}", flush=True)
+        print(f"    gate: {gate.reason}", flush=True)
+        return rows
+    return rows
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
@@ -725,6 +912,7 @@ def print_summary_table(
     sparse_rows: List[dict] | None = None,
     scan_rows: List[dict] | None = None,
     step7_rows: List[dict] | None = None,
+    step8_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -739,6 +927,7 @@ def print_summary_table(
         or hermite_rows
         or sparse_rows
         or step7_rows
+        or step8_rows
     )
     if numeric:
         print(f"{'kind':<8} {'n':>4} {'m':>4} {'#F':>8} {'match':>6}")
@@ -791,6 +980,13 @@ def print_summary_table(
             f"{'step7':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
             f"{r['label']:>6}"
         )
+    for r in step8_rows or []:
+        brute = r["brute"]
+        brute_cell = f"{brute:8d}" if isinstance(brute, int) and brute >= 0 else f"{'—':>8}"
+        print(
+            f"{'step8':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
+            f"{r['label']:>6}"
+        )
     if numeric:
         print("-" * 72)
     if interp_rows:
@@ -838,6 +1034,12 @@ def print_summary_table(
             f"Balance/slice (I): {sum(1 for row in step7_rows if row['ok'])}/{len(step7_rows)} passed"
             + (f" ({refused} refused as recorded)" if refused else "")
         )
+    if step8_rows:
+        refused = sum(1 for row in step8_rows if row["label"] == "REFUSED")
+        print(
+            f"Balancer      (J): {sum(1 for row in step8_rows if row['ok'])}/{len(step8_rows)} passed"
+            + (f" ({refused} refused as recorded)" if refused else "")
+        )
     print("=" * 72)
 
 
@@ -876,7 +1078,19 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "Balance inequalities that fail are refused without choosing a schedule. "
             "Caller-supplied schedules, including the hand-written Step 3 placements, "
             "are checked with design_problems_at. Full M0 was refused before allocation. "
-            "The conditional-expectation balancer is not implemented."
+            "The admitted point is handed to the Step 8 search."
+        )
+    if 8 in steps:
+        parts.append(
+            "Step 8 runs successive choice only when the balance inequalities "
+            "hold and the slice is under the cap. On the admitted rows the "
+            "multiplicity and group bounds hold, and design_problems_at is not "
+            "called because its Boolean walk is above the budget. Formulas that "
+            "fail the inequalities still refuse with no placement. Full M0 and "
+            "side length 1024 were refused before allocation. A direct check on "
+            "eight units, which are not admitted, passed design and T=0; "
+            "schedule_placement does not make that call. The schedule cube was "
+            "not enumerated."
         )
     parts.append("No Theorem 1.1, no 2^{o(n)} claim.")
     return " ".join(parts)
@@ -887,7 +1101,7 @@ def _run_selected(
     growth_groups: Sequence[int],
     scan_profile: str,
 ) -> int:
-    """Run a subset of Steps 2–6. The full Steps 0–6 path stays in ``main``."""
+    """Run a subset of Steps 2–8. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -900,6 +1114,7 @@ def _run_selected(
     sparse_rows: list[dict] = []
     scan_rows: list[dict] = []
     step7_rows: list[dict] = []
+    step8_rows: list[dict] = []
 
     if 2 in steps:
         example_rows, growth_rows = run_step2_suite(growth_groups)
@@ -947,6 +1162,13 @@ def _run_selected(
             print("FAIL: Step 7 slice or balance check disagreed", file=sys.stderr)
             return 1
         print()
+    if 8 in steps:
+        step8_rows = run_step8_suite()
+        print()
+        if not step8_rows or not all(row["ok"] for row in step8_rows):
+            print("FAIL: Step 8 balancer disagreed with its checks", file=sys.stderr)
+            return 1
+        print()
 
     print_summary_table(
         [],
@@ -958,6 +1180,7 @@ def _run_selected(
         sparse_rows or None,
         scan_rows or None,
         step7_rows or None,
+        step8_rows or None,
     )
     print()
     print("ALL TESTS PASSED")
@@ -967,7 +1190,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0 through 7)"
+        description="Counting-polynomial skeleton verifier (Steps 0 through 8)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1007,6 +1230,14 @@ def main(argv: List[str] | None = None) -> int:
             "(--quick skips the side-length-256 point)"
         ),
     )
+    parser.add_argument(
+        "--step8",
+        action="store_true",
+        help=(
+            "run the Step 8 successive-choice balancer "
+            "(refusals are not timed; the design walk above the budget is not started)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1029,6 +1260,7 @@ def main(argv: List[str] | None = None) -> int:
             (5, args.step5),
             (6, args.step6),
             (7, args.step7),
+            (8, args.step8),
         )
         if enabled
     ]
@@ -1039,13 +1271,14 @@ def main(argv: List[str] | None = None) -> int:
             "quick" if args.quick else "full",
         )
 
-    print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, 5, 6, and 7")
+    print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, 5, 6, 7, and 8")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
     print("occurrence copying with #F' = #F inside the brute-force window,")
     print("a parameter scan of those pieces against brute force,")
-    print("and a balance-check scaffold for placements into a larger slice.")
+    print("a balance-check scaffold for placements into a larger slice,")
+    print("and a machine-limited successive-choice balancer.")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
 
@@ -1134,6 +1367,13 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (I) all {len(step7_rows)} Step 7 rows passed")
     print()
 
+    step8_rows = run_step8_suite()
+    if not step8_rows or not all(row["ok"] for row in step8_rows):
+        print("FAIL: Step 8 balancer disagreed with its checks", file=sys.stderr)
+        return 1
+    print(f"  (J) all {len(step8_rows)} Step 8 rows passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
@@ -1148,6 +1388,7 @@ def main(argv: List[str] | None = None) -> int:
         sparse_rows,
         scan_rows,
         step7_rows,
+        step8_rows,
     )
     print()
     print("ALL TESTS PASSED")
@@ -1164,8 +1405,11 @@ def main(argv: List[str] | None = None) -> int:
         "The Hermite condition count stays D+1, and each of those points still "
         "enumerates 2^n assignments. Copying can push the reduced n past 20; those "
         "rows are recorded and not counted. Popcount measurement tuples grow as (r+1)^b. "
-        "Refused scan cells were not timed. Caller-supplied schedules are checked; "
-        "the conditional-expectation balancer is not implemented. "
+        "Refused scan cells were not timed. Caller-supplied schedules are checked. "
+        "When the balance inequalities hold, successive choice aims at multiplicity "
+        "at most 2M/D and group size at most 2n/r. On the admitted rows that walk "
+        "is above the design budget, so no placement is accepted. The schedule "
+        "cube was not enumerated. "
         f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
         "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
     )

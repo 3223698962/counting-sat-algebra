@@ -1,5 +1,5 @@
 """
-Balance-check scaffold for placements into an auxiliary slice (Step 7).
+Balance checks and a machine-limited schedule balancer (Steps 7 and 8).
 
 Lemma 4.5 of the October 2026 preprint asks for schedules whose label
 multiplicity is at most 2M/D and whose groups have size at most 2n/r, provided
@@ -14,24 +14,42 @@ inequalities force n to be at least on the order of D^2: when b >= 1,
 
 Lemma 4.7 adds 1 <= R < Q and a binomial tail bound. This module checks the
 numerical balance inequalities and the degree gap. It does not check the tail
-bound, and it does not run the conditional-expectation construction that would
-choose the schedules. When the inequalities fail, or when they hold, a call
-that does not supply schedules refuses and does not sample a placement.
+bound.
+
+When the inequalities fail, or when the slice would sit above the cap, a call
+that does not supply schedules refuses and does not sample a placement. When
+the inequalities hold and the slice is under the cap, Step 8 runs a
+successive-choice search over the schedule alphabet {0, ..., r-1}^Q. At each
+variable and each clause it tries every alphabet symbol and keeps the one that
+minimizes a quadratic load potential. Ties break toward the lexicographically
+first symbol. Nothing is sampled. The schedule cube, of size (r^Q)^(n+m), is
+not enumerated.
+
+The search aims at label multiplicity at most 2M/D and group size at most
+2n/r. If it meets both and the Boolean walk inside ``design_problems_at`` fits
+a fixed budget, the schedules are placed with ``place_formula`` and checked
+with ``design_problems_at`` and the T = 0 restoration. A supplied R that fails
+1 <= R < Q, and Q = 1 (where no positive R is strictly below Q), blocks
+acceptance. If a bound fails, or the alphabet, the trial count, or the Boolean
+budget is too large, the call refuses and does not invent a placement.
 
 Caller-supplied schedules are placed with ``place_formula`` and checked with
 ``design_problems_at`` and the T = 0 restoration. That is how the hand-written
-Step 3 placements, and the two new slices below, are accepted. A supplied
+Step 3 placements, and the two Step 7 slices, are accepted. A supplied
 placement is not presented as the output of a balancer. The multiplicity bound
-2M/D is recorded on that placement. It is not required for acceptance, because
-the hand-written rows can exceed it precisely when the balance hypotheses fail.
-The group-size bound is already inside ``design_problems_at``.
+2M/D is recorded on that placement. It is not required for acceptance of a
+supplied placement, because the hand-written rows can exceed it precisely when
+the balance hypotheses fail. The group-size bound is already inside
+``design_problems_at``.
 
 Nothing here is Theorem 1.1. This module does not refute ETH. Nothing it runs
-is a 2^{o(n)} count. Refusals are not timed.
+is a 2^{o(n)} count. Refusals are not timed. A passing balance check is not,
+by itself, a schedule, and a schedule this search returns is not a count.
 """
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Sequence
@@ -55,6 +73,13 @@ from .replacement_matrix import (
 
 # Above this, the balance integer r**(2Q) is not formed. Full M0 uses Q = 192.
 BALANCE_MAX_Q = 4096
+
+# Successive choice tries each alphabet symbol once per variable and per clause.
+# The schedule cube, size (r**Q)**(n + m), is never enumerated.
+BALANCER_MAX_ALPHABET = 32
+BALANCER_MAX_TRIALS = 100_000
+# ``design_problems_at`` walks 2**(group size) Boolean points on an outside group.
+BALANCER_DESIGN_BOOLEAN_BUDGET = 4096
 
 
 def _as_index(value: object, what: str) -> int:
@@ -265,28 +290,47 @@ def _allocation_sentence(check: BalanceCheck) -> str:
     )
 
 
+def _gap_sentence(check: BalanceCheck) -> str:
+    """Lemma 4.7's degree gap, when this call cannot be a witness for it."""
+    if check.degree_gap_ok is False:
+        return f" Lemma 4.7 asks for 1 <= R < Q; R={check.R}, Q={check.Q}."
+    if check.R is None and check.Q <= 1:
+        return (
+            f" No integer R satisfies 1 <= R < Q at Q={check.Q}, so this call "
+            "cannot be a Lemma 4.7 witness."
+        )
+    return ""
+
+
+def _degree_gap_blocks_acceptance(check: BalanceCheck) -> bool:
+    """Acceptance needs 1 <= R < Q when a slice would be built at a concrete R.
+
+    A supplied R that fails the gap blocks acceptance. Q <= 1 blocks it as
+    well: every positive R is then at least Q, including the R = 1 slice this
+    module would build when the caller omitted R.
+    """
+    if check.degree_gap_ok is False:
+        return True
+    return check.Q <= 1 and check.degree_gap_ok is not True
+
+
 def _unplaced_reason(check: BalanceCheck) -> str:
     allocation = _allocation_sentence(check)
     if check.admitted:
-        gap = ""
-        if check.degree_gap_ok is False:
-            gap = f" Lemma 4.7 also asks for 1 <= R < Q; R={check.R}, Q={check.Q}."
         return (
             allocation
             + "The Lemma 4.5 balance inequalities hold: "
             + f"2(b+w)D^2 = {_fmt(check.mass_bound)} <= M = {check.M} and "
             + f"2Qr^2 = {check.variable_bound} <= n = {check.n}. "
             + "n is on the order of D^2. "
-            + "The conditional-expectation balancer is not implemented, so no "
-            + "schedules were chosen."
-            + gap
+            + "The balancer was not run, because the matrix was not allocated."
+            + _gap_sentence(check)
         )
     failed = "; ".join(check.reasons)
     return (
         allocation
         + "Refusing to choose schedules: the Lemma 4.5 balance inequalities fail "
-        + f"({failed}). No placement was invented. "
-        + "The conditional-expectation balancer is not implemented."
+        + f"({failed}). No placement was invented. The balancer was not run."
     )
 
 
@@ -314,6 +358,13 @@ class ScheduleOutcome:
     multiplicity_ok: bool | None
     group_size_ok: bool | None
     reason: str
+    balancer_attempted: bool = False
+    balancer_built: bool = False
+    design_checked: bool = False
+    max_group_size: int | None = None
+    outside_group_size: int | None = None
+    design_boolean_points: int | None = None
+    trials: int | None = None
 
 
 def _blank_outcome(check: BalanceCheck, *, caller_supplied: bool) -> ScheduleOutcome:
@@ -331,6 +382,446 @@ def _blank_outcome(check: BalanceCheck, *, caller_supplied: bool) -> ScheduleOut
         multiplicity_ok=None,
         group_size_ok=None,
         reason=_unplaced_reason(check),
+    )
+
+
+def _alphabet_size(r: int, Q: int) -> int:
+    return r ** Q
+
+
+def _search_block_reason(n: int, m: int, r: int, Q: int) -> str | None:
+    """Refuse before the successive loop when the alphabet or the trial count is too large.
+
+    Returning a sentence means the loop did not run. The schedule cube is not
+    mentioned as something that was enumerated; it was not.
+    """
+    alphabet = _alphabet_size(r, Q)
+    if alphabet > BALANCER_MAX_ALPHABET:
+        return (
+            f"The balancer was not run: the schedule alphabet has size r**Q = {alphabet}, "
+            f"above {BALANCER_MAX_ALPHABET}. That alphabet was not enumerated, and the "
+            "schedule cube was not enumerated. No placement was invented."
+        )
+    trials = (n + m) * alphabet
+    if trials > BALANCER_MAX_TRIALS:
+        return (
+            "The balancer was not run: the successive search would consider "
+            f"(n+m)*r**Q = {trials} candidate symbols, above the budget "
+            f"{BALANCER_MAX_TRIALS}. The schedule cube was not enumerated. "
+            "No placement was invented."
+        )
+    return None
+
+
+@dataclass(frozen=True)
+class _SearchResult:
+    """Schedules from successive choice, or a refusal that did not place them."""
+
+    attempted: bool
+    chosen: bool
+    variable_schedules: tuple[tuple[int, ...], ...] | None
+    clause_schedules: tuple[tuple[int, ...], ...] | None
+    multiplicity: int | None
+    multiplicity_bound: Fraction
+    multiplicity_ok: bool | None
+    max_group_size: int | None
+    group_size_ok: bool | None
+    outside_group_size: int | None
+    design_boolean_points: int | None
+    trials: int | None
+    reason: str
+
+
+def _search_schedules(cnf: CNF, check: BalanceCheck) -> _SearchResult:
+    """Pick schedules by successive minimization of a quadratic load.
+
+    Variables are fixed first, one alphabet symbol at a time, so that no group
+    exceeds size ``floor(2n/r)`` and the symbols spread across the alphabet.
+    Clauses are fixed second. A clause symbol is scored by the increase it
+    causes in the sum of squares of label loads, which is the one-step
+    conditional expectation of that potential when the remaining clause symbols
+    would have been uniform. The final multiplicity and group sizes are then
+    compared with the Lemma 4.5 bounds. This is not a proof of that lemma.
+    """
+    bound = Fraction(2 * check.M, check.D)
+    blocked = _search_block_reason(cnf.n, cnf.m, check.r, check.Q)
+    if blocked is not None:
+        return _SearchResult(
+            attempted=False,
+            chosen=False,
+            variable_schedules=None,
+            clause_schedules=None,
+            multiplicity=None,
+            multiplicity_bound=bound,
+            multiplicity_ok=None,
+            max_group_size=None,
+            group_size_ok=None,
+            outside_group_size=None,
+            design_boolean_points=None,
+            trials=None,
+            reason=blocked,
+        )
+    alphabet = list(itertools.product(range(check.r), repeat=check.Q))
+    capacity = (2 * check.n) // check.r
+    group_counts = [[0 for _ in range(check.r)] for _ in range(check.Q)]
+    schedule_hist: dict[tuple[int, ...], int] = {}
+    variable_schedules: list[tuple[int, ...]] = []
+    for _var in range(cnf.n):
+        best_score: tuple[int, int, int] | None = None
+        best_sigma: tuple[int, ...] | None = None
+        for sigma in alphabet:
+            projected = [group_counts[t][sigma[t]] + 1 for t in range(check.Q)]
+            if any(size > capacity for size in projected):
+                continue
+            score = (max(projected), sum(projected), schedule_hist.get(sigma, 0))
+            if best_score is None or score < best_score:
+                best_score = score
+                best_sigma = sigma
+        if best_sigma is None:
+            return _SearchResult(
+                attempted=True,
+                chosen=False,
+                variable_schedules=None,
+                clause_schedules=None,
+                multiplicity=None,
+                multiplicity_bound=bound,
+                multiplicity_ok=None,
+                max_group_size=None,
+                group_size_ok=False,
+                outside_group_size=None,
+                design_boolean_points=None,
+                trials=(cnf.n + cnf.m) * len(alphabet),
+                reason=(
+                    "The successive-choice balancer stopped. Every alphabet symbol "
+                    f"would put a group above size {capacity}, and size * r <= 2n "
+                    f"is the group bound (2n = {2 * check.n}, r = {check.r}). "
+                    "No placement was invented. The schedule cube was not enumerated."
+                ),
+            )
+        for t, symbol in enumerate(best_sigma):
+            group_counts[t][symbol] += 1
+        schedule_hist[best_sigma] = schedule_hist.get(best_sigma, 0) + 1
+        variable_schedules.append(best_sigma)
+
+    label_counts: dict[tuple[tuple[int, ...], tuple[int, ...]], int] = {}
+    clause_schedules: list[tuple[int, ...]] = []
+    for clause in cnf.clauses:
+        masses: dict[tuple[int, ...], int] = {}
+        for var, _neg in clause:
+            sigma = variable_schedules[var]
+            masses[sigma] = masses.get(sigma, 0) + 1
+        best_clause: tuple[int, tuple[int, ...]] | None = None
+        for tau in alphabet:
+            increment = 0
+            for sigma, amount in masses.items():
+                base = label_counts.get((sigma, tau), 0)
+                increment += 2 * base * amount + amount * amount
+            score = (increment, tau)
+            if best_clause is None or score < best_clause:
+                best_clause = score
+        assert best_clause is not None
+        tau = best_clause[1]
+        for sigma, amount in masses.items():
+            key = (sigma, tau)
+            label_counts[key] = label_counts.get(key, 0) + amount
+        clause_schedules.append(tau)
+
+    multiplicity = max(label_counts.values(), default=0)
+    multiplicity_ok = multiplicity <= bound
+    max_group = max((max(row) for row in group_counts), default=0)
+    group_ok = all(size * check.r <= 2 * check.n for row in group_counts for size in row)
+    outside, points = _outside_load(
+        cnf,
+        variable_schedules,
+        clause_schedules,
+        check.r,
+        check.Q,
+    )
+    trials = (cnf.n + cnf.m) * len(alphabet)
+    if not multiplicity_ok or not group_ok:
+        reason = _bound_failure_reason(
+            check,
+            multiplicity=multiplicity,
+            bound=bound,
+            multiplicity_ok=multiplicity_ok,
+            max_group=max_group,
+            group_ok=group_ok,
+        )
+        return _SearchResult(
+            attempted=True,
+            chosen=False,
+            variable_schedules=tuple(variable_schedules),
+            clause_schedules=tuple(clause_schedules),
+            multiplicity=multiplicity,
+            multiplicity_bound=bound,
+            multiplicity_ok=multiplicity_ok,
+            max_group_size=max_group,
+            group_size_ok=group_ok,
+            outside_group_size=outside,
+            design_boolean_points=points,
+            trials=trials,
+            reason=reason,
+        )
+    return _SearchResult(
+        attempted=True,
+        chosen=True,
+        variable_schedules=tuple(variable_schedules),
+        clause_schedules=tuple(clause_schedules),
+        multiplicity=multiplicity,
+        multiplicity_bound=bound,
+        multiplicity_ok=True,
+        max_group_size=max_group,
+        group_size_ok=True,
+        outside_group_size=outside,
+        design_boolean_points=points,
+        trials=trials,
+        reason="",
+    )
+
+
+def _outside_load(
+    cnf: CNF,
+    variable_schedules: Sequence[Sequence[int]],
+    clause_schedules: Sequence[Sequence[int]],
+    r: int,
+    Q: int,
+) -> tuple[int, int | None]:
+    """Largest outside group, and the Boolean-point total when it is small enough to form.
+
+    The total matches the walk in ``design_problems_at``: one 2**(group size)
+    product for each occurrence and each group other than the clause's symbol,
+    at each t. A size above 20 is already past the budget; the total is then
+    left unformed.
+    """
+    sizes = [[0 for _ in range(r)] for _ in range(Q)]
+    for schedule in variable_schedules:
+        for t, symbol in enumerate(schedule):
+            sizes[t][symbol] += 1
+    outside = 0
+    points = 0
+    formed = True
+    for clause, clause_schedule in zip(cnf.clauses, clause_schedules):
+        width = len(clause)
+        if width == 0:
+            continue
+        for t, assigned in enumerate(clause_schedule):
+            for symbol in range(r):
+                if symbol == assigned:
+                    continue
+                size = sizes[t][symbol]
+                if size > outside:
+                    outside = size
+                if size > 20:
+                    formed = False
+                    continue
+                points += width * (1 << size)
+    return outside, points if formed else None
+
+
+def _bound_failure_reason(
+    check: BalanceCheck,
+    *,
+    multiplicity: int,
+    bound: Fraction,
+    multiplicity_ok: bool,
+    max_group: int,
+    group_ok: bool,
+) -> str:
+    sentences = [
+        "The successive-choice balancer stopped before place_formula. "
+        "The schedule cube was not enumerated."
+    ]
+    if multiplicity_ok:
+        sentences.append(
+            f"Label multiplicity {multiplicity} is at most 2M/D = {bound}."
+        )
+    else:
+        sentences.append(
+            f"Label multiplicity {multiplicity} exceeds 2M/D = {bound}. "
+            "No placement was invented."
+        )
+    if group_ok:
+        sentences.append(
+            f"The largest group has size {max_group}, and "
+            f"{max_group} * r = {max_group * check.r} <= 2n = {2 * check.n}."
+        )
+    else:
+        sentences.append(
+            f"The largest group has size {max_group}, and "
+            f"{max_group} * r = {max_group * check.r} > 2n = {2 * check.n}. "
+            "No placement was invented."
+        )
+    return " ".join(sentences)
+
+
+def _design_budget_reason(check: BalanceCheck, search: _SearchResult) -> str:
+    outside = search.outside_group_size if search.outside_group_size is not None else 0
+    points = (
+        f" The Boolean-point total would be {search.design_boolean_points}."
+        if search.design_boolean_points is not None
+        else ""
+    )
+    assert search.max_group_size is not None
+    trials = f" The search considered {search.trials} candidate symbols." if search.trials else ""
+    return (
+        "The successive-choice balancer chose schedules over the alphabet "
+        f"{{0, ..., {check.r - 1}}}^{check.Q} "
+        f"({_alphabet_size(check.r, check.Q)} symbols). "
+        "The schedule cube was not enumerated."
+        + trials
+        + f" Label multiplicity {search.multiplicity} is at most "
+        f"2M/D = {search.multiplicity_bound}. "
+        f"The largest group has size {search.max_group_size}, and "
+        f"{search.max_group_size} * r = {search.max_group_size * check.r} "
+        f"<= 2n = {2 * check.n}. "
+        "design_problems_at was not called: an outside group has size "
+        f"{outside}, so that call enumerates 2**{outside} Boolean points for "
+        f"that group on each occurrence that reads it, above the budget "
+        f"{BALANCER_DESIGN_BOOLEAN_BUDGET}.{points} "
+        "place_formula was not called. No placement was accepted."
+        + _gap_sentence(check)
+    )
+
+
+def _search_outcome(check: BalanceCheck, search: _SearchResult) -> ScheduleOutcome:
+    if search.chosen:
+        reason = _design_budget_reason(check, search)
+    else:
+        reason = search.reason + _gap_sentence(check)
+    return ScheduleOutcome(
+        balance=check,
+        placed=None,
+        design_problems=(),
+        restoration_problems=(),
+        accepted=False,
+        caller_supplied=False,
+        built_slice=False,
+        allocation_refused=False,
+        multiplicity=search.multiplicity,
+        multiplicity_bound=search.multiplicity_bound,
+        multiplicity_ok=search.multiplicity_ok,
+        group_size_ok=search.group_size_ok,
+        reason=reason,
+        balancer_attempted=search.attempted,
+        balancer_built=False,
+        design_checked=False,
+        max_group_size=search.max_group_size,
+        outside_group_size=search.outside_group_size,
+        design_boolean_points=search.design_boolean_points,
+        trials=search.trials,
+    )
+
+
+def _design_budget_exceeded(search: _SearchResult) -> bool:
+    outside = search.outside_group_size or 0
+    if outside > 20:
+        return True
+    if search.design_boolean_points is None:
+        return True
+    return search.design_boolean_points > BALANCER_DESIGN_BOOLEAN_BUDGET
+
+
+def _finish_chosen_placement(
+    cnf: CNF,
+    check: BalanceCheck,
+    search: _SearchResult,
+    auxiliary: AuxiliarySlice | None,
+) -> ScheduleOutcome:
+    """Place schedules the search already accepted and run the existing checks.
+
+    ``design_problems_at`` is called only after ``_design_budget_exceeded``
+    has returned false. This function does not re-check Lemma 4.5 admission.
+    ``schedule_placement`` is the gate for that.
+    """
+    assert search.variable_schedules is not None and search.clause_schedules is not None
+    built = False
+    if auxiliary is None:
+        R = check.R if check.R is not None else 1
+        auxiliary = build_auxiliary_slice(check.r, check.Q, R)
+        built = True
+    placed = place_formula(
+        cnf,
+        auxiliary,
+        search.variable_schedules,
+        search.clause_schedules,
+    )
+    design: list[tuple[int, str]] = []
+    for t in range(1, auxiliary.Q + 1):
+        for problem in design_problems_at(placed, t):
+            design.append((t, problem))
+    restored = tuple(restoration_problems(placed))
+    multiplicity = placed.copies
+    bound = Fraction(2 * check.M, check.D)
+    multiplicity_ok = multiplicity <= bound
+    group_ok = _group_size_ok(placed)
+    accepted = not design and not restored and multiplicity_ok and group_ok
+    gap_blocked = _degree_gap_blocks_acceptance(check)
+    if gap_blocked:
+        accepted = False
+    if accepted:
+        design_sentence = (
+            "design_problems_at and T=0 restoration passed at every t in {1, ..., Q}. "
+        )
+    else:
+        if design or restored:
+            detail = design[0][1] if design else restored[0]
+            design_sentence = (
+                "design_problems_at or T=0 restoration reported a problem: "
+                f"{detail} "
+            )
+        elif gap_blocked:
+            design_sentence = (
+                "design_problems_at and T=0 restoration passed. "
+                "Acceptance is blocked because the Lemma 4.7 degree gap does not hold. "
+            )
+        else:
+            design_sentence = "design_problems_at or T=0 restoration reported a problem. "
+    if multiplicity_ok:
+        multiplicity_sentence = f"Label multiplicity {multiplicity} is at most 2M/D = {bound}. "
+    else:
+        multiplicity_sentence = f"Label multiplicity {multiplicity} exceeds 2M/D = {bound}. "
+    if group_ok:
+        group_sentence = "Every group has size at most 2n/r. "
+    else:
+        group_sentence = "Some group has size above 2n/r. "
+    balance_sentence = (
+        "The Lemma 4.5 balance inequalities hold. "
+        if check.admitted
+        else "The Lemma 4.5 balance inequalities were not the gate for this call. "
+    )
+    slice_sentence = ""
+    if built and check.R is None:
+        slice_sentence = f"The slice was built at R={auxiliary.R}. "
+    return ScheduleOutcome(
+        balance=check,
+        placed=placed,
+        design_problems=tuple(design),
+        restoration_problems=restored,
+        accepted=accepted,
+        caller_supplied=False,
+        built_slice=built,
+        allocation_refused=False,
+        multiplicity=multiplicity,
+        multiplicity_bound=bound,
+        multiplicity_ok=multiplicity_ok,
+        group_size_ok=group_ok,
+        reason=(
+            "Schedules were chosen by the successive-choice balancer. "
+            "They were not supplied by the caller. The schedule cube was not enumerated. "
+            + balance_sentence
+            + slice_sentence
+            + design_sentence
+            + group_sentence
+            + multiplicity_sentence
+            + _gap_sentence(check).lstrip()
+        ).rstrip(),
+        balancer_attempted=True,
+        balancer_built=True,
+        design_checked=True,
+        max_group_size=search.max_group_size,
+        outside_group_size=search.outside_group_size,
+        design_boolean_points=search.design_boolean_points,
+        trials=search.trials,
     )
 
 
@@ -353,14 +844,16 @@ def schedule_placement(
     variable_schedules: Sequence[Sequence[int]] | None = None,
     clause_schedules: Sequence[Sequence[int]] | None = None,
 ) -> ScheduleOutcome:
-    """Check balance, then place caller-supplied schedules or refuse.
+    """Check balance, then place supplied schedules or run the successive-choice search.
 
     Parameters come from ``auxiliary`` when it is given. Explicit ``r``, ``Q``,
-    and ``R`` must match that slice. With no schedules, the result is a refusal
-    whether or not the inequalities hold: this function does not choose
-    schedules and does not draw a random placement. With schedules, a slice
-    above the cap is refused before ``build_auxiliary_slice``. A slice at or
-    under the cap is built only when the caller did not pass one.
+    and ``R`` must match that slice. With no schedules, the search runs only
+    when the Lemma 4.5 inequalities hold and the slice is under the cap. It
+    tries one alphabet symbol at a time. It does not draw a placement, and it
+    does not enumerate the schedule cube. A failed bound or an exhausted
+    budget returns no placement. With schedules, a slice above the cap is
+    refused before ``build_auxiliary_slice``. A slice at or under the cap is
+    built only when the caller did not pass one.
     """
     supplied_var = variable_schedules is not None
     supplied_clause = clause_schedules is not None
@@ -378,7 +871,12 @@ def schedule_placement(
         raise ValueError("pass an auxiliary slice, or pass r and Q")
     check = check_balance(cnf.n, scopes_from_cnf(cnf), r, Q, R)
     if not supplied_var:
-        return _blank_outcome(check, caller_supplied=False)
+        if not check.admitted or _allocation_refused(check):
+            return _blank_outcome(check, caller_supplied=False)
+        search = _search_schedules(cnf, check)
+        if not search.chosen or _design_budget_exceeded(search):
+            return _search_outcome(check, search)
+        return _finish_chosen_placement(cnf, check, search, auxiliary)
     if auxiliary is None and R is None:
         raise ValueError("pass R when the schedules need a new slice, or pass an auxiliary slice")
     if auxiliary is None and _allocation_refused(check):
@@ -462,6 +960,9 @@ def schedule_placement(
             + group_sentence
             + multiplicity_sentence
         ),
+        balancer_attempted=False,
+        balancer_built=False,
+        design_checked=True,
     )
 
 
