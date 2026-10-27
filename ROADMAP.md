@@ -139,10 +139,22 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Expose DIMACS `--backend common|tensor`, with tensor width and degree caps. The current suite is 205 pytest tests and 21 reference checks at version 0.16.0
 - Step 15 is finite variable elimination on connected supports whose intermediate tables fit explicit budgets. It is not Appendix D's general modular contraction, and it does not establish that asymptotic bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
 
+### Step 16 — choose and run a finite member of the asymptotic parameter family
+
+- [x] Compute Lemma 4.8's integer schedule from n and the factor scopes: λ = ⌈log₂ n⌉, ν = ⌈log₂ λ⌉, r the greatest integer with r²ν⁴ ≤ λ, Q = ⌊λ/(128ν)⌋, R = (β+3)⌈√λ⌉. β is the least integer ≥ 1 with b, w ≤ λ^β
+- [x] Form τ, ε, D and the centered interval only after the proof's preliminary guard r ≥ 2 and Q > R. At 16384 alternating unit clauses the schedule is r=0, Q=0, R=16, so D is not formed. At λ=2¹⁹ the integers are r=2, Q=215, R=2900, and Q ≤ R, so D is not formed there either
+- [x] Inside explicit choice budgets, keep a tuple only when `check_reference_parameters` accepts every Lemma 4.7 numerical hypothesis. The interval is the centered one from the proof. τ is the least value in (0, 1/2] that meets the exact binomial tail
+- [x] On 8192 alternating unit clauses, no tuple is accepted. r=2, Q=2, R=1 has tail 7/16, above every τ ≤ 1/2, and r=2, Q=3 needs 2(b+w)D² = 16384 > M. Label `CHECKED`
+- [x] On 16384 alternating unit clauses the chooser selects r=2, Q=3, R=2, τ=5/16. The earlier hand-picked point used τ=1/2. The tail is still 5/32, and the measurement allowance 2τn falls from 16384 to 10240. This tuple does not meet R ≥ 32 or 6R ≤ Q. Label `CHECKED`
+- [x] Sparse placement at that tuple reproduces the Step 12 storage record: 59392 polynomial entries, 14336 measurement entries, 536870912 dense polynomial slots, multiplicity 256, largest group 8192, and group ranks (2048, 2048) at each of three nodes. The independent-measurement count is 4096, which is within 10240
+- [x] Counting goes through the existing backends with explicit budgets, and a refusal returns no partial count. The common routine refuses before enumeration: q=5461, J=5462, a Boolean-vector bound of 36697 bits, and zero vectors scanned. Memoized support recovery counts 1, with 96 local Boolean vectors, 13 evaluations and 10227 memo hits. Finite Taylor elimination counts 1, with bucket width 4, 176128 local Boolean vectors, 262144 jet products and peak table size 72
+- [x] A candidate-trial budget of 1 refuses before the schedule search. `build_auxiliary_slice(2, 192, 32)` still refuses before allocation; the dense side-length cap is unchanged
+- [x] Running these finite tuples is not a proof of Lemma 4.8's asymptotic time or space bound. Step 16 does not implement Sections 5–6 or Appendix D. Step 15 remains finite Taylor elimination. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Theorem 1.1 is not implemented, ETH is not refuted, and there is no general 2^{o(n)} algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false
+
 ## Remaining work toward the reference conclusion
 
 - [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
-- [ ] Choose and run the full asymptotic parameter family
+- [x] Choose and run finite members of the asymptotic parameter family. Lemma 4.8's closed form is checked exactly; at every n this repository can place, that closed form fails before D is formed. One budget-feasible tuple that passes Lemma 4.7 is placed and counted or refused. This is not a proof of the asymptotic bound
 - [ ] Implement Section 5's sparse polynomial systems and coefficient algebra
 - [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control
 - [ ] Implement Appendix D's general modular contraction to reach Theorem 1.1's sharper bound. Step 15's finite Taylor elimination is not this algorithm
@@ -162,7 +174,7 @@ src/counting_sat_algebra/
   sparsify.py                                                          # Step 5
   parameter_scan.py                                                    # Step 6
   scheduler.py, conditional_balance.py, linear_algebra.py                # Steps 7–9
-  reference_parameters.py                                               # reference hypothesis checks
+  reference_parameters.py                                               # Lemma 4.7 checks and the Step 16 schedule
   common_count.py                                                       # Step 10
   structured_auxiliary.py, reference_verify.py                           # Step 11 and alignment checks
   sparse_placement.py                                                   # Step 12

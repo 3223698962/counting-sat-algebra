@@ -1,6 +1,6 @@
 # Progress
 
-The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.16.0 completes Steps 9–15: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements, actual DIMACS counts by independent components, contraction of the same global polynomial through its disjoint replacement supports, and finite Taylor tensor elimination on connected supports whose intermediate tables fit explicit budgets. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`. Theorem 1.1 is not proved, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false.
+The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.17.0 completes Steps 9–16: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements, actual DIMACS counts by independent components, contraction of the same global polynomial through its disjoint replacement supports, finite Taylor tensor elimination on connected supports whose intermediate tables fit explicit budgets, and a deterministic choice of Lemma 4.8's schedule together with one budget-feasible finite member. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`. Theorem 1.1 is not proved, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false. Selecting a finite parameter tuple is not a proof of the asymptotic time or space bound.
 
 The Step 0–8 sections below preserve historical measurements. Step 7/8 Boolean-budget refusals are reproduced through the explicit legacy mode. They no longer describe the default scheduler. The older Step 6 distance list is a historical snapshot, updated below by the new reference alignment.
 
@@ -642,6 +642,46 @@ DIMACS accepts `--backend common|tensor`. `common` remains the shared-measuremen
 
 All 205 pytest tests and all 21 reference checks pass at version 0.16.0. `--reference` writes Steps 9–15 to `benches/reference_alignment.json`. `--step15` selects the four rows also saved in `artifacts/step15-verification.json`. Both reports keep `theorem_1_1_complete=false` and `lean_proof_complete=false`.
 
+## Step 16 — Lemma 4.8's schedule and one finite admitted member
+
+Shipped in `reference_parameters.py`. `lemma_4_8_proposal` follows the proof's order. λ = ⌈log₂ n⌉, ν = ⌈log₂ λ⌉, r is the greatest integer with r²ν⁴ ≤ λ, Q = ⌊λ/(128ν)⌋, and R = (β+3)⌈√λ⌉, where β ≥ 1 is the least integer with b, w ≤ λ^β. τ = 1/(rλ), ε = 1/(br²λ), D = r^{2Q} and the centered interval are formed only after r ≥ 2 and Q > R. A failure of that guard does not form D and does not allocate a matrix.
+
+At 16384 alternating unit clauses, λ=14, ν=4, β=1, so the closed form is r=0, Q=0, R=16. D is not formed. The same guard fails at λ=2¹⁹, where the integers are ν=19, r=2, Q=215, R=2900 and Q ≤ R. Neither check is an executed counter. Label `CHECKED`.
+
+`choose_asymptotic_parameters` then searches r, Q and R inside explicit budgets and calls `check_reference_parameters` before accepting a tuple. The interval is the centered one from the proof of Lemma 4.8. τ is the least value in (0, 1/2] that meets the exact binomial tail; equality is allowed. Among accepted placeable tuples, the order is smaller τ, then smaller R/Q, then smaller 1/r. That comparison does not prove the O() bound on Lemma 4.8's exponent.
+
+| instance | what the chooser reports | label |
+| --- | --- | --- |
+| 8192 alternating units | no tuple. Tail 7/16 at r=2, Q=2, R=1 exceeds every τ ≤ 1/2. r=2, Q=3 needs 2(b+w)D² = 16384 > M | `CHECKED` |
+| 16384 alternating units | r=2, Q=3, R=2, τ=5/16, interval {0, 1}, tail 5/32 = τ/(rb). D=64. Not R ≥ 32 and not 6R ≤ Q | `CHECKED` |
+| same n, trial budget 1 | the same tuple is admitted and then refused. Alphabet 8 and 262144 candidate trials are not started | `REFUSED` |
+
+The hand-picked point at this n used τ=1/2. The tail is unchanged. The measurement allowance 2τn falls from 16384 to 10240. Sparse placement at the chosen tuple reproduces the Step 12 record, because the schedules do not read τ:
+
+| quantity | value |
+| --- | --- |
+| label copies | 256 |
+| largest group | 8192 |
+| group ranks at each of three nodes | (2048, 2048) |
+| independent measurements | 4096, within the allowance 10240 |
+| sparse polynomial entries | 59392 |
+| dense polynomial slots | 536870912 |
+| sparse measurement entries | 14336 |
+| mode-coordinate queries | 163840 |
+| pullback candidates | 34816 |
+
+Counting uses the existing backends. A refusal returns no count and does not start enumeration.
+
+| backend | result | label | operation record |
+| --- | --- | --- | --- |
+| common | no count | `REFUSED` | q=5461, J=5462, Boolean-vector bound of 36697 bits, 0 vectors scanned |
+| support, memoization on | count 1 | `COUNTED` | 10240 components, largest support 4, degree at most 4, 13 evaluations, 10227 memo hits, 96 local Boolean vectors, plan 49152 |
+| tensor | count 1 | `COUNTED` | same 10240 components, bucket width 4, 176128 local Boolean vectors, 98304 factor evaluations, 262144 jet products, peak table size 72, 360 peak coefficients, 268288 planning steps |
+
+The count 1 matches the single assignment of alternating-polarity unit clauses. The support count and the tensor count are disjoint-support evaluations of this one placement. They are not a general connected-instance bound. The tensor backend is still Step 15's finite Taylor elimination, not Appendix D. `build_auxiliary_slice(2, 192, 32)` still refuses before allocation; the reported side length remains 2³⁸⁴.
+
+All 214 pytest tests and all 31 reference checks pass at version 0.17.0. `--reference` writes Steps 9–16 to `benches/reference_alignment.json`. `--step16` selects these rows, also saved in `artifacts/step16-verification.json`. Both reports keep `theorem_1_1_complete=false` and `lean_proof_complete=false`. No wall times are recorded.
+
 ## Current distance to the reference conclusion
 
-The structured operator now connects to sparse placements, measurement construction and the common counting entry point. Supplied CNFs can be counted when their independently placed components fit the budgets; the same global placement can also be counted when its actual replacement supports split into small components. Some connected supports can be counted when every elimination bucket fits the explicit table budgets. To obtain the reference's general-input bound, the full asymptotic parameter family must be selected and executed; Sections 5–6 require sparse polynomial systems, equation selection and disjoint sparsification. Step 14's finite disjoint-support contraction and Step 15's finite Taylor elimination do not supply Appendix D's general modular contraction or its asymptotic bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.
+Finite members of the parameter schedule can now be chosen and, when the budgets allow, placed and counted or refused. Lemma 4.8's closed form itself is not yet inside those budgets: every machine-feasible n checked here fails r ≥ 2 or Q > R before D is formed. Passing Lemma 4.7 at n=16384, r=2, Q=3, R=2, τ=5/16 does not prove the asymptotic time or space bound, and it does not meet R ≥ 32 or 6R ≤ Q. Sections 5–6 still require sparse polynomial systems, equation selection and disjoint sparsification with the stated length control. Step 14's disjoint-support contraction and Step 15's finite Taylor elimination do not supply Appendix D's general modular contraction or its sharper bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.

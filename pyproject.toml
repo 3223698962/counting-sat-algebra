@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "counting-sat-algebra"
-version = "0.16.0"
-description = "Exact algebraic #SAT reference implementation with sparse placements, shared-measurement Taylor recovery, finite tensor contraction and DIMACS component counting. Complete theorem and asymptotic alignment remains open."
+version = "0.17.0"
+description = "Exact algebraic #SAT reference implementation with a Lemma 4.8 parameter chooser, sparse placements, shared-measurement Taylor recovery, finite tensor contraction and DIMACS component counting. Complete theorem and asymptotic alignment remains open."
 readme = "README.md"
 requires-python = ">=3.10"
 
