@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.18.0",
+  "version": "0.19.0",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, and finite Section 5.1–5.2 sparse-system checks. Section 6, Appendix D, and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, and a finite Section 5.3–5.5 replacement sum in A_ell. Section 6, Appendix D, and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
   "wall_times_recorded": false,
   "steps": [
     9,
@@ -15,7 +15,8 @@
     14,
     15,
     16,
-    17
+    17,
+    18
   ],
   "failed_step": null,
   "all_checks_passed": true,
@@ -960,6 +961,134 @@
       "coefficients_constructed": false,
       "boolean_vector_budget": 1,
       "reason": "Boolean cube 2^4 exceeds budget 1; no assignments scanned"
+    },
+    {
+      "name": "replacement-degree-and-incidence",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "input_degree_bound": 20,
+      "h_degree_bound": 20,
+      "incidence_total": 8,
+      "occurrence_cap": 4,
+      "heavy": [],
+      "neutral_factors": 4,
+      "section_6_implemented": false,
+      "appendix_d_implemented": false,
+      "count_checked": false,
+      "note": "Equation (5.5) and the Section 5.5 occurrence cap. No sum is run in this row."
+    },
+    {
+      "name": "replacement-sum-n4",
+      "n": 4,
+      "m": 2,
+      "brute": 4,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 4,
+      "ell": 5,
+      "h0_coefficients": [
+        -2,
+        6,
+        0,
+        -192,
+        2496
+      ],
+      "unreduced_sum": 2308,
+      "boolean_vectors": 399,
+      "vector_bound": 714,
+      "factor_evaluations": 2016,
+      "q": 0,
+      "jet_length": 1,
+      "design_Q": 21,
+      "replacement_degree": 1,
+      "slope": "1/21",
+      "input_degree_bound": 20,
+      "h_degree_bound": 20,
+      "sample_at_one": "15730846331829752040313096448/1892642377190146589368683",
+      "neutral_factors": 4,
+      "note": "S_ell(H(0)) residue 4 matches the cube oracle and the F2 scan. The row is not Lemma 4.8."
+    },
+    {
+      "name": "high-incidence-branches-n4",
+      "n": 4,
+      "m": 6,
+      "brute": 4,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 4,
+      "branch_counts": [
+        4,
+        0
+      ],
+      "heavy": [
+        0
+      ],
+      "occurrence_cap": 6,
+      "boolean_vectors": 110,
+      "branches_enumerated": 1,
+      "note": "Fixing the heavy variable splits the cube. The branches add to N(P)."
+    },
+    {
+      "name": "lemma-4.8-guard-on-branch",
+      "n": 3,
+      "m": 1,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "r": 1,
+      "Q": 0,
+      "R": 8,
+      "guard_passed": false,
+      "dimension_formed": false,
+      "count_checked": false,
+      "note": "The restricted branch has n'=3. Tau and D are not formed. The finite design still summed."
+    },
+    {
+      "name": "replacement-vector-budget",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "vector_bound": 714,
+      "jets_allocated": false,
+      "coefficients_constructed": false,
+      "boolean_vector_budget": 1,
+      "reason": "Boolean vector bound 714 exceeds budget 1; no enumeration started"
+    },
+    {
+      "name": "replacement-branch-budget",
+      "n": 4,
+      "m": 6,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "branches": 2,
+      "branches_enumerated": 0,
+      "jets_allocated": false,
+      "branch_budget": 1,
+      "reason": "branch count 2^1 exceeds budget 1; no branch enumerated"
+    },
+    {
+      "name": "replacement-coefficient-budget",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "jets_allocated": false,
+      "coefficients_constructed": false,
+      "coefficient_bit_budget": 1,
+      "reason": "Beigel–Tarui coefficient bit length 3 exceeds budget 1; parity coefficients not constructed"
     }
   ]
 }

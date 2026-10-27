@@ -1,6 +1,6 @@
 # 与 references 的实现对齐
 
-目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.18.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 17 没有完成 Theorem 1.1。
+目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.19.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 18 没有完成 Theorem 1.1。
 
 ## 需要达到的结论
 
@@ -33,6 +33,7 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 | 不相交支持集乘积与局部 Taylor 恢复 | `support_count.py` | 对同一全局放置的实际替换因子按支持集分解；局部布尔求和与 Taylor 恢复得到全局 H(0)；有限收缩，不是 Appendix D 的一般算法 |
 | 连通支持上的有限 Taylor 消元 | `tensor_count.py`；`cli.py` 的 `--backend tensor` | 在 \(\mathbb Q[z]\) 上对实际替换因子做预算内变量消去；表是 T=1 的完整 Taylor 喷射。只处理中间表较小的连通支持。不是 Appendix D 的一般模收缩，也不建立其渐近界。拒绝发生在建表之前，且不返回部分计数 |
 | Section 5.1–5.2 的有限系数代数 | `sparse_systems.py`；`verify --step17` | 稀疏 \(\mathbb F_2\) 单项式、整数提升、Lemma 5.1 的精确除法，以及按 \(h\) 次截断的乘积。公共零点在预算内的立方上穷举。不是 Section 5.3 的替换求和，也不是 Theorem 2.2 的运行时间。拒绝发生在项表或扫描之前，且不返回部分计数 |
+| Section 5.3–5.5 的有限替换求和 | `algebra_count.py`；`common_count.py` 的 `separated_group_sum`；`verify --step18` | 方程因子 \(B_i\) 在 \(A_\ell\) 中按 (5.4) 构造，并加上值为 1 的中性因子。Section 3 的测量扫描在 \(A_\ell[z]/(z^J)\) 中求和，再对每个 \(V\) 系数做 Hermite 插值。有限设计满足 Definition 3.1，但不是 Lemma 4.8 的行。高出现变量按 Section 5.5 分支。拒绝发生在枚举或分配喷射之前，且不返回部分计数。不是 Section 6，也不是 Theorem 2.2 的运行时间 |
 
 `count_placed_formula` 使用安全次数上界 \(d_H=M(R-1)\)，取 \(q=\lfloor d_H/Q\rfloor\)、\(J=q+1\)，因此 \(QJ>d_H\)。它只调用局部扫描，不调用 `brute_count`、`eval_H_at` 或 `eval_H_hasse_jet`。这些全空间函数用于独立验证。
 
@@ -70,8 +71,12 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 - \(n=4\)、\(k=2\)、\(c=1\) 的系统 \(x_0x_1+x_2=0\)、\(x_3+1=0\)：截断指示器模 \(2^5\) 的最小非负剩余是 4，16 个布尔点上逐点等于公共零点指示器（`COUNTED`）。空方程列表给出 \(2^5=32\)，常数方程 \(1=0\) 给出 0，两者的布尔扫描都是 0。
 - 同一 4 变量系统在项数预算 2、系数位数预算 1 或布尔立方预算 1 下为 `REFUSED`。计数是空的，`boolean_vectors=0`，项表没有分配。系数位数和立方预算也没有构造出被返回的部分系数。
 - 这些检查不是 Theorem 2.2 的位运算界，也不是 Section 6 的方程选择。Step 17 没有完成 Theorem 1.1。
+- \(n=4\)、\(k=2\) 的系统 \(x_0x_1+x_2=0\)、\(x_3+1=0\)：输入次数上界 \(d=20\)，\(d_H=20\)，出现次数上限 \(b_0=4\)，重变量集为空，四个中性范围（`CHECKED`）。同一系统在 \(Q=21\)、\(R=1\)、斜率 \(1/21\) 的有限设计上，\(S_\ell(H(0))\) 的 \(V\) 系数是 \((-2,6,0,-192,2496)\)，未约化和 2308，模 \(2^5\) 的最小非负剩余是 **4**（`COUNTED`）。它与独立的 \(\mathbb F_2\) 扫描以及不经替换行的布尔立方求和一致。实际扫描 399 个布尔向量，计划上界 714，因子求值 2016 次。\(T=1\) 处的和不是 4。该系统上 Lemma 4.8 为 \(r=1\)、\(Q=0\)、\(R=10\)，\(D\) 没有形成。
+- 五个 \(x_0=0\) 与一个 \(x_0+x_1=0\)：\(M=11\)，\(b_0=6\)，重变量是 \(x_0\)。两个分支的计数是 \((4,0)\)，合计 **4**（`COUNTED`），实际扫描 110。限制后的分支有 \(n'=3\)。Lemma 4.8 给出 \(r=1\)、\(Q=0\)、\(R=8\)，初步守卫失败，\(\tau\) 和 \(D\) 都没有形成（`CHECKED`）。求和用的是有限设计，不是这篇证明里的穷举回退，也不是 Section 4 的辅助阵列。
+- 同一 4 变量系统在布尔向量预算 1 下为 `REFUSED`：上界 714，扫描 0，喷射没有分配，系数没有构造。六个方程的系统在分支预算 1 下为 `REFUSED`：2 个分支都没有进入循环。系数位数预算 1 在构造 \(p_\ell\) 时拒绝，喷射没有分配。无效核条件在枚举之前返回，计数为空。
+- 这些检查不是 Theorem 2.2 的位运算界，也不是 Section 6 的方程选择或 Appendix D。Step 18 没有完成 Theorem 1.1。
 
-227 项 pytest 全部通过；`--reference` 的 40 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.18.0，步骤为 9–17。它区分 `COUNTED`、`CHECKED`、`REFUSED`，分别记录两种复用模式、Step 15 的实际结果、Step 16 的参数选择和 Step 17 的九行有限检查，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`，不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。
+237 项 pytest 全部通过；`--reference` 的 47 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.19.0，步骤为 9–18。它区分 `COUNTED`、`CHECKED`、`REFUSED`，分别记录两种复用模式、Step 15 的实际结果、Step 16 的参数选择、Step 17 的九行有限检查和 Step 18 的七行替换求和，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`，不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。
 
 命令：
 
@@ -83,18 +88,19 @@ python -m counting_sat_algebra.verify --step14
 python -m counting_sat_algebra.verify --step15
 python -m counting_sat_algebra.verify --step16
 python -m counting_sat_algebra.verify --step17
+python -m counting_sat_algebra.verify --step18
 python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
 python -m counting_sat_algebra count examples/connected_path.cnf --backend tensor --output benches/connected_path.json
 ```
 
-`--step9` 至 `--step17` 可以分别运行上述九组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Step 16 和 Step 17 的同一组有限检查。Step 17 不改变 DIMACS 计数命令。
+`--step9` 至 `--step18` 可以分别运行上述十组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Step 16、Step 17 和 Step 18 的同一组有限检查。Step 17 和 Step 18 不改变 DIMACS 计数命令。
 
 ## 尚未完成的条件
 
 1. Lemma 4.8 的闭式已能精确计算，并在预算允许时执行一个通过 Lemma 4.7 的有限成员。机器可放置的 n 上，闭式在形成 D 之前失败；n=16384 的有限成员是 r=2、Q=3、R=2、τ=5/16，不满足 R≥32 或 6R≤Q。这次执行没有证明渐近时间或空间界，也没有让一般输入自动获得该界。共享测量路线在该放置上仍超出预算。桶宽不超过预算的连通支持可由 Step 15 计数；更宽的因子或消除桶仍在建表前拒绝。调用者仍可直接提供参数。
-2. Section 5.1–5.2 的有限单项式、Lemma 5.1 和截断乘积已经可以在预算内核对。下一步是 Section 5.3–5.5：为这些方程因子构造替换并在 \(A_\ell\) 中求和。Section 6 的方程选择与互不重叠的稀疏化仍未实现；现有蕴涵环复制不满足所需的变量长度控制。Step 17 的穷举不是这套算法。
+2. Section 5.1–5.5 的有限对象已经可以在预算内核对：单项式、Lemma 5.1、截断乘积，以及在显式有限设计上的 \(A_\ell\) 替换求和。该设计不是 Lemma 4.8 的行，这次求和也不是 Theorem 2.2 的运行时间。Section 6 的方程选择与互不重叠的稀疏化仍未实现；现有蕴涵环复制不满足所需的变量长度控制。Step 17 的穷举和 Step 18 的有限求和都不是这套算法。
 3. 实现 Appendix D 的一般模收缩，才能对齐 Theorem 1.1 的较强时间界。Step 14 的有限不相交支持集收缩，以及 Step 15 在小中间表上的有限 Taylor 变量消去，都没有给出这一一般算法或复杂度证明。
 4. 完成精确位复杂度、总空间的分析，以及 Lean 主定理中的实际机器构造与证明。有限存储统计、独立分量计数、不相交支持集计数和有限连通收缩都不能证明这些界。
 
-这些是完成参考结论的验收条件。当前实现已推进 Sections 3、4 和 Section 5.1–5.2 的有限检查，但尚未达到 Theorem 1.1 或 Lean 主定理。Step 17 没有完成 Theorem 1.1。
+这些是完成参考结论的验收条件。当前实现已推进 Sections 3、4 和 Section 5 的有限检查，但尚未达到 Theorem 1.1 或 Lean 主定理。Step 18 没有完成 Theorem 1.1。

@@ -8,9 +8,10 @@ it by the monic quadratic h(Y) = Y(Y-1). The truncated product keeps only the
 terms whose total number of h factors is less than ell.
 
 The Boolean sum below is an exhaustive scan of a budgeted cube. It checks the
-residue identity on tiny systems. It does not build replacement forms, select
-Section 6 equations, or run Appendix D. It is not Theorem 2.2's algorithm and
-it is not Theorem 1.1. ``theorem_1_1_complete`` stays false.
+residue identity on tiny systems. It does not build replacement forms; the
+Section 5.3–5.5 sum in A_ell is Step 18 in ``algebra_count.py``. It does not
+select Section 6 equations or run Appendix D. It is not Theorem 2.2's
+algorithm and it is not Theorem 1.1. ``theorem_1_1_complete`` stays false.
 """
 
 from __future__ import annotations

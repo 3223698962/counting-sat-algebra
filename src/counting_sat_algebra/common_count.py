@@ -8,6 +8,10 @@ global assignment cube nor an attained-measurement table is stored.
 The operation budget is checked before any enumeration. This implements
 the common routine on supplied designs; the rest of Theorem 1.1's pipeline
 and its asymptotic parameter choices are separate obligations.
+
+``separated_group_sum`` is Lemma 3.2 for an arbitrary coefficient ring.
+The CNF counter uses it over ``Q[z]/(z^J)``. The Section 5 replacement sum
+uses the same scan over ``A_ell[z]/(z^J)``.
 """
 
 from __future__ import annotations
@@ -118,6 +122,66 @@ def _measure(rows, bits):
     return tuple(sum((value * bits[i] for i, value in row.items()), Fraction(0)) for row in rows)
 
 
+def separated_group_sum(n, groups, rows, ranges, counts, fixed, evaluate, zero, one, add, multiply, stats):
+    """Lemma 3.2. ``evaluate(group, bits)`` returns one element of the coefficient ring.
+
+    ``add`` and ``multiply`` must return new values and leave their arguments
+    unchanged. ``zero`` and ``one`` are reused, so they must not be mutated.
+    The two scans of each local cube are sequential. No assignment table and
+    no attained-measurement table is stored. ``stats[0]`` counts Boolean
+    vectors and ``stats[1]`` counts measurement tuples.
+    """
+    total = zero
+    for measurement in itertools.product(*ranges):
+        stats[1] += 1
+        representatives = []
+        cursor = 0
+        targets = []
+        for group, matrix, count in zip(groups, rows, counts):
+            target = measurement[cursor:cursor + count]
+            cursor += count
+            targets.append(target)
+            representative = None
+            for bits in itertools.product((0, 1), repeat=len(group)):
+                stats[0] += 1
+                if _measure(matrix, bits) == target:
+                    representative = bits
+                    break
+            if representative is None:
+                break
+            representatives.append(representative)
+        if len(representatives) != len(groups):
+            continue
+        baseline = [0] * n
+        for group, representative in zip(groups, representatives):
+            for variable, bit in zip(group, representative):
+                baseline[variable] = bit
+        product = one
+        for g, (group, matrix, target) in enumerate(zip(groups, rows, targets)):
+            subtotal = zero
+            for local in itertools.product((0, 1), repeat=len(group)):
+                stats[0] += 1
+                if any(variable in fixed and bit == 0 for variable, bit in zip(group, local)):
+                    continue
+                if _measure(matrix, local) != target:
+                    continue
+                bits = list(baseline)
+                for variable, bit in zip(group, local):
+                    bits[variable] = bit
+                subtotal = add(subtotal, evaluate(g, bits))
+            product = multiply(product, subtotal)
+        total = add(total, product)
+    return total
+
+
+def _add_jets(left, right):
+    return tuple(left_coeff + right_coeff for left_coeff, right_coeff in zip(left, right))
+
+
+def _mul_jets(left, right):
+    return tuple(_jet_mul(left, right))
+
+
 def _restricted_sum(placed, node, t, E, U, coeff_jets, q, stats):
     """Lemma 3.2 in Q[z]/(z**(q+1)), with X fixed to the indicator of U."""
     n = placed.cnf.n
@@ -131,8 +195,8 @@ def _restricted_sum(placed, node, t, E, U, coeff_jets, q, stats):
                 for j in range(1, q + 1):
                     if v in occurrence:
                         jet[j] += occurrence[v][j]
-            clause.append(jet)
-        corrections.append(clause)
+            clause.append(tuple(jet))
+        corrections.append(tuple(clause))
     assigned = [[] for _ in node.groups]
     for e, schedule in enumerate(placed.clause_schedules):
         assigned[schedule[t - 1]].append(e)
@@ -151,50 +215,11 @@ def _restricted_sum(placed, node, t, E, U, coeff_jets, q, stats):
                 break
         return product
 
-    total = [Fraction(0)] * (q + 1)
-    for measurement in itertools.product(*node.ranges):
-        stats[1] += 1
-        representatives = []
-        cursor = 0
-        targets = []
-        for group, rows, count in zip(node.groups, node.rows, node.counts):
-            target = measurement[cursor:cursor + count]
-            cursor += count
-            targets.append(target)
-            representative = None
-            for bits in itertools.product((0, 1), repeat=len(group)):
-                stats[0] += 1
-                if _measure(rows, bits) == target:
-                    representative = bits
-                    break
-            if representative is None:
-                break
-            representatives.append(representative)
-        if len(representatives) != len(node.groups):
-            continue
-        baseline = [0] * n
-        for group, representative in zip(node.groups, representatives):
-            for v, bit in zip(group, representative):
-                baseline[v] = bit
-        product = _one_jet(q)
-        for g, (group, rows, target) in enumerate(zip(node.groups, node.rows, targets)):
-            subtotal = [Fraction(0)] * (q + 1)
-            for local in itertools.product((0, 1), repeat=len(group)):
-                stats[0] += 1
-                if any(v in fixed and not bit for v, bit in zip(group, local)):
-                    continue
-                if _measure(rows, local) != target:
-                    continue
-                bits = list(baseline)
-                for v, bit in zip(group, local):
-                    bits[v] = bit
-                value = evaluate(g, bits)
-                for j, coefficient in enumerate(value):
-                    subtotal[j] += coefficient
-            product = _jet_mul(product, subtotal)
-        for j, coefficient in enumerate(product):
-            total[j] += coefficient
-    return total
+    zero = (Fraction(0),) * (q + 1)
+    return separated_group_sum(
+        n, node.groups, node.rows, node.ranges, node.counts, fixed, evaluate,
+        zero, tuple(_one_jet(q)), _add_jets, _mul_jets, stats,
+    )
 
 
 def count_placed_formula(
