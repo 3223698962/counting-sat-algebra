@@ -1,6 +1,6 @@
 # Roadmap
 
-Build the pieces of the counting algorithm on instances small enough to compare with brute force. A step is done when that comparison passes and the cost matches the step's own analysis. Refuting ETH is not a success criterion for this repository.
+Implement the deterministic exact counter described in references, including the stated time and space bounds. Finite checks are milestones; complete alignment with Theorem 1.1 requires the general-input pipeline and bit-complexity analysis. See docs/REFERENCE_ALIGNMENT.md for the stronger Appendix D bound and the weaker Sections 3–6 / Lean target.
 
 ## Done
 
@@ -66,23 +66,69 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] `build_auxiliary_slice(2, 192, 32)` and `schedule_placement` at those parameters both refuse before a matrix is allocated. The next pure powers, 729 and 1024, stay above the cap. `verify --quick` runs the D = 81 point and the refusals. `verify --step7` also runs D = 256
 - Not claimed: Theorem 1.1, a refutation of ETH, a subexponential runtime, or 2^{o(n)}. A passing balance check is not a schedule
 
-### Step 8 — conditional-expectation balancer scaffold
+### Step 8 — original balancer and legacy Boolean budget
+
+Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget stops; Step 9 implements the exact reference scheduler and default rational check.
 
 - [x] Successive choice runs only when the Lemma 4.5 inequalities hold and the slice is under the cap. At each variable and each clause it tries every symbol in {0, …, r−1}^Q and keeps the symbol that minimizes a quadratic load potential. Ties break toward the lexicographically first symbol. Nothing is sampled. The schedule cube is not enumerated
-- [x] On 64 disjoint unit clauses, r = 2, Q = 1, D = 4, the search meets label multiplicity 16 ≤ 2M/D = 32 and largest group 32, with 32·r ≤ 2n. `design_problems_at` is not called: an outside group has size 32, and that walk enumerates 2^32 Boolean points, above the budget 4096. `place_formula` is not called. The same kind of refusal, with 1 ≤ R < Q holding, is what 1024 disjoint units give at r = 2, Q = 2, R = 1, D = 16 (outside group 512, multiplicity 64 ≤ 128)
+- [x] In the explicit `design_method="boolean"` mode, on 64 disjoint unit clauses, r = 2, Q = 1, D = 4, the search meets label multiplicity 16 ≤ 2M/D = 32 and largest group 32, with 32·r ≤ 2n. `design_problems_at` is not called: an outside group has size 32, and that walk enumerates 2^32 Boolean points, above the budget 4096. `place_formula` is not called. The same kind of refusal, with 1 ≤ R < Q holding, is what 1024 disjoint units give at r = 2, Q = 2, R = 1, D = 16 (outside group 512, multiplicity 64 ≤ 128)
 - [x] Formulas that fail the inequalities, including the brute-comparable ones, still refuse with no placement and without running the search. Full M0 and side length 1024 still refuse before allocation. A direct call on eight units at r = 2, Q = 2, which is not admitted, passes `design_problems_at` and the T = 0 restoration. `schedule_placement` does not make that call
 - [x] `verify --step8` and `verify --quick` record these rows. Refusals are not timed. The direct check on eight units took about 0.01 seconds on one run. That clock is not a complexity result
 - Not claimed: Theorem 1.1, a refutation of ETH, a subexponential runtime, or 2^{o(n)}. The search is not a proof of Lemma 4.5. The binomial tail is not checked. A budget refusal is not a placement
 
-## Not started
+### Step 9 — reference conditional expectation and rational design
 
-No further step is listed. The distance to a full counting algorithm is still the list in `docs/PROGRESS.md`: full M0, a balancer that places an admitted formula inside the design budget, sparsification with n' = n + o(n), a measurement space that is not exponential in the number of blocks, and a Hermite evaluation that does not walk the cube. The Step 8 search stops before `design_problems_at` on every admitted row in this tree.
+- [x] Minimize the exact reference potential Phi/(M(b+w)) + Xi/(Qn), including shared-incidence dependencies
+- [x] Check each prefix expectation against all completions on tiny inputs; independently check the final potential
+- [x] Eliminate each group's measurement matrix once and check the entire rational kernel through row-span membership
+- [x] Complete a real admitted n=1024, Q=2, R=1 placement without a Boolean cube check
+- [x] Check Lemma 4.7's exact binomial tail. The n=1024 point fails it; n=16384, Q=3, R=2, tau=1/2 meets every numerical hypothesis
 
-## Out of scope
+### Step 10 — Section 3 common counting routine
 
-- A claim that this repository runs the full counting algorithm, or that ETH is false
-- A race against CDCL solvers
-- Unchecked runs at n too large to compare with brute force
+- [x] Stream integer measurement tuples and scan each local Boolean cube twice, with no attained-measurement table
+- [x] Recover truncated Taylor jets using U subset E and fixed-bit restrictions, then restore H(0) by Hermite interpolation
+- [x] Compare all requested coefficients and counts on the four Step 3 examples with independent cube oracles
+- [x] Check second-order recovery, negative literals, empty clauses, free variables, invalid designs and pre-enumeration budgets
+- This counts supplied finite designs. Their measurement space can still be exponential; no general-formula complexity bound follows from these runs
+
+### Step 11 — structured auxiliary operator
+
+- [x] Query M0 and replacement-polynomial entries by Fourier/Krawtchouk sums over swap orbits
+- [x] Compare every entry with dense slices of side 4, 9, 16, 64 and 81
+- [x] Query coordinates at r=2, Q=192, R=32, D=2^384 with no dense allocation
+- [x] Describe individual integer measurement modes and refuse oversized enumeration
+- Step 12 connects this descriptor to finite sparse placements and the common counting entry point
+
+### Step 12 — sparse admitted placement
+
+- [x] Store occupied polynomial and measurement coordinates without M×n dense arrays
+- [x] Bound replacement support, mode-coordinate queries, pullback candidates and sparse elimination before resource overuse
+- [x] Check restoration, common denominator, coefficient norms and exact rational kernels
+- [x] Complete n=16384, r=2, Q=3, R=2 placement with all Lemma 4.7 numerical hypotheses satisfied
+- [x] Record 59392 polynomial entries and 14336 measurement entries versus 536870912 dense polynomial slots
+- [x] Plan the common count and refuse before enumeration: q=5461, J=5462, zero Boolean vectors examined
+
+### Step 13 — DIMACS and independent components
+
+- [x] Parse strict DIMACS with declared free variables, multiline clauses and empty clauses
+- [x] Normalize clauses and identify independent components; place each component afresh
+- [x] Count each nontrivial component through the sparse shared-measurement backend; cap optional memoization
+- [x] Add actual count CLI, JSON reporting, explicit budgets and exact hex output for huge counts
+- [x] Count the eight-variable example as 196 and the 32769-variable disjoint 3-CNF as 7^10923
+- [x] Verify no cube-oracle backend, free-bit factors, disabled memoization and refusals without partial counts
+- This completes a finite supplied-CNF counter within component budgets. General large connected instances and the reference's asymptotic bounds remain open
+
+## Remaining work toward the reference conclusion
+
+- [x] Connect structured auxiliary entries and measurement descriptors to finite sparse placed formulas
+- [ ] Choose and run the full asymptotic parameter family
+- [ ] Implement Section 5's sparse polynomial systems and coefficient algebra
+- [ ] Implement Section 6's equation selection and disjoint sparsification with the required size control
+- [ ] Implement Appendix D's tensor contraction to reach Theorem 1.1's sharper bound
+- [ ] Establish exact bit-operation and space bounds; complete the Lean machine and proof without the existing sorry
+
+Unsupported claims of theorem completion are not an acceptance criterion. Results must distinguish counted formulas, checked hypotheses or coordinates, and budget refusals.
 
 ## File map
 
@@ -95,7 +141,13 @@ src/counting_sat_algebra/
   hermite.py                                                           # Step 4
   sparsify.py                                                          # Step 5
   parameter_scan.py                                                    # Step 6
-  scheduler.py                                                         # Steps 7 and 8
+  scheduler.py, conditional_balance.py, linear_algebra.py                # Steps 7–9
+  reference_parameters.py                                               # reference hypothesis checks
+  common_count.py                                                       # Step 10
+  structured_auxiliary.py, reference_verify.py                           # Step 11 and alignment checks
+  sparse_placement.py                                                   # Step 12
+  component_count.py, dimacs.py, cli.py                                  # Step 13
 benches/
+examples/count_demo.cnf
 docs/PROGRESS.md
 ```

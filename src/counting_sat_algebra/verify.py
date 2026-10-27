@@ -25,6 +25,7 @@ import random
 import sys
 import time
 from fractions import Fraction
+from functools import partial
 from typing import List, Sequence, Tuple
 
 from .blocked_sum import (
@@ -38,6 +39,10 @@ from .bounded_occurrence import random_bounded_3cnf, run_degree_bound_experiment
 from .cnf import brute_count, random_3cnf
 from .hermite import analyze_step4_case, recovery_problems, step4_cases
 from .independent import run_independent_suite
+from .reference_verify import (
+    run_reference_design_suite, run_common_count_suite, run_structured_auxiliary_suite,
+    run_sparse_placement_suite, run_component_count_suite,
+)
 from .replacement_matrix import (
     FULL_M0_LOG2_DIMENSION_AT_R2,
     FULL_M0_MIN_Q,
@@ -678,7 +683,7 @@ def run_step7_suite(*, heavy: bool) -> list[dict]:
         print(f"    {small.reason}", flush=True)
         return rows
 
-    admitted = schedule_placement(_units(64), r=2, Q=1, R=1)
+    admitted = schedule_placement(_units(64), r=2, Q=1, R=1, design_method="boolean")
     admitted_ok = (
         admitted.balance.admitted
         and admitted.placed is None
@@ -751,6 +756,7 @@ def run_step8_suite() -> list[dict]:
     )
     print("  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm.")
     rows: list[dict] = []
+    legacy_schedule = partial(schedule_placement, design_method="boolean")
 
     def add(name: str, n: int, m: int, brute: int, ok: bool, label: str) -> None:
         rows.append(
@@ -764,7 +770,7 @@ def run_step8_suite() -> list[dict]:
             }
         )
 
-    small = schedule_placement(_units(2), r=2, Q=1, R=1)
+    small = legacy_schedule(_units(2), r=2, Q=1, R=1)
     small_ok = (
         small.placed is None
         and not small.accepted
@@ -779,7 +785,7 @@ def run_step8_suite() -> list[dict]:
         print(f"    {small.reason}", flush=True)
         return rows
 
-    toy = schedule_placement(_units(64), r=2, Q=1, R=1)
+    toy = legacy_schedule(_units(64), r=2, Q=1, R=1)
     toy_ok = (
         toy.balance.admitted
         and toy.placed is None
@@ -806,7 +812,7 @@ def run_step8_suite() -> list[dict]:
         print(f"    {toy.reason}", flush=True)
         return rows
 
-    wide = schedule_placement(_units(1024), r=2, Q=2, R=1)
+    wide = legacy_schedule(_units(1024), r=2, Q=2, R=1)
     wide_ok = (
         wide.balance.admitted
         and wide.balance.degree_gap_ok is True
@@ -828,7 +834,7 @@ def run_step8_suite() -> list[dict]:
         print(f"    {wide.reason}", flush=True)
         return rows
 
-    over = schedule_placement(_units(1), r=2, Q=5, R=1)
+    over = legacy_schedule(_units(1), r=2, Q=5, R=1)
     over_ok = (
         over.balance.D == 1024
         and over.allocation_refused
@@ -848,7 +854,7 @@ def run_step8_suite() -> list[dict]:
         full_message = str(exc)
     else:
         full_message = ""
-    full = schedule_placement(_units(1), r=2, Q=FULL_M0_MIN_Q, R=FULL_M0_MIN_R)
+    full = legacy_schedule(_units(1), r=2, Q=FULL_M0_MIN_Q, R=FULL_M0_MIN_R)
     full_ok = (
         full.placed is None
         and full.allocation_refused
@@ -870,9 +876,9 @@ def run_step8_suite() -> list[dict]:
     wiring_check = check_balance(wiring_cnf.n, scopes_from_cnf(wiring_cnf), 2, 2, 1)
     wiring_search = _search_schedules(wiring_cnf, wiring_check)
     started = time.perf_counter()
-    wiring = _finish_chosen_placement(wiring_cnf, wiring_check, wiring_search, None)
+    wiring = _finish_chosen_placement(wiring_cnf, wiring_check, wiring_search, None, design_method="boolean")
     elapsed = time.perf_counter() - started
-    gate = schedule_placement(wiring_cnf, r=2, Q=2, R=1)
+    gate = legacy_schedule(wiring_cnf, r=2, Q=2, R=1)
     wiring_ok = (
         not wiring_check.admitted
         and wiring.accepted
@@ -913,6 +919,7 @@ def print_summary_table(
     scan_rows: List[dict] | None = None,
     step7_rows: List[dict] | None = None,
     step8_rows: List[dict] | None = None,
+    reference_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -928,6 +935,7 @@ def print_summary_table(
         or sparse_rows
         or step7_rows
         or step8_rows
+        or reference_rows
     )
     if numeric:
         print(f"{'kind':<8} {'n':>4} {'m':>4} {'#F':>8} {'match':>6}")
@@ -987,6 +995,9 @@ def print_summary_table(
             f"{'step8':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
             f"{r['label']:>6}"
         )
+    for r in reference_rows or []:
+        brute_cell = f"{r['brute']:8d}" if r['brute'] >= 0 else f"{'—':>8}"
+        print(f"{'ref':<8} {r['n']:4d} {r['m']:4d} {brute_cell} {r['label']:>6}")
     if numeric:
         print("-" * 72)
     if interp_rows:
@@ -1040,6 +1051,8 @@ def print_summary_table(
             f"Balancer      (J): {sum(1 for row in step8_rows if row['ok'])}/{len(step8_rows)} passed"
             + (f" ({refused} refused as recorded)" if refused else "")
         )
+    if reference_rows:
+        print(f"Reference (K–O): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1092,6 +1105,8 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
+    if any(step in steps for step in (9, 10, 11, 12, 13)):
+        parts.append("Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, structured matrix entries, sparse admitted placements and independent component counts. Complete Theorem 1.1 alignment remains open.")
     parts.append("No Theorem 1.1, no 2^{o(n)} claim.")
     return " ".join(parts)
 
@@ -1101,7 +1116,7 @@ def _run_selected(
     growth_groups: Sequence[int],
     scan_profile: str,
 ) -> int:
-    """Run a subset of Steps 2–8. The full path stays in ``main``."""
+    """Run a subset of Steps 2–13. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1115,6 +1130,7 @@ def _run_selected(
     scan_rows: list[dict] = []
     step7_rows: list[dict] = []
     step8_rows: list[dict] = []
+    reference_rows: list[dict] = []
 
     if 2 in steps:
         example_rows, growth_rows = run_step2_suite(growth_groups)
@@ -1170,6 +1186,16 @@ def _run_selected(
             return 1
         print()
 
+    for step, runner in ((9, run_reference_design_suite), (10, run_common_count_suite), (11, run_structured_auxiliary_suite),
+                         (12, run_sparse_placement_suite), (13, run_component_count_suite)):
+        if step in steps:
+            rows = runner()
+            reference_rows.extend(rows)
+            if not rows or not all(row['ok'] for row in rows):
+                print(f"FAIL: Step {step} reference check", file=sys.stderr)
+                return 1
+            print()
+
     print_summary_table(
         [],
         [],
@@ -1181,6 +1207,7 @@ def _run_selected(
         scan_rows or None,
         step7_rows or None,
         step8_rows or None,
+        reference_rows or None,
     )
     print()
     print("ALL TESTS PASSED")
@@ -1190,7 +1217,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0 through 8)"
+        description="Counting algorithm reference verifier (Steps 0 through 13)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1238,6 +1265,12 @@ def main(argv: List[str] | None = None) -> int:
             "(refusals are not timed; the design walk above the budget is not started)"
         ),
     )
+    parser.add_argument('--step9', action='store_true', help='check exact conditional expectations, rational designs and the binomial tail')
+    parser.add_argument('--step10', action='store_true', help='check Section 3 shared-measurement counting and Taylor recovery')
+    parser.add_argument('--step11', action='store_true', help='check structured auxiliary entries at small and full parameters')
+    parser.add_argument('--step12', action='store_true', help='check sparse admitted placement and common-count budget planning')
+    parser.add_argument('--step13', action='store_true', help='check exact component counts including a large disconnected 3-CNF')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–13 against the local reference')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1261,6 +1294,11 @@ def main(argv: List[str] | None = None) -> int:
             (6, args.step6),
             (7, args.step7),
             (8, args.step8),
+            (9, args.step9 or args.reference),
+            (10, args.step10 or args.reference),
+            (11, args.step11 or args.reference),
+            (12, args.step12 or args.reference),
+            (13, args.step13 or args.reference),
         )
         if enabled
     ]
@@ -1271,7 +1309,7 @@ def main(argv: List[str] | None = None) -> int:
             "quick" if args.quick else "full",
         )
 
-    print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, 5, 6, 7, and 8")
+    print("counting_sat_algebra.verify — Steps 0 through 13")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
@@ -1374,6 +1412,16 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (J) all {len(step8_rows)} Step 8 rows passed")
     print()
 
+    reference_rows = []
+    for runner in (run_reference_design_suite, run_common_count_suite, run_structured_auxiliary_suite,
+                   run_sparse_placement_suite, run_component_count_suite):
+        rows = runner()
+        reference_rows.extend(rows)
+        if not rows or not all(row['ok'] for row in rows):
+            print('FAIL: reference alignment checks', file=sys.stderr)
+            return 1
+        print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
@@ -1389,6 +1437,7 @@ def main(argv: List[str] | None = None) -> int:
         scan_rows,
         step7_rows,
         step8_rows,
+        reference_rows,
     )
     print()
     print("ALL TESTS PASSED")
@@ -1407,11 +1456,15 @@ def main(argv: List[str] | None = None) -> int:
         "rows are recorded and not counted. Popcount measurement tuples grow as (r+1)^b. "
         "Refused scan cells were not timed. Caller-supplied schedules are checked. "
         "When the balance inequalities hold, successive choice aims at multiplicity "
-        "at most 2M/D and group size at most 2n/r. On the admitted rows that walk "
-        "is above the design budget, so no placement is accepted. The schedule "
-        "cube was not enumerated. "
-        f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
-        "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
+        "at most 2M/D and group size at most 2n/r. Step 9 checks the admitted "
+        "n=1024 placement using exact linear algebra. Step 10 recovers jets by "
+        "streaming local measurement scans. Step 11 queries full-parameter matrix "
+        "entries. Step 12 checks a sparse placement admitted by every Lemma 4.7 "
+        "hypothesis. Step 13 counts independent components exactly. Complete "
+        "Theorem 1.1 alignment remains open. "
+        f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "
+        f"2**{FULL_M0_LOG2_DIMENSION_AT_R2} at r=2); structured entry queries pass. "
+        "No Theorem 1.1, no 2^{o(n)} claim."
     )
     return 0
 

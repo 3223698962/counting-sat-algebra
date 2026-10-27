@@ -35,7 +35,7 @@ schedules below are written out by hand. Step 7 checks two further explicit
 placements, at side lengths 81 and 256, and a balance-check scaffold that
 refuses to choose schedules when 2(b+w)D**2 ≤ M and 2Qr**2 ≤ n fail. Step 8
 runs a successive-choice search when those inequalities hold. On the admitted
-rows it refuses before design_problems_at, because that walk would exceed a
+rows the legacy Boolean mode refuses before design_problems_at because that walk would exceed a
 Boolean-point budget. The inequalities need n on the order of D**2.
 Sparsification and a subexponential count are not implemented. Hermite
 interpolation of H is a separate exact check in ``hermite.py``; it is not
@@ -786,7 +786,7 @@ def _check_t(placed: PlacedFormula, t: int) -> None:
         raise ValueError(f"t must lie in {{1, ..., {placed.auxiliary.Q}}}, got {t}")
 
 
-def design_problems_at(placed: PlacedFormula, t: int) -> list[str]:
+def design_problems_at(placed: PlacedFormula, t: int, *, boolean_check: bool = False) -> list[str]:
     """Legal-design failures at one sample point.
 
     Checked here, for this explicit placement:
@@ -797,7 +797,11 @@ def design_problems_at(placed: PlacedFormula, t: int) -> list[str]:
       the auxiliary side length D;
     - for every occurrence, at this t, the coefficient vector outside the
       clause's assigned group lies in the span of the measurement rows
-      (rational kernel condition, and the same statement on Boolean points).
+      (the rational kernel condition implies the statement on Boolean points).
+
+    The default eliminates the restricted measurement matrix once per group.
+    ``boolean_check=True`` additionally runs the original exhaustive Boolean
+    comparison, for small-instance validation. Callers must budget that walk.
 
     For r = 2 the size bound is ``size ≤ n``, so it holds for every partition.
     The kernel condition is the part that can fail. An empty list means this
@@ -836,6 +840,16 @@ def design_problems_at(placed: PlacedFormula, t: int) -> list[str]:
                 f"t={t}: measurement row {row_index} has absolute sum {absolute}, above D={dimension}"
             )
 
+    if any(len(row) != n for row in placed.measurement_rows):
+        return problems
+    from .linear_algebra import RationalRowSpan
+
+    restricted_rows = [
+        [[row[index] for index in variables] for row in placed.measurement_rows]
+        for variables in groups
+    ]
+    spans = [RationalRowSpan(rows, len(variables)) for rows, variables in zip(restricted_rows, groups)]
+
     position = t - 1
     for clause_index, clause in enumerate(placed.cnf.clauses):
         assigned = placed.clause_schedules[clause_index][position]
@@ -848,14 +862,13 @@ def design_problems_at(placed: PlacedFormula, t: int) -> list[str]:
                 if group == assigned:
                     continue
                 target = [coeff[index] for index in variables]
-                restricted = [
-                    [row[index] for index in variables] for row in placed.measurement_rows
-                ]
-                if not vector_in_row_span(restricted, target):
+                if not spans[group].contains(target):
                     problems.append(
                         f"t={t}: clause {clause_index} occurrence {occ} (variable {var}) "
                         f"reads group {group} outside the measurement span"
                     )
+                    continue
+                if not boolean_check:
                     continue
                 table: dict[tuple[Fraction, ...], Fraction] = {}
                 for bits in itertools.product((0, 1), repeat=len(variables)):

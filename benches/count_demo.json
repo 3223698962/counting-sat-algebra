@@ -1,0 +1,21 @@
+{
+  "status": "counted",
+  "count": "196",
+  "reason": "independent component counts and declared free-bit factor completed",
+  "components": 2,
+  "components_counted": 2,
+  "free_variables": 2,
+  "largest_component": 3,
+  "normalized_clauses": 2,
+  "local_evaluations": 2,
+  "memo_hits": 0,
+  "boolean_vectors": 148,
+  "measurement_tuples": 16,
+  "factor_evaluations": 32,
+  "count_encoding": "decimal",
+  "satisfiable": true,
+  "algorithm": "independent components with sparse shared-measurement local counts",
+  "input": "D:\\Desktop\\Document\\counting-sat-algebra\\examples\\count_demo.cnf",
+  "n": 8,
+  "m": 2
+}
