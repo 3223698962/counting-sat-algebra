@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Verification CLI: Step 0 (product identity + H(T) interpolation) and a small
-Step 1 bounded-occurrence degree check.
+Verification CLI: Step 0 (product identity + H(T) interpolation), a small
+Step 1 bounded-occurrence degree check, and Step 2 blocked-sum agreement.
 
 Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
+  python -m counting_sat_algebra.verify --step2
 """
 
 from __future__ import annotations
@@ -17,10 +18,17 @@ import time
 from fractions import Fraction
 from typing import List, Sequence, Tuple
 
+from .blocked_sum import (
+    blocked_sum,
+    compare_blocked_to_full,
+    hand_built_examples,
+    popcount_group_instance,
+    popcount_growth,
+)
 from .bounded_occurrence import random_bounded_3cnf, run_degree_bound_experiment
 from .cnf import brute_count, random_3cnf
 from .independent import run_independent_suite
-from .replacements import interpolate_H0
+from .replacements import eval_H_at, interpolate_H0
 from .self_reduce import find_assignment_by_self_reduction
 
 
@@ -119,10 +127,124 @@ def run_bounded_suite(
     return rows
 
 
+def run_step2_suite(group_counts: Sequence[int]) -> tuple[list[dict], list[dict]]:
+    """Hand-built blocked-sum checks, then a popcount scan over the group count.
+
+    Returns ``(example_rows, growth_rows)``. A row with ``ok`` false stops the
+    scan. Measurement-tuple counts for the popcount scan are ``3^b`` with
+    block size 2; that is exponential in the number of groups.
+    """
+    print("=== (D) Blocked sum vs full H(t), hand-built replacements ===")
+    print(
+        "  Simplified (r, τ, D)-design: blocks of size ≤ r and τ shared linear measurements."
+    )
+    print(
+        "  Measurement tuples can grow exponentially with the number of blocks. "
+        "Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm."
+    )
+    example_rows: list[dict] = []
+    examples = hand_built_examples()
+    for index, example in enumerate(examples, start=1):
+        started = time.perf_counter()
+        comparisons = compare_blocked_to_full(
+            example.cnf,
+            example.structured,
+            example.sample_points,
+        )
+        brute = brute_count(example.cnf)
+        ok = all(blocked.value == full for _t, full, blocked in comparisons)
+        at_zero = [blocked.value for t, _full, blocked in comparisons if t == 0]
+        ok = ok and len(at_zero) == 1 and at_zero[0] == Fraction(brute)
+        elapsed = time.perf_counter() - started
+        design = example.structured.design
+        sample = comparisons[0][2]
+        row = {
+            "name": example.name,
+            "n": example.cnf.n,
+            "m": example.cnf.m,
+            "blocks": len(design.blocks),
+            "r": design.r,
+            "tau": design.tau,
+            "R": example.structured.R,
+            "D": design.D,
+            "brute": brute,
+            "tuples": sample.measurement_tuples,
+            "local": sample.local_evaluations,
+            "full_space": sample.full_space,
+            "ok": ok,
+            "sec": elapsed,
+            "points": len(comparisons),
+        }
+        example_rows.append(row)
+        status = "OK" if ok else "FAIL"
+        print(
+            f"  [D {index:02d}/{len(examples)}] {example.name}  "
+            f"n={row['n']} blocks={row['blocks']} r={row['r']} τ={row['tau']} "
+            f"R={row['R']} D={row['D']}  #F={brute}  "
+            f"tuples={row['tuples']} local={row['local']} full={row['full_space']}  "
+            f"points={row['points']}  {status}  ({elapsed:.3f}s)",
+            flush=True,
+        )
+        if not ok:
+            for t, full, blocked in comparisons:
+                if blocked.value != full or (t == 0 and blocked.value != Fraction(brute)):
+                    print(
+                        f"    mismatch at t={t}: blocked={blocked.value} full={full} #F={brute}",
+                        flush=True,
+                    )
+            return example_rows, []
+
+    print("  Popcount growth, block size 2, every α coefficient 1, compared at t = 1.")
+    print("  Measurement tuples = (r+1)^b = 3^b, exponential in the number of groups.")
+    growth_rows: list[dict] = []
+    for growth in popcount_growth(group_counts, block_size=2, R=1, t=1):
+        row = {
+            "n": growth.blocked.n,
+            "m": growth.groups,
+            "groups": growth.groups,
+            "tuples": growth.blocked.measurement_tuples,
+            "local": growth.blocked.local_evaluations,
+            "full_space": growth.blocked.full_space,
+            "seconds": growth.blocked.seconds,
+            "ok": growth.ok,
+            "value": growth.blocked.value,
+            "full": growth.full,
+        }
+        growth_rows.append(row)
+        status = "OK" if growth.ok else "FAIL"
+        print(
+            f"    b={growth.groups} n={growth.blocked.n}  "
+            f"H(1)={growth.blocked.value}  tuples={growth.blocked.measurement_tuples}  "
+            f"local_evals={growth.blocked.local_evaluations}  "
+            f"full_space={growth.blocked.full_space}  "
+            f"enum={growth.blocked.seconds:.4f}s  {status}",
+            flush=True,
+        )
+        if not growth.ok:
+            print(f"    full H(1)={growth.full}", flush=True)
+            return example_rows, growth_rows
+
+    largest = group_counts[-1]
+    cnf, structured = popcount_group_instance(largest, block_size=2, R=1)
+    blocked_at_zero = blocked_sum(cnf, structured, 0)
+    brute = brute_count(cnf)
+    full_at_zero = eval_H_at(cnf, structured.family, Fraction(0))
+    ok_zero = blocked_at_zero.value == Fraction(brute) == full_at_zero
+    print(
+        f"    b={largest} at t=0: blocked={blocked_at_zero.value}  #F={brute}  "
+        f"{'OK' if ok_zero else 'FAIL'}",
+        flush=True,
+    )
+    if not ok_zero:
+        growth_rows[-1]["ok"] = False
+    return example_rows, growth_rows
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
     bounded_rows: List[dict],
+    blocked_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -149,36 +271,88 @@ def print_summary_table(
             f"{'bounded':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
             f"{'OK' if r['ok'] else 'FAIL':>6}"
         )
+    for r in blocked_rows or []:
+        print(
+            f"{'blocked':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
+            f"{'OK' if r['ok'] else 'FAIL':>6}"
+        )
     print("-" * 72)
-    print(f"Interpolation (B): {sum(1 for r in interp_rows if r['ok'])}/{len(interp_rows)} passed")
-    print(f"Independent   (A): {sum(1 for r in indep_rows if r['ok'])}/{len(indep_rows)} passed")
-    print(f"Bounded occ.  (C): {sum(1 for r in bounded_rows if r['ok'])}/{len(bounded_rows)} passed")
+    if interp_rows:
+        print(
+            f"Interpolation (B): {sum(1 for r in interp_rows if r['ok'])}/{len(interp_rows)} passed"
+        )
+    if indep_rows:
+        print(
+            f"Independent   (A): {sum(1 for r in indep_rows if r['ok'])}/{len(indep_rows)} passed"
+        )
+    if bounded_rows:
+        print(
+            f"Bounded occ.  (C): {sum(1 for r in bounded_rows if r['ok'])}/{len(bounded_rows)} passed"
+        )
+    if blocked_rows:
+        print(
+            f"Blocked sum   (D): {sum(1 for r in blocked_rows if r['ok'])}/{len(blocked_rows)} passed"
+        )
     print("=" * 72)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0 and 1)"
+        description="Counting-polynomial skeleton verifier (Steps 0, 1, and 2)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--R", type=int, default=1, help="replacement degree for suite B")
     parser.add_argument("--quick", action="store_true", help="fewer and smaller tests")
+    parser.add_argument(
+        "--step2",
+        action="store_true",
+        help="run only the Step 2 blocked-sum checks",
+    )
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
     bounded_specs: List[Tuple[int, int, int]] = [(6, 4, 1), (6, 6, 1), (7, 5, 1)]
+    # Block size 2 popcount scan. Tuple count is 3^b, so b=5 is still a 243-tuple sum.
+    growth_groups: tuple[int, ...] = (1, 2, 3, 4, 5)
     if args.quick:
         args.trials_b = min(args.trials_b, 6)
         args.trials_a = min(args.trials_a, 6)
         n_max = 7
         bounded_specs = [(6, 4, 1), (6, 6, 1)]
+        growth_groups = (1, 2, 3, 4)
 
-    print("counting_sat_algebra.verify — Steps 0 and 1")
-    print("Counting polynomial, univariate interpolation, bounded-occurrence checks.")
-    print("Does not implement a subexponential algorithm and does not refute ETH.")
+    if args.step2:
+        print("counting_sat_algebra.verify — Step 2 only")
+    else:
+        print("counting_sat_algebra.verify — Steps 0, 1, and 2")
+        print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
+        print("and a blocked sum on hand-built replacements.")
+    print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
+
+    if args.step2:
+        example_rows, growth_rows = run_step2_suite(growth_groups)
+        print()
+        if (
+            not example_rows
+            or not all(row["ok"] for row in example_rows)
+            or len(growth_rows) != len(growth_groups)
+            or not all(row["ok"] for row in growth_rows)
+        ):
+            print("FAIL: blocked sum disagreed with the full sum", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], example_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: Step 2 only. On these hand-built families the blocked sum equals "
+            "full-space H(t), including H(0) = #F. For popcount blocks of size 2 the "
+            "measurement tuple count is 3^b, exponential in the number of groups. "
+            "No matrix M0, no Theorem 1.1, no 2^{o(n)} claim."
+        )
+        return 0
 
     print("=== (A) Independent components ===")
     indep_rows = run_independent_suite(trials=args.trials_a, seed=args.seed + 1)
@@ -218,17 +392,31 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (C) all {len(bounded_rows)} instances passed")
     print()
 
+    example_rows, growth_rows = run_step2_suite(growth_groups)
+    if (
+        not example_rows
+        or not all(row["ok"] for row in example_rows)
+        or len(growth_rows) != len(growth_groups)
+        or not all(row["ok"] for row in growth_rows)
+    ):
+        print("FAIL: blocked sum disagreed with the full sum", file=sys.stderr)
+        return 1
+    print(f"  (D) all {len(example_rows)} hand-built instances passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
 
-    print_summary_table(interp_rows, indep_rows, bounded_rows)
+    print_summary_table(interp_rows, indep_rows, bounded_rows, example_rows)
     print()
     print("ALL TESTS PASSED")
     print(
         "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
-        "identity, and degree-cap checks on occurrence-≤3 3-CNFs. "
-        "No (r, τ, D)-design, no blocked-sum, no M0, no 2^{o(n)} claim."
+        "identity, degree-cap checks on occurrence-≤3 3-CNFs, and blocked-sum "
+        "agreement with full-space H(t) on hand-built replacements. "
+        "Popcount measurement tuples grow as (r+1)^b. "
+        "No matrix M0, no Theorem 1.1, no 2^{o(n)} claim."
     )
     return 0
 

@@ -19,14 +19,15 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] Fixed-seed formulas under `benches/` and pytest coverage
 - See `docs/PROGRESS.md` for the numbers from the fixed seed
 
+### Step 2 — simplified (r, τ, D)-design and blocked sum
+
+- [x] On a hand-built replacement family, group the variables and sum inside each group after the shared measurements are fixed
+- [x] Check blocked sum = full-space sum H(t)
+- [x] Enumeration of measurements may stay exponential; record how time grows with the number of groups
+- Success criterion met: agreement on small n. The popcount tuple count is (r+1)^b, exponential in the number of groups. A subexponential runtime was not required and is not claimed
+- The design here is a block partition plus τ explicit linear measurements, with D carried and unused. It is not the matrix M0
+
 ## Not started
-
-### Step 2 — (r, τ, D)-design and blocked sum
-
-- [ ] On a hand-built replacement family, group the variables and sum inside each group after the shared measurements are fixed
-- [ ] Check blocked sum = full-space sum H(t)
-- [ ] Enumeration of measurements may stay exponential; record how time grows with the number of groups
-- Success criterion: agreement on small n. A subexponential runtime is not required
 
 ### Step 3 — a runnable slice of the low-degree replacement / matrix construction
 
@@ -61,7 +62,7 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 src/counting_sat_algebra/
   cnf.py, replacements.py, independent.py, self_reduce.py, verify.py   # Step 0
   bounded_occurrence.py                                                # Step 1
-  # design.py, blocked_sum.py                                          # Step 2, absent
+  design.py, blocked_sum.py                                            # Step 2
 benches/
 docs/PROGRESS.md
 ```

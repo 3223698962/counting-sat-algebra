@@ -11,7 +11,13 @@ Replacement linear forms and the univariate H(T) from Section 2.3:
   H(0) = #F,   deg H ≤ m · k · R   (k=子句宽度上界)
 
 本原型在全部 2^n 赋值上用精确有理数求值 H(1),…,H(D+1)，
-再插值恢复 H(0)——*不* 使用论文的 (r,τ,D)-design / 快速分组求和。
+再插值恢复 H(0)。``eval_H_at`` 本身仍然枚举全部赋值。
+
+Step 2 lives in ``blocked_sum.py``. For a hand-built family whose higher
+T-coefficients lie in a fixed list of linear measurements, that module
+regroups the same sum by blocks. The regrouping is checked against
+``eval_H_at``. It does not replace this full-cube evaluator, and it does
+not by itself yield a subexponential algorithm.
 """
 
 from __future__ import annotations
