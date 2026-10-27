@@ -42,12 +42,15 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] H(0) matches brute-force #F and `interpolate_H0` on the closed forms, on Step 0 random formulas, and on the Step 1 bench row n6-m4-r1 (7 paired points against 13, #F = 44). On these draws the measured degree equalled the cap
 - Not claimed: fewer than D+1 conditions, a subexponential evaluation, Theorem 1.1, or 2^{o(n)}. A full jet of order D does quadratic arithmetic per assignment. Each sample point still costs 2^n
 
-## Not started
-
 ### Step 5 — sparsification and a reduction from general small k-CNF
 
-- [ ] Counting-preserving sparsification or variable copying at small n
-- [ ] Pipe a general small k-CNF into a bounded-occurrence instance and then through Steps 2 and 3
+- [x] Implication-cycle copying at B = 3. A variable of occurrence d > 3 becomes d copies, one per occurrence, plus (¬y_1 ∨ y_2) ∧ … ∧ (¬y_d ∨ y_1). Each copy occurs three times. A variable that already occurs at most three times stays one variable. #F' = #F, with no extra factor of 2
+- [x] Brute force agrees on the hand formulas inside n' ≤ 20, including a free bit, an empty clause, one heavy width-3 variable, and a width-2 formula whose clauses sit in two blocks. The two-block row goes through the Step 2 blocked sum. The rows with n' ≤ 7 go through `interpolate_H0`, and on those draws the measured degree equalled M·R. Sixteen units are counted; their interpolation exceeds the assignment budget and is refused
+- [x] Recorded, and not counted, when n' > 20. A seeded 3-CNF with n = 5 and m = 12 has n' = 36; the cap-3 bound n' ≥ 3m − 2n is already 26. Sixteen units fit in the brute window and miss the interpolation budget
+- The output is mixed width. The exact-width-3 checker rejects the cycle clauses. Step 3 is not applied. B = 3 is the smallest cap this gadget meets
+- Not claimed: Theorem 1.1, a subexponential runtime, 2^{o(n)}, or a reduction that keeps n' = n + o(n)
+
+## Not started
 
 ### Step 6 — parameter scan
 
@@ -69,6 +72,7 @@ src/counting_sat_algebra/
   design.py, blocked_sum.py                                            # Step 2
   replacement_matrix.py                                                # Step 3
   hermite.py                                                           # Step 4
+  sparsify.py                                                          # Step 5
 benches/
 docs/PROGRESS.md
 ```
