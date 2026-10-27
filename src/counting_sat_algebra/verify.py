@@ -2,7 +2,8 @@
 """
 Verification CLI: Step 0 (product identity + H(T) interpolation), a small
 Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, a
-Step 3 tiny replacement-matrix slice, and Step 4 Hermite recovery of H(0).
+Step 3 tiny replacement-matrix slice, Step 4 Hermite recovery of H(0), and
+Step 5 occurrence copying with #F' = #F on instances inside the brute window.
 
 Usage:
   python -m counting_sat_algebra.verify
@@ -10,6 +11,7 @@ Usage:
   python -m counting_sat_algebra.verify --step2
   python -m counting_sat_algebra.verify --step3
   python -m counting_sat_algebra.verify --step4
+  python -m counting_sat_algebra.verify --step5
 """
 
 from __future__ import annotations
@@ -43,6 +45,7 @@ from .replacement_matrix import (
 )
 from .replacements import eval_H_at, interpolate_H0
 from .self_reduce import find_assignment_by_self_reduction
+from .sparsify import Step5Report, analyze_step5_case, step5_cases
 
 
 def run_interpolation_suite(
@@ -412,6 +415,95 @@ def run_step4_suite() -> list[dict]:
     return rows
 
 
+def run_step5_suite() -> list[dict]:
+    """Copy high-occurrence variables, then check #F' and the downstream steps.
+
+    The recovery on a counted instance is #F' = #F. A reduced n above 20, an
+    interpolation plan above the assignment budget, or a Step 2 clause that
+    meets two blocks is printed as REFUSED and does not fail the suite when
+    that refusal is the one the case records. Step 3 is not invoked.
+    """
+    print("=== (G) Copy variables down to occurrence ≤ 3 ===")
+    print("  Implication cycle on the copies. On a counted instance, #F' = #F.")
+    print(
+        "  Reduced n above 20, an interpolation budget overrun, and a clause that "
+        "meets two Step 2 blocks are recorded and are not treated as counts."
+    )
+    print("  Theorem 1.1 is not implemented. This is not a 2^{o(n)} algorithm.")
+    rows: list[dict] = []
+    cases = step5_cases()
+    for index, case in enumerate(cases, start=1):
+        report = analyze_step5_case(case)
+        row = _step5_row(report)
+        rows.append(row)
+        print(_format_step5_line(index, len(cases), report, row), flush=True)
+        if not report.ok:
+            for problem in report.problems:
+                print(f"    {problem}", flush=True)
+            return rows
+    return rows
+
+
+def _step5_row(report: Step5Report) -> dict:
+    spec = report.sparsification
+    brute = report.count.brute_reduced
+    label = "FAIL"
+    if report.ok:
+        label = "RECORDED" if report.count.status == "refused" else "OK"
+    return {
+        "name": report.name,
+        "n": spec.n_after,
+        "m": spec.m_after,
+        "n_before": spec.n_before,
+        "m_before": spec.m_before,
+        "occ_before": spec.max_occurrence_before,
+        "occ_after": spec.max_occurrence_after,
+        "brute": brute,
+        "label": label,
+        "ok": report.ok,
+        "sec": report.seconds,
+        "count_status": report.count.status,
+        "pipeline_status": None if report.pipeline is None else report.pipeline.status,
+        "blocked_status": None if report.blocked is None else report.blocked.status,
+    }
+
+
+def _format_step5_line(index: int, total: int, report: Step5Report, row: dict) -> str:
+    spec = report.sparsification
+    if report.count.status == "agreed":
+        count_text = str(report.count.brute_reduced)
+    else:
+        count_text = "REFUSED"
+    if report.pipeline is None:
+        if report.blocked is not None and report.blocked.status == "agreed":
+            h0_text = f"{report.blocked.blocked_at_zero} via blocked sum"
+        else:
+            h0_text = "—"
+    elif report.pipeline.status == "agreed":
+        degree = report.pipeline.observed_degree
+        mass = report.pipeline.degree_cap_mass
+        h0_text = f"{report.pipeline.h0} deg={degree}/{mass}"
+    elif report.pipeline.status == "refused":
+        h0_text = "REFUSED"
+    else:
+        h0_text = "FAIL"
+    if report.blocked is None:
+        block_text = "—"
+    elif report.blocked.status == "agreed":
+        block_text = f"OK tuples={report.blocked.tuples}"
+    elif report.blocked.status == "refused":
+        block_text = "REFUSED"
+    else:
+        block_text = "FAIL"
+    return (
+        f"  [G {index:02d}/{total}] {report.name}  "
+        f"n {spec.n_before}→{spec.n_after}  m {spec.m_before}→{spec.m_after}  "
+        f"occ {spec.max_occurrence_before}→{spec.max_occurrence_after}  "
+        f"#F={count_text}  H(0)={h0_text}  blocks={block_text}  "
+        f"{row['label']}  ({report.seconds:.3f}s)"
+    )
+
+
 def print_summary_table(
     interp_rows: List[dict],
     indep_rows: List[dict],
@@ -419,6 +511,7 @@ def print_summary_table(
     blocked_rows: List[dict] | None = None,
     matrix_rows: List[dict] | None = None,
     hermite_rows: List[dict] | None = None,
+    sparse_rows: List[dict] | None = None,
 ) -> None:
     print()
     print("=" * 72)
@@ -460,6 +553,13 @@ def print_summary_table(
             f"{'hermite':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
             f"{'OK' if r['ok'] else 'FAIL':>6}"
         )
+    for r in sparse_rows or []:
+        brute = r["brute"]
+        brute_cell = f"{brute:8d}" if isinstance(brute, int) and brute >= 0 else f"{'—':>8}"
+        print(
+            f"{'sparse':<8} {r['n']:4d} {r['m']:4d} {brute_cell} "
+            f"{r['label']:>6}"
+        )
     print("-" * 72)
     if interp_rows:
         print(
@@ -485,12 +585,18 @@ def print_summary_table(
         print(
             f"Hermite       (F): {sum(1 for r in hermite_rows if r['ok'])}/{len(hermite_rows)} passed"
         )
+    if sparse_rows:
+        recorded = sum(1 for r in sparse_rows if r["label"] == "RECORDED")
+        print(
+            f"Sparsify      (G): {sum(1 for r in sparse_rows if r['ok'])}/{len(sparse_rows)} passed"
+            + (f" ({recorded} recorded past the brute wall)" if recorded else "")
+        )
     print("=" * 72)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Steps 0, 1, 2, 3, and 4)"
+        description="Counting-polynomial skeleton verifier (Steps 0, 1, 2, 3, 4, and 5)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -512,6 +618,11 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="run the Step 4 Hermite / Hasse checks",
     )
+    parser.add_argument(
+        "--step5",
+        action="store_true",
+        help="run the Step 5 occurrence-copying checks",
+    )
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -525,11 +636,13 @@ def main(argv: List[str] | None = None) -> int:
         bounded_specs = [(6, 4, 1), (6, 6, 1)]
         growth_groups = (1, 2, 3, 4)
 
-    only_step2 = args.step2 and not args.step3 and not args.step4
-    only_step3 = args.step3 and not args.step2 and not args.step4
-    only_steps_2_and_3 = args.step2 and args.step3 and not args.step4
-    only_step4 = args.step4 and not args.step2 and not args.step3
-    mixed_with_step4 = args.step4 and (args.step2 or args.step3)
+    only_step2 = args.step2 and not args.step3 and not args.step4 and not args.step5
+    only_step3 = args.step3 and not args.step2 and not args.step4 and not args.step5
+    only_steps_2_and_3 = args.step2 and args.step3 and not args.step4 and not args.step5
+    only_step4 = args.step4 and not args.step2 and not args.step3 and not args.step5
+    only_step5 = args.step5 and not args.step2 and not args.step3 and not args.step4
+    mixed_with_step4 = args.step4 and (args.step2 or args.step3) and not args.step5
+    mixed_with_step5 = args.step5 and (args.step2 or args.step3 or args.step4)
     if only_step2:
         print("counting_sat_algebra.verify — Step 2 only")
     elif only_step3:
@@ -538,6 +651,20 @@ def main(argv: List[str] | None = None) -> int:
         print("counting_sat_algebra.verify — Steps 2 and 3 only")
     elif only_step4:
         print("counting_sat_algebra.verify — Step 4 only")
+    elif only_step5:
+        print("counting_sat_algebra.verify — Step 5 only")
+    elif mixed_with_step5:
+        names = ", ".join(
+            str(number)
+            for number, enabled in (
+                (2, args.step2),
+                (3, args.step3),
+                (4, args.step4),
+                (5, args.step5),
+            )
+            if enabled
+        )
+        print(f"counting_sat_algebra.verify — Steps {names} only")
     elif mixed_with_step4:
         names = ", ".join(
             str(number)
@@ -546,10 +673,11 @@ def main(argv: List[str] | None = None) -> int:
         )
         print(f"counting_sat_algebra.verify — Steps {names} only")
     else:
-        print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, and 4")
+        print("counting_sat_algebra.verify — Steps 0, 1, 2, 3, 4, and 5")
         print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
         print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
-        print("and Hermite recovery of H(0) from Hasse coefficients.")
+        print("Hermite recovery of H(0) from Hasse coefficients,")
+        print("and occurrence copying with #F' = #F inside the brute-force window.")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
     print()
 
@@ -641,6 +769,85 @@ def main(argv: List[str] | None = None) -> int:
             "sample point is one pass over {0,1}^n; a full jet of order D does "
             "quadratic arithmetic per assignment. No Theorem 1.1, no 2^{o(n)} claim. "
             "Full M0 is not built."
+        )
+        return 0
+
+    if only_step5:
+        sparse_rows = run_step5_suite()
+        print()
+        if not sparse_rows or not all(row["ok"] for row in sparse_rows):
+            print("FAIL: occurrence copying disagreed with its checks", file=sys.stderr)
+            return 1
+        print_summary_table([], [], [], None, None, None, sparse_rows)
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: Step 5 only. Variables that occur more than three times are "
+            "replaced by copies tied with an implication cycle. Where both cubes "
+            "were enumerated, #F' = #F. interpolate_H0 recovers that count when the "
+            "planned sample window fits the assignment budget. A source partition "
+            "that already holds every clause is handed to the Step 2 blocked sum "
+            "after the copies are placed in the owner's block. Reduced n above 20 "
+            "is recorded and not counted. The cycle clauses have width 2, so the "
+            "exact-width-3 checker does not accept a formula that used the cycle. "
+            "Step 3 is not applied. No Theorem 1.1, no 2^{o(n)} claim. Full M0 is not built."
+        )
+        return 0
+
+    if mixed_with_step5:
+        example_rows: list[dict] = []
+        matrix_rows: list[dict] = []
+        hermite_rows: list[dict] = []
+        sparse_rows: list[dict] = []
+        if args.step2:
+            example_rows, growth_rows = run_step2_suite(growth_groups)
+            if (
+                not example_rows
+                or not all(row["ok"] for row in example_rows)
+                or len(growth_rows) != len(growth_groups)
+                or not all(row["ok"] for row in growth_rows)
+            ):
+                print("FAIL: blocked sum disagreed with the full sum", file=sys.stderr)
+                return 1
+            print()
+        if args.step3:
+            matrix_rows = run_step3_suite()
+            print()
+            if not matrix_rows or not all(row["ok"] for row in matrix_rows):
+                print("FAIL: replacement-matrix slice disagreed with its checks", file=sys.stderr)
+                return 1
+            print()
+        if args.step4:
+            hermite_rows = run_step4_suite()
+            print()
+            if not hermite_rows or not all(row["ok"] for row in hermite_rows):
+                print("FAIL: Hermite recovery disagreed with brute force", file=sys.stderr)
+                return 1
+            print()
+        sparse_rows = run_step5_suite()
+        print()
+        if not sparse_rows or not all(row["ok"] for row in sparse_rows):
+            print("FAIL: occurrence copying disagreed with its checks", file=sys.stderr)
+            return 1
+        print_summary_table(
+            [],
+            [],
+            [],
+            example_rows or None,
+            matrix_rows or None,
+            hermite_rows or None,
+            sparse_rows,
+        )
+        print()
+        print("ALL TESTS PASSED")
+        print(
+            "Scope: the requested steps only. Where Step 5 ran, #F' = #F on the "
+            "instances inside the brute-force window, and rows past that window are "
+            "recorded rather than counted. Each Hermite node, where Step 4 ran, still "
+            "enumerates 2^n assignments. "
+            f"Side length, when Step 3 ran, is at most {SLICE_MAX_DIMENSION}. "
+            "The parameter list with R≥32 and 6R≤Q is not built. "
+            "No Theorem 1.1, no 2^{o(n)} claim."
         )
         return 0
 
@@ -747,12 +954,25 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (F) all {len(hermite_rows)} Hermite instances passed")
     print()
 
+    sparse_rows = run_step5_suite()
+    if not sparse_rows or not all(row["ok"] for row in sparse_rows):
+        print("FAIL: occurrence copying disagreed with its checks", file=sys.stderr)
+        return 1
+    print(f"  (G) all {len(sparse_rows)} occurrence-copying instances passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
 
     print_summary_table(
-        interp_rows, indep_rows, bounded_rows, example_rows, matrix_rows, hermite_rows
+        interp_rows,
+        indep_rows,
+        bounded_rows,
+        example_rows,
+        matrix_rows,
+        hermite_rows,
+        sparse_rows,
     )
     print()
     print("ALL TESTS PASSED")
@@ -760,10 +980,12 @@ def main(argv: List[str] | None = None) -> int:
         "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
         "identity, degree-cap checks on occurrence-≤3 3-CNFs, blocked-sum agreement "
         "with full-space H(t) on hand-built replacements, a tiny replacement "
-        f"matrix of side length at most {SLICE_MAX_DIMENSION}, and Hermite recovery "
-        "of H(0) from Hasse coefficients at fewer distinct sample points than D+1. "
+        f"matrix of side length at most {SLICE_MAX_DIMENSION}, Hermite recovery "
+        "of H(0) from Hasse coefficients at fewer distinct sample points than D+1, "
+        "and occurrence copying with #F' = #F inside the brute-force window. "
         "The Hermite condition count stays D+1, and each of those points still "
-        "enumerates 2^n assignments. Popcount measurement tuples grow as (r+1)^b. "
+        "enumerates 2^n assignments. Copying can push the reduced n past 20; those "
+        "rows are recorded and not counted. Popcount measurement tuples grow as (r+1)^b. "
         f"The parameter list with R≥32 and 6R≤Q is not built (side length 2**{FULL_M0_LOG2_DIMENSION_AT_R2} "
         "at r=2). No Theorem 1.1, no 2^{o(n)} claim."
     )

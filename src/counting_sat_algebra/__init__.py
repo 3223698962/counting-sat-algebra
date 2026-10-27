@@ -1,4 +1,4 @@
-"""counting_sat_algebra: small algebraic #SAT testbed (Steps 0 through 4).
+"""counting_sat_algebra: small algebraic #SAT testbed (Steps 0 through 5).
 
 Steps 0 and 1 check the counting polynomial, univariate interpolation, and a
 bounded-occurrence degree cap. Step 2 checks a simplified (r, τ, D)-design and
@@ -6,13 +6,17 @@ a blocked sum against the full sum H(t) on hand-built replacements. Step 3
 builds the replacement matrix M0 = V0 f_I(W0) only at side lengths up to 64.
 Step 4 recovers H(0) from Hasse coefficients at fewer distinct sample points
 than the D+1 value samples of Lagrange interpolation. The condition count
-stays D+1, and each sample point still enumerates the cube.
+stays D+1, and each sample point still enumerates the cube. Step 5 copies
+variables through an implication cycle so each occurs in at most three
+clauses, with #F' = #F on instances small enough to enumerate.
 
 Every check still enumerates an exponential set: the cube {0,1}^n, a
 measurement space that is exponential in the number of blocks for the popcount
-design, or a matrix whose side length is r**(2Q) on a tiny parameter. The
-matrix at the parameter list R ≥ 32, 6R ≤ Q is not built. Theorem 1.1 is not
-implemented. Nothing here runs in 2^{o(n)} time.
+design, or a matrix whose side length is r**(2Q) on a tiny parameter. Copying
+can make the reduced n larger than the source n, and past that point the
+count is recorded as unchecked. The matrix at the parameter list R ≥ 32,
+6R ≤ Q is not built. Theorem 1.1 is not implemented. Nothing here runs in
+2^{o(n)} time.
 """
 
 from .blocked_sum import (
@@ -43,6 +47,14 @@ from .replacement_matrix import (
     place_formula,
     step3_examples,
 )
+from .sparsify import (
+    Sparsification,
+    Step5Case,
+    Step5Report,
+    analyze_step5_case,
+    sparsify,
+    step5_cases,
+)
 
 __all__ = [
     "AuxiliarySlice",
@@ -53,9 +65,13 @@ __all__ = [
     "HermiteRecovery",
     "PlacedFormula",
     "Step3Example",
+    "Sparsification",
     "Step4Case",
+    "Step5Case",
+    "Step5Report",
     "StructuredReplacement",
     "analyze_step4_case",
+    "analyze_step5_case",
     "blocked_sum",
     "build_auxiliary_slice",
     "eval_H_hasse_jet",
@@ -67,8 +83,10 @@ __all__ = [
     "popcount_design",
     "popcount_group_instance",
     "popcount_growth",
+    "sparsify",
     "step3_examples",
     "step4_cases",
+    "step5_cases",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

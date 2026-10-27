@@ -1,6 +1,6 @@
 # Progress
 
-Steps 0, 1, 2, a small-parameter Step 3, and an exact Step 4 Hermite check are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement sparsification or Theorem 1.1. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point.
+Steps 0, 1, 2, a small-parameter Step 3, an exact Step 4 Hermite check, and a Step 5 occurrence reduction are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Theorem 1.1. Step 5 copies variables so that each occurs in at most three clauses and checks #F' = #F where both cubes fit in the brute-force window; the reduced length n' can be larger than the source length, and past n' = 20 the equality is recorded as unchecked. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point.
 
 ## Step 0
 
@@ -259,17 +259,96 @@ Cube passes equal the number of distinct points. Assignments enumerated for that
 
 ### Obstacle
 
-Producing the jet still scans {0,1}^n. Packing derivatives into a node reduces the number of distinct sample points and, for a short jet, the number of cube passes. It does not evaluate H below exponential cost in n, and it does not reduce the number of conditions below D+1. On these instances the degree sat on the cap, so there was no unused room in the bound either. Sparsification is not implemented. Theorem 1.1 is not implemented. Nothing in this step runs in 2^{o(n)}.
+Producing the jet still scans {0,1}^n. Packing derivatives into a node reduces the number of distinct sample points and, for a short jet, the number of cube passes. It does not evaluate H below exponential cost in n, and it does not reduce the number of conditions below D+1. On these instances the degree sat on the cap, so there was no unused room in the bound either. Copying variables is Step 5, not part of this Hermite check. Theorem 1.1 is not implemented. Nothing in this step runs in 2^{o(n)}.
 
-## Next: Step 5
+## Step 5 — occurrence copying
 
-Counting-preserving sparsification, or variable copying, at small n, and a path from a general small k-CNF into a bounded-occurrence instance. That step is not in this tree.
+Shipped in `sparsify.py`. A variable that already occurs in at most B clauses stays one variable. A variable that occurs d > B times is replaced by c = ceil(d / (B − 2)) copies. Occurrences are dealt out in clause order, at most B − 2 per copy, and the copies are tied by the implication cycle
+
+(¬y_1 ∨ y_2) ∧ (¬y_2 ∨ y_3) ∧ … ∧ (¬y_c ∨ y_1).
+
+Each copy sits in two cycle clauses and at most B − 2 original clauses, so its occurrence is at most B. The smallest cap the gadget can meet is B = 3, which is the Step 1 cap and the default used below. A cap of 2 is refused: the cycle would leave no slot for an original clause. One pytest row uses B = 4 on six positive units (three copies, occurrence 4, #F' = #F = 1) to check that the same cycle with two original slots per copy still preserves the count. The CLI rows all use B = 3.
+
+The cycle holds exactly when the copies are equal. Extending a source assignment by writing its bit on every copy is a bijection between source assignments and reduced assignments that satisfy the cycles, and it preserves each original clause. Therefore #F' = #F. There is no extra factor of 2. A copy is not a free variable. Pytest checks that bijection by enumerating both cubes whenever both lengths are at most 12, and checks the two cardinalities whenever both lengths are at most 20. `brute_count` refuses n > 20 before it loops. The same wall is used here.
+
+For B = 3 the reduced length satisfies n' ≥ n and n' ≥ M − 2n, where M is the number of literal occurrences in the source. An exact 3-CNF therefore has n' ≥ 3m − 2n. The output is a mixed-width CNF: source clauses keep their width, and every cycle clause has width 2. `check_bounded_occurrence` still demands exact width 3, so it rejects a formula that used the cycle. The occurrence cap is the same number 3. Clause lists get longer by the number of cycle clauses. This is occurrence reduction, not a deletion of clauses, and it is one formula rather than a disjunction of many sparse formulas.
+
+### Blowup
+
+"Checked" means both model counts were computed and were equal. "Source only" means the source cube was counted and the reduced cube was not. M' is the number of literal occurrences after copying. Every checked row has M' ≤ 3n'.
+
+| instance | n | n' | m | m' | occ | occ' | cycles | M' | #F | what was counted |
+|----------|---|----|----|----|-----|------|--------|----|----|------------------|
+| units-n1-m4 | 1 | 4 | 4 | 8 | 4 | 3 | 4 | 12 | 1 | both cubes |
+| free-bit-n2 | 2 | 5 | 4 | 8 | 4 | 3 | 4 | 12 | 2 | both cubes |
+| heavy-3cnf-n4 | 4 | 7 | 4 | 8 | 4 | 3 | 4 | 20 | 10 | both cubes |
+| bounded-clause-n3 | 3 | 3 | 1 | 1 | 1 | 1 | 0 | 3 | 7 | both cubes; clauses unchanged |
+| empty-clause-n2 | 2 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | both cubes |
+| two-block-copies | 3 | 9 | 8 | 16 | 4 | 3 | 8 | 26 | 2 | both cubes, then the blocked sum |
+| cross-block-copies | 3 | 6 | 4 | 8 | 4 | 3 | 4 | 14 | 4 | both cubes; Step 2 refused |
+| units-n1-m16 | 1 | 16 | 16 | 32 | 16 | 3 | 16 | 48 | 1 | both cubes; interpolation refused |
+| units-n1-m21 | 1 | 21 | 21 | 42 | 21 | 3 | 21 | 63 | source 1 | source only |
+| random-3cnf-n5-m12 | 5 | 36 | 12 | 48 | 8 | 3 | 36 | 108 | source 8 | source only |
+
+`bounded-clause-n3` is one positive 3-clause. Occurrence is already 1, so the copying map is the identity and the cycle is empty. A separate pytest draw, `random_bounded_3cnf(6, 4, seed 7)`, is likewise unchanged, and `run_degree_bound_experiment` on that image agrees with brute force at both Step 1 caps. `free-bit-n2` is the four-unit formula plus a variable that occurs in no clause. Both sides have two models. The free bit is not removed and it is not duplicated.
+
+`units-n1-m21` has reduced n = 21. `brute_count` raises before enumerating, and the equality is not checked. The source count is 1 because the single variable is forced true by the twenty-one positive units. The reduced side, twenty-one copies, was not enumerated. `random-3cnf-n5-m12` is `random_3cnf(5, 12, seed 0)`. Its source count is 8. The cap-3 bound gives n' ≥ 3·12 − 2·5 = 26, already past the wall, and the construction produced n' = 36. Every source variable occurred more than three times (maximum 8), so each occurrence became its own variable and n' = M = 36.
+
+### Degree pipeline
+
+Rows whose sample window fits the budget call `random_replacements` at R = 1 and `interpolate_H0` with k equal to the maximum clause width. The same samples are interpolated at the loose cap 3n'R, which is `degree_bound_3n` at B = 3. H(0) from both caps, the direct sum at 0, and the brute-force count of the reduced formula agreed, and one extra node agreed with the interpolant. "deg" is the degree read from forward differences of the longer window.
+
+| instance | k | D = m'·k·R | M'·R | 3n'·R | deg | #F |
+|----------|---|------------|------|-------|-----|----|
+| units-n1-m4 | 2 | 16 | 12 | 12 | 12 | 1 |
+| free-bit-n2 | 2 | 16 | 12 | 15 | 12 | 2 |
+| heavy-3cnf-n4 | 3 | 24 | 20 | 21 | 20 | 10 |
+| bounded-clause-n3 | 3 | 3 | 3 | 9 | 3 | 7 |
+| empty-clause-n2 | 0 | 0 | 0 | 6 | 0 | 0 |
+| cross-block-copies | 3 | 24 | 14 | 18 | 14 | 4 |
+
+On these six draws the measured degree equalled M'·R. That is the bookkeeping bound deg H ≤ (sum of clause widths)·R. The width cap m'·k·R is at least that large, and it was strictly larger except on `bounded-clause-n3`, where the only clause has width 3, and on `empty-clause-n2`, where both the width cap and M'·R are 0 because the only clause is empty and H is the zero polynomial. The loose cap 3n'·R equalled M'·R on the four-unit row, where every reduced variable occurs three times, and was strictly larger on the other five. One family per formula. This is not a proof for every replacement.
+
+`units-n1-m16` has n' = 16, which brute force still counts (#F' = 1). The interpolation plan is (66 + 64 + 2)·2^16 = 8,650,752 cube assignments: D = m'·k·R = 64 and the loose cap is 48, so the window has length 66. The budget is 100,000. The pipeline records the refusal and does not evaluate H. `two-block-copies` is counted and passed to Step 2. Its degree window would be D = 32 on n' = 9, which is inside the budget, and it is not part of this table. The blocked sum already checks H(0) on that formula.
+
+A width-4 formula is in pytest and not in the CLI table. Four clauses on five variables, one variable in every clause and the others in three clauses each, become n' = 8 and m' = 8 with occurrence at most 3. The extension bijection holds. `interpolate_H0` was run at R = 0, where the cap is 0 and H is the constant #F'. The R = 1 window for that formula was not run.
+
+One run of `python -m counting_sat_algebra.verify --step5` marked every row OK or RECORDED. The slowest interpolated row on that run was `heavy-3cnf-n4`, about 1.2 seconds, for 6,656 cube assignments. These times are one machine's measurement, not a complexity result. The reproducible cost is the pair (n', D) and the assignment count.
+
+### Step 2, when the clauses already sit in blocks
+
+`two-block-copies` partitions the source variables into {0, 1} and {2}. Clauses use only one of those sets. After copying, the blocks are (0, 1, 2, 3, 4) and (5, 6, 7, 8): four copies of variable 0, the unsplit variable 1, and four copies of variable 2. Cycle clauses mention copies of a single source variable, so they stay inside that block. The design is the Step 2 popcount design, τ = 1, R = 1, every higher coefficient 1. Blocked H(t) matched the full-cube sum at t = 0 and at t = 1, and H(0) = #F' = 2.
+
+|  | value |
+|--|-------|
+| r | 5 |
+| blocks | 2 |
+| measurement tuples | 30 |
+| local evaluations | 256 |
+| full cube | 512 |
+| H(0) | 2 |
+| H(1) | −47986541792015699006680248 |
+
+H(1) is a value of the counting polynomial at t ≠ 0. It is not a model count. The tuple count is (5 + 1)·(4 + 1) = 30, the same exponential-in-the-number-of-blocks enumeration Step 2 already records. On this row the local-evaluation count, 256, is below the cube, 512. That comparison is one parameter point. It is not a subexponential algorithm.
+
+`cross-block-copies` uses blocks {0, 1} and {2} and a single 3-clause on variables 0, 1, and 2, plus three positive units on variable 0. Copying produces n' = 6 and #F' = #F = 4, and `interpolate_H0` recovers 4. The 3-clause still meets both blocks. `validate_design` refuses it with the Step 2 message that a clause must sit inside one block. The cycle does not repair a clause that already crossed. Step 2 is not run on a general copied formula.
+
+### Obstacle
+
+Step 3 is not applied. Its schedules are written out by hand for four placements, and this reduction does not produce a schedule. The cycle clauses have width 2. The side-length cap remains 64, and full M0 at R ≥ 32 and 6R ≤ Q is still not built.
+
+The reduction does not keep n' close to n. At B = 3 a variable in d clauses becomes d variables whenever d > 3, and a 3-CNF with 3m − 2n > 20 leaves the brute-force window no matter how the clauses are arranged. The n = 5, m = 12 row is that situation at a tiny source. Nothing in this step runs in 2^{o(n)}. Theorem 1.1 is not implemented.
+
+## Next: Step 6
+
+For n in a machine-limited range, time brute force against a blocked sum. Record which steps match brute force, which stopped on an unfinished construction, and the remaining distance to a full counting algorithm. That step is not in this tree.
 
 ## Known gaps
 
-- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64.
-- No sparsification and no Theorem 1.1. Step 4 does not remove the 2^n pass inside each sample point.
-- Step 2 matches the full sum on the instances above. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.
-- The Step 0/1 Lagrange path is still Θ(2^n · D) scalar evaluations. The Step 4 paired path is about half as many cube passes, with a jet of width 2. The single-point path is one pass with Θ(D²) arithmetic per assignment. Neither is subexponential.
-- The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table. The Step 4 degree column is the eight rows above; on each of them the measured degree equalled the cap.
+- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64. Step 5 does not hand the copied formula to that matrix.
+- The occurrence reduction checks #F' = #F inside the brute-force window and records the rows that leave it. It is not a reduction with n' = n + o(n), and it does not remove the 2^{n'} pass inside `interpolate_H0` or the 2^n pass inside each Hermite sample.
+- The copied formula is mixed width. `check_bounded_occurrence` accepts it only when the reduction added no cycle, which is the case already inside the Step 1 testbed. A general copied instance is not an exact 3-CNF with m ≤ n.
+- Step 2 matches the full sum on the instances in the Step 2 section and on `two-block-copies`. It refuses a copied clause that still crosses blocks. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.
+- The Step 0/1 Lagrange path is still Θ(2^n · D) scalar evaluations. The Step 4 paired path is about half as many cube passes, with a jet of width 2. The single-point path is one pass with Θ(D²) arithmetic per assignment. The Step 5 degree rows are the same shape of cost on n' and on m'·k·R. None of these is subexponential.
+- The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table. The Step 4 degree column is the eight rows in that section; on each of them the measured degree equalled the cap. The Step 5 degree column is the six rows above; on each of them the measured degree equalled M'·R.
 - Self-reduction deletes fixed variables from clauses and then calls brute force on all 2^n bits, so the integer it sees is not the number of extensions. The CLI only needs a yes/no answer and checks the witness it returns.
