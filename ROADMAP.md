@@ -27,13 +27,15 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - Success criterion met: agreement on small n. The popcount tuple count is (r+1)^b, exponential in the number of groups. A subexponential runtime was not required and is not claimed
 - The design here is a block partition plus τ explicit linear measurements, with D carried and unused. It is not the matrix M0
 
+### Step 3 — small-parameter replacement matrix
+
+- [x] One machine-built slice of M0 = V0 f_I(W0) and the rows P_u(T), at side lengths 4, 9, 16, and 64. The 4×4 exchange and the row ζ_(00,11) − (T/2) ζ_(10,01) − T ζ_(01,10) are also written out by hand
+- [x] T = 0 restores the auxiliary coordinate and, on four explicit placements, restores X_v. H(0) matches brute force. The measured degree sits inside M·(R−1) and inside m·k·R
+- [x] A legal design (partition, absolute row sum at most the side length, kernel condition) holds at every t ∈ {1, …, Q} on those placements, including one 3-clause that meets three groups
+- [x] Full M0 is absent. The parameter list with R ≥ 32 and 6R ≤ Q forces side length 2^384 at r = 2, above the cap of 64. Schedules are hand-written. The point R = Q = 2 is an exact identity and sits outside the hypothesis R < Q
+- Not claimed: Theorem 1.1, a subexponential runtime, or 2^{o(n)}
+
 ## Not started
-
-### Step 3 — a runnable slice of the low-degree replacement / matrix construction
-
-- [ ] One small-parameter slice that can be computed by hand or by the machine
-- [ ] Check the T = 0 restoration, the degree cap, and that a legal design exists at a few t
-- [ ] If the full matrix M0 is too heavy, write down the obstacle and the simplification
 
 ### Step 4 — Hermite / multi-coefficient interpolation
 
@@ -63,6 +65,7 @@ src/counting_sat_algebra/
   cnf.py, replacements.py, independent.py, self_reduce.py, verify.py   # Step 0
   bounded_occurrence.py                                                # Step 1
   design.py, blocked_sum.py                                            # Step 2
+  replacement_matrix.py                                                # Step 3
 benches/
 docs/PROGRESS.md
 ```

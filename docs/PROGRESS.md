@@ -1,6 +1,6 @@
 # Progress
 
-Steps 0, 1, and 2 are implemented and checked against brute-force counting, or against the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement the matrix M0, Hermite interpolation, sparsification, or Theorem 1.1. The Step 2 measurement loop is exponential in the number of groups.
+Steps 0, 1, 2, and a small-parameter Step 3 are implemented and checked against brute-force counting, or against the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Hermite interpolation, sparsification, or Theorem 1.1. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups.
 
 ## Step 0
 
@@ -105,14 +105,96 @@ On the width-2 popcount family, #F = 3^b happens to equal the tuple count 3^b. T
 
 A design that could feed a subexponential counting algorithm would also have to keep the measurement space small at large n and hand a low-degree matrix to Step 3. This step does neither. D is bookkeeping. Clauses that cross blocks are out of scope for the factoring identity used here. Theorem 1.1 is not implemented.
 
-## Next: Step 3
+## Step 3 — small-parameter replacement matrix
 
-One runnable slice of the low-degree replacement / matrix construction. If the full matrix M0 is too heavy, record the obstacle and the simplification. That step is not in this tree.
+Shipped in `replacement_matrix.py`. This is the auxiliary matrix
+
+M0 = V0 f_I(W0)
+
+and the rows built from it, at side lengths 4, 9, 16, and 64. It is not the matrix at the parameter list R ≥ 32, 6R ≤ Q. Schedules are written out by hand. Hermite interpolation is not implemented. Theorem 1.1 is not implemented.
+
+Coordinates are pairs of length-Q schedules with entries in {0, …, r−1}. There are D = r**(2Q) of them. V0 exchanges the two schedules, W0 = (1/2) Σ_s (I − Π_s), and f_I is the polynomial of degree at most R−1 with f_I(j) = (−1)^j on R consecutive integers. The row is
+
+⟨P_u(T), ζ⟩ = ((I − M0) ζ)_u + Σ_y M0[u, y] φ_{u,y}(T) ζ_y,
+
+φ_{u,y}(T) = Π_{s ∈ E(u,y)} (1 − T/s).
+
+At T = 0 every φ equals 1, so the row restores ζ_u. A nonzero M0 entry has at most R−1 mismatches, so the degree is at most R−1. Measurement rows are the product basis vectors whose minus-count lies outside the interval. Their entries are in {−1, 0, 1}. Pulling a row back along an explicit placement gives a replacement of the original variables. Unoccupied coordinates contribute 0.
+
+The point r = 2, Q = 2, R = 2 has R = Q. That sits outside the hypothesis R < Q used for a runtime bound. The identities at that point are exact and were checked anyway.
+
+### What was checked
+
+On every slice below, the auxiliary checks passed: f_I(j) = (−1)^j on the interval, T = 0 restores each coordinate, degree ≤ R−1, (R−1)! M0 is an integer matrix, (R−1)! Q! clears the row denominators, a nonzero M0 entry has at most R−1 mismatches, M0 fixes each basis vector inside the interval, and each row of I−M0 lies in the span of the measurement rows. The measurement-row count equals the binomial count of basis vectors outside the interval.
+
+On each placed formula, the coefficient row of occurrence (e, v) is e_v at T = 0, H(0) equals the brute-force count both by direct summation and by Lagrange at both caps, and the measured degree is at most M·(R−1) and at most m·k·R. At every t ∈ {1, …, Q} the schedules partition the variables, each group has size s with s·r ≤ 2n, each pulled-back measurement row is integral with absolute sum at most D, and every coefficient outside the clause's assigned group lies in the measurement span (over Q, and on Boolean points).
+
+For r = 2 the size bound is s ≤ n, so every partition meets it. For `cross-r3`, r = 3 and n = 3, the bound is s ≤ 2, and each group has size 1.
+
+| instance | r | Q | R | D | C rows | n | m | #F | deg H | M(R−1) | m·k·R | t checked |
+|----------|---|---|---|---|--------|---|---|----|-------|--------|-------|-----------|
+| swap-4 | 2 | 1 | 1 | 4 | 1 | 2 | 2 | 1 | 0 | 0 | 2 | 1 |
+| remark-4-4 | 2 | 2 | 2 | 16 | 1 | 2 | 2 | 1 | 2 | 2 | 4 | 1, 2 |
+| cross-r3 | 3 | 1 | 1 | 9 | 3 | 3 | 1 | 7 | 0 | 0 | 3 | 1 |
+| r2-q3 | 2 | 3 | 2 | 64 | 10 | 3 | 1 | 7 | 2 | 3 | 6 | 1, 2, 3 |
+
+`remark-4-4` meets the occurrence cap: the measured degree is 2, and M·(R−1) = 2. `r2-q3` has measured degree 2 under a cap of 3. The two degree-0 rows meet a cap of 0, so H is constant.
+
+Sample values, all equal to the full-cube sum:
+
+| instance | H(0) | H(1) | H(2) | other |
+|----------|------|------|------|-------|
+| swap-4 | 1 | 1 | 1 | |
+| remark-4-4 | 1 | -3/4 | -2 | H(1/2) = 1/16 |
+| cross-r3 | 7 | 7 | 7 | |
+| r2-q3 | 7 | 8 | 29/3 | |
+
+`swap-4` and `cross-r3` and `r2-q3` all have H(0) equal to a nonnegative integer model count. `remark-4-4` is negative at t = 1 and at t = 2. That is a rational value of H(t) for t ≠ 0, not a count.
+
+### Hand checks
+
+`swap-4`. Order the four coordinates (a, d) as (0,0), (0,1), (1,0), (1,1). f_I is the constant 1 and M0 is the exchange
+
+```
+1 0 0 0
+0 0 1 0
+0 1 0 0
+0 0 0 1
+```
+
+The single measurement row is (0, 1, −1, 0). Each auxiliary row is the corresponding basis vector, so the degree is 0. The two positive unit clauses put variable 0 in group 0 and variable 1 in group 1, and assign each clause to the other group. The pulled-back measurement is X_0 − X_1. H(T) = 1, which is the model count of two positive units.
+
+`remark-4-4`. f_I(z) = 1 − 2z on the interval {0, 1}. The M0 row of coordinate (00, 11) is
+
++ζ_(10,01) + ζ_(01,10) − ζ_(11,00),
+
+and the replacement row is
+
+ζ_(00,11) − (T/2) ζ_(10,01) − T ζ_(01,10).
+
+The measurement row is +1, −1, −1, +1 on those four coordinates and 0 elsewhere. The placement puts X_0 at (00, 11) and X_1 at (10, 01), with the other two coordinates empty, so the two positive unit clauses become
+
+X_0 − (T/2) X_1    and    X_1 − (T/2) X_0.
+
+Summing the four assignments gives H(T) = 1 − 2T + T²/4. The same polynomial was summed by `eval_H_at`. At t = 2 both variables sit in group 0 while both clauses are assigned to group 1, which is empty, and the forms reduce to the measurement X_0 − X_1. Step 2's block design would refuse a clause that meets two blocks. This placement is legal for the kernel condition.
+
+`cross-r3`. One positive 3-clause on three variables, each in its own group, the clause assigned to group 0. M0 is the exchange of (a, d) with (d, a) on all 9 coordinates. Variables 1 and 2 lie outside the assigned group. The degree is 0, so each replacement is still X_v. The three pulled-back measurement rows are −X_1, −X_2, and a zero row, so the two variables outside the assigned group are carried by integer measurements. H(T) = 7. The same clause is rejected by `validate_design` on a three-block popcount design, which is the Step 2 restriction this slice does not keep.
+
+`r2-q3` uses the same formulas at r = 2, Q = 3, R = 2, where R < Q and the side length is 64. The schedules are ((0,1,0), (1,0,0), (0,0,1)) for the variables and (1,0,1) for the single clause x_0 ∨ x_1 ∨ ¬x_2. It was checked by the machine against brute force. It was not expanded by hand.
+
+### Obstacle
+
+Full M0 is still absent. The parameter list that accompanies that matrix asks for R ≥ 32 and 6R ≤ Q before a tail bound is invoked. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses every side length above 64 and says so in the error. A scheduler that would also keep groups of size at most 2n/r and label multiplicity at most 2M/D needs n on the order of D². That inequality is already false for every formula this repository compares with brute force, so the scheduler is not run. The four placements above are the simplification: the same matrix formulas, hand-written schedules, and direct checks. Nothing in this step runs in 2^{o(n)}.
+
+## Next: Step 4
+
+Hermite or multi-coefficient interpolation: several Taylor or Hasse coefficients at each sample point, and fewer sample points than the degree cap. That step is not in this tree.
 
 ## Known gaps
 
-- No M0, no Hermite interpolation, no sparsification, no Theorem 1.1.
+- Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64.
+- No Hermite interpolation, no sparsification, no Theorem 1.1.
 - Step 2 matches the full sum on the instances above. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.
 - Interpolation cost on the Step 0/1 path is still Θ(2^n · D).
-- The degree table is the bench set plus one pytest draw, all at R = 1.
+- The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table.
 - Self-reduction deletes fixed variables from clauses and then calls brute force on all 2^n bits, so the integer it sees is not the number of extensions. The CLI only needs a yes/no answer and checks the witness it returns.
