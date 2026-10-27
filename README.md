@@ -20,6 +20,16 @@ python -m counting_sat_algebra count examples/count_demo.cnf --output benches/co
 
 核验结果中的 `COUNTED` 表示确实恢复了计数，并与独立暴力计数或已知闭式核对；`CHECKED` 表示设计、参数或条目核对；`REFUSED` 表示预算或前提导致停止。大实例的设计通过不会被当成计数完成。
 
+## 持续集成
+
+`.github/workflows/ci.yml` 在 pull request、推送到 `main`，以及手动 `workflow_dispatch` 时运行。同一引用上的新运行会取消尚未结束的运行。
+
+Python 3.12 用 pip 缓存安装可编辑包后运行 `pytest -q` 和 `python -m counting_sat_algebra.verify --quick`。`--quick` 覆盖 Steps 0–16 的较小网格，并执行 Steps 9–16 的参考检查。该作业要求日志包含 `ALL TESTS PASSED`、参考小结的通过数等于检查数，并且仍写明 Theorem 1.1 未实现、没有 \(2^{o(n)}\) 结论。
+
+Python 3.10 安装同一包，并运行去掉 `test_step7_scheduler.py`、`test_step9_reference_design.py`、`test_step12_sparse_placement.py`、`test_step14_support_count.py` 和 `test_step16_asymptotic_family.py` 的 pytest。侧长 256 的日程点和 n=16384 的放置留在 Python 3.12 的 `pytest` 与 `verify --quick` 中。
+
+`python -m counting_sat_algebra.verify --reference` 写出 Steps 9–16 的报告。它在推送到 `main`、`workflow_dispatch`，以及带 `run-reference` 标签的 pull request 上运行。某项检查未通过、`all_checks_passed` 不是 true，或 `theorem_1_1_complete` 与 `lean_proof_complete` 不是 false 时，作业失败。绿色 CI 只说明这些有限检查通过。它不是 Theorem 1.1 的证明，也不否定 ETH。
+
 ## 新的计数接口
 
 直接读取 DIMACS：
