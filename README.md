@@ -4,15 +4,20 @@ Small Python package that checks the counting-polynomial skeleton for #3-SAT on 
 
 > **Honesty banner**
 >
-> Step 0 checks the following on instances small enough to brute-force. Write #F as a sum of clause polynomials, replace each literal input by a rational linear form that restores the original variable at T = 0, and recover H(0) = #F by Lagrange interpolation.
+> This repository checks two things on instances small enough to brute-force:
 >
-> Every value H(t) for t ≠ 0 is still a sum over all 2^n assignments. The package does not contain an (r, τ, D)-design, a blocked sum, the matrix M0, or sparsification. It does not refute the exponential-time hypothesis, and it does not claim a 2^{o(n)} algorithm.
+> 1. **Step 0.** Write #F as a sum of clause polynomials, replace each literal input by a rational linear form that restores the original variable at T = 0, and recover H(0) = #F by Lagrange interpolation.
+> 2. **Step 1.** Generate and recognize 3-CNFs in which every variable occurs in at most three clauses, and check the degree caps D = m·k·R and D = 3·n·R on those formulas.
+>
+> Every value H(t) for t ≠ 0 is still a sum over all 2^n assignments. The package does not contain an (r, τ, D)-design, a blocked sum, the matrix M0, or sparsification. Theorem 1.1 is not implemented. Nothing here refutes the exponential-time hypothesis or runs in 2^{o(n)} time.
 
 ## Layout
 
 ```
 src/counting_sat_algebra/   # import name counting_sat_algebra
 tests/                      # pytest
+benches/                    # fixed-seed bounded-occurrence formulas
+docs/PROGRESS.md            # what was actually checked
 ```
 
 Core arithmetic uses `fractions.Fraction` from the standard library.
@@ -36,10 +41,11 @@ Exit code 0 and the line `ALL TESTS PASSED` mean the checks in that run agreed w
 | `cnf.py` | Clause polynomial Φ_e and brute-force #F |
 | `independent.py` | If no clause crosses variable groups, #F = ∏ N_g |
 | `replacements.py` | Degree-≤ R replacements with value X_v at T = 0; H(0) by Lagrange |
+| `bounded_occurrence.py` | 3-CNF, ≤ 3 occurrences per variable; degree caps m·k·R and 3·n·R |
 | `self_reduce.py` | Optional search for one satisfying assignment by fixing bits |
 
-The degree cap used for a width-k formula is `m * k * R`. Interpolation uses the nodes T = 1, …, D+1.
+The degree cap used for a width-k formula is `m * k * R`. On the bounded-occurrence testbed, `M = Σ |I_e| ≤ 3n`, so `M R ≤ 3 n R` is a second, sometimes looser, cap. Step 1 records both.
 
 ## Next step
 
-Step 1 in `ROADMAP.md`: a generator and checker for 3-CNFs with at most three occurrences of each variable, and a degree-cap experiment. That step is not in this tree yet.
+Step 2 in `ROADMAP.md`: an (r, τ, D)-design and a blocked sum compared with the full sum on a hand-built replacement family. That step is not in this tree.

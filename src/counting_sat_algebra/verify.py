@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Verification CLI for the Step 0 skeleton.
+Verification CLI: Step 0 (product identity + H(T) interpolation) and a small
+Step 1 bounded-occurrence degree check.
 
+Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
 """
@@ -13,8 +15,9 @@ import random
 import sys
 import time
 from fractions import Fraction
-from typing import List
+from typing import List, Sequence, Tuple
 
+from .bounded_occurrence import random_bounded_3cnf, run_degree_bound_experiment
 from .cnf import brute_count, random_3cnf
 from .independent import run_independent_suite
 from .replacements import interpolate_H0
@@ -30,7 +33,7 @@ def run_interpolation_suite(
 ) -> List[dict]:
     """
     Random 3-CNF: n in [n_min, n_max], m in [n, 2n].
-    Compare brute-force #F with interpolated H(0).
+    Compare brute #F with interpolated H(0). R=1 keeps the degree cap modest.
     """
     rng = random.Random(seed)
     rows: List[dict] = []
@@ -84,13 +87,49 @@ def run_self_reduction_demo(seed: int = 7) -> None:
     print("  [self-reduce] OK")
 
 
-def print_summary_table(interp_rows: List[dict], indep_rows: List[dict]) -> None:
+def run_bounded_suite(
+    specs: Sequence[Tuple[int, int, int]],
+    seed: int,
+) -> List[dict]:
+    """
+    specs: (n, m, R) bounded-occurrence 3-CNFs.
+    Interpolate at D = m*k*R and at D = 3*n*R; both must recover #F.
+    """
+    rows: List[dict] = []
+    for i, (n, m, R) in enumerate(specs):
+        rng = random.Random(seed + i)
+        cnf = random_bounded_3cnf(n, m, rng=rng)
+        t0 = time.perf_counter()
+        result = run_degree_bound_experiment(cnf, R=R, rng=random.Random(seed + 1000 + i))
+        dt = time.perf_counter() - t0
+        ok = bool(result["ok_mkR"] and result["ok_3nR"])
+        result["ok"] = ok
+        result["sec"] = dt
+        rows.append(result)
+        status = "OK" if ok else "FAIL"
+        print(
+            f"  [C {i+1:02d}/{len(specs)}] n={n} m={m} R={R}  "
+            f"occ≤{result['max_occurrence']}  #F={result['brute']}  "
+            f"H(0)={result['H0_mkR']}  deg_obs={result['observed_degree']}  "
+            f"D={result['D_mkR']}/{result['D_3nR']}  {status}  ({dt:.2f}s)",
+            flush=True,
+        )
+        if not ok:
+            break
+    return rows
+
+
+def print_summary_table(
+    interp_rows: List[dict],
+    indep_rows: List[dict],
+    bounded_rows: List[dict],
+) -> None:
     print()
-    print("=" * 64)
+    print("=" * 72)
     print("SUMMARY")
-    print("=" * 64)
+    print("=" * 72)
     print(f"{'kind':<8} {'n':>4} {'m':>4} {'#F':>8} {'match':>6}")
-    print("-" * 64)
+    print("-" * 72)
     for r in interp_rows[:15]:
         print(
             f"{'interp':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
@@ -105,33 +144,40 @@ def print_summary_table(interp_rows: List[dict], indep_rows: List[dict]) -> None
         )
     if len(indep_rows) > 10:
         print(f"  ... ({len(indep_rows) - 10} more indep rows)")
-    print("-" * 64)
-    n_ok_b = sum(1 for r in interp_rows if r["ok"])
-    n_ok_a = sum(1 for r in indep_rows if r["ok"])
-    print(f"Interpolation (B): {n_ok_b}/{len(interp_rows)} passed")
-    print(f"Independent   (A): {n_ok_a}/{len(indep_rows)} passed")
-    print("=" * 64)
+    for r in bounded_rows:
+        print(
+            f"{'bounded':<8} {r['n']:4d} {r['m']:4d} {r['brute']:8d} "
+            f"{'OK' if r['ok'] else 'FAIL':>6}"
+        )
+    print("-" * 72)
+    print(f"Interpolation (B): {sum(1 for r in interp_rows if r['ok'])}/{len(interp_rows)} passed")
+    print(f"Independent   (A): {sum(1 for r in indep_rows if r['ok'])}/{len(indep_rows)} passed")
+    print(f"Bounded occ.  (C): {sum(1 for r in bounded_rows if r['ok'])}/{len(bounded_rows)} passed")
+    print("=" * 72)
 
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting-polynomial skeleton verifier (Step 0)"
+        description="Counting-polynomial skeleton verifier (Steps 0 and 1)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--R", type=int, default=1, help="replacement degree")
+    parser.add_argument("--R", type=int, default=1, help="replacement degree for suite B")
     parser.add_argument("--quick", action="store_true", help="fewer and smaller tests")
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
+    bounded_specs: List[Tuple[int, int, int]] = [(6, 4, 1), (6, 6, 1), (7, 5, 1)]
     if args.quick:
         args.trials_b = min(args.trials_b, 6)
         args.trials_a = min(args.trials_a, 6)
         n_max = 7
+        bounded_specs = [(6, 4, 1), (6, 6, 1)]
 
-    print("counting_sat_algebra.verify — counting polynomial + interpolation skeleton")
-    print("Step 0 only. Does not implement a subexponential algorithm and does not refute ETH.")
+    print("counting_sat_algebra.verify — Steps 0 and 1")
+    print("Counting polynomial, univariate interpolation, bounded-occurrence checks.")
+    print("Does not implement a subexponential algorithm and does not refute ETH.")
     print()
 
     print("=== (A) Independent components ===")
@@ -164,17 +210,25 @@ def main(argv: List[str] | None = None) -> int:
     print(f"  (B) all {len(interp_rows)} trials passed")
     print()
 
+    print("=== (C) Bounded occurrence, degree caps m*k*R and 3*n*R ===")
+    bounded_rows = run_bounded_suite(bounded_specs, seed=args.seed + 7)
+    if not bounded_rows or not all(r["ok"] for r in bounded_rows):
+        print("FAIL: bounded-occurrence degree check", file=sys.stderr)
+        return 1
+    print(f"  (C) all {len(bounded_rows)} instances passed")
+    print()
+
     print("=== Optional: self-reduction demo ===")
     run_self_reduction_demo(seed=args.seed + 99)
     print()
 
-    print_summary_table(interp_rows, indep_rows)
+    print_summary_table(interp_rows, indep_rows, bounded_rows)
     print()
     print("ALL TESTS PASSED")
     print(
-        "Scope: H(0)=#F recovered by Lagrange from brute-force samples H(1),…,H(D+1), "
-        "and the disjoint-variable product identity. No design, no blocked-sum, no M0, "
-        "no 2^{o(n)} claim."
+        "Scope: H(0)=#F by brute-force sampling plus Lagrange, the disjoint-product "
+        "identity, and degree-cap checks on occurrence-≤3 3-CNFs. "
+        "No (r, τ, D)-design, no blocked-sum, no M0, no 2^{o(n)} claim."
     )
     return 0
 

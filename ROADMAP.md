@@ -12,13 +12,14 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] Self-reduction demo that searches for one satisfying assignment
 - Cost: each H(t), t ≠ 0, still enumerates 2^n assignments
 
-## Not started
-
 ### Step 1 — bounded-occurrence testbed
 
-- [ ] Generator and checker for 3-CNF with at most 3 occurrences of each variable
-- [ ] Degree-cap experiment at D = m·k·R and D = 3·n·R, compared with brute-force #F
-- [ ] Fixed-seed formulas under `benches/` and pytest coverage
+- [x] Generator and checker for 3-CNF with at most 3 occurrences of each variable
+- [x] Degree-cap experiment at D = m·k·R and D = 3·n·R, compared with brute-force #F
+- [x] Fixed-seed formulas under `benches/` and pytest coverage
+- See `docs/PROGRESS.md` for the numbers from the fixed seed
+
+## Not started
 
 ### Step 2 — (r, τ, D)-design and blocked sum
 
@@ -59,7 +60,8 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 ```
 src/counting_sat_algebra/
   cnf.py, replacements.py, independent.py, self_reduce.py, verify.py   # Step 0
-  # bounded_occurrence.py                                                # Step 1, absent
-benches/          # Step 1
-docs/PROGRESS.md  # Step 1
+  bounded_occurrence.py                                                # Step 1
+  # design.py, blocked_sum.py                                          # Step 2, absent
+benches/
+docs/PROGRESS.md
 ```

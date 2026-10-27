@@ -1,0 +1,246 @@
+{
+  "seed": 42,
+  "description": "Fixed-seed exact 3-CNFs with at most 3 occurrences of each variable. Regenerate with counting_sat_algebra.bounded_occurrence.build_bench_document.",
+  "instances": [
+    {
+      "name": "n6-m4-r1",
+      "n": 6,
+      "m": 4,
+      "R": 1,
+      "max_occurrence": 3,
+      "M": 12,
+      "clauses": [
+        [
+          [
+            1,
+            false
+          ],
+          [
+            2,
+            false
+          ],
+          [
+            4,
+            true
+          ]
+        ],
+        [
+          [
+            2,
+            false
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            0,
+            true
+          ]
+        ],
+        [
+          [
+            4,
+            true
+          ],
+          [
+            0,
+            true
+          ],
+          [
+            5,
+            false
+          ]
+        ],
+        [
+          [
+            0,
+            true
+          ],
+          [
+            5,
+            false
+          ],
+          [
+            3,
+            false
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "n6-m6-r1",
+      "n": 6,
+      "m": 6,
+      "R": 1,
+      "max_occurrence": 3,
+      "M": 18,
+      "clauses": [
+        [
+          [
+            0,
+            true
+          ],
+          [
+            5,
+            true
+          ],
+          [
+            4,
+            false
+          ]
+        ],
+        [
+          [
+            5,
+            false
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            3,
+            false
+          ]
+        ],
+        [
+          [
+            4,
+            true
+          ],
+          [
+            3,
+            false
+          ],
+          [
+            1,
+            true
+          ]
+        ],
+        [
+          [
+            3,
+            false
+          ],
+          [
+            1,
+            true
+          ],
+          [
+            2,
+            false
+          ]
+        ],
+        [
+          [
+            1,
+            true
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            0,
+            true
+          ]
+        ],
+        [
+          [
+            2,
+            true
+          ],
+          [
+            0,
+            true
+          ],
+          [
+            5,
+            true
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "n7-m5-r1",
+      "n": 7,
+      "m": 5,
+      "R": 1,
+      "max_occurrence": 3,
+      "M": 15,
+      "clauses": [
+        [
+          [
+            1,
+            false
+          ],
+          [
+            6,
+            false
+          ],
+          [
+            0,
+            false
+          ]
+        ],
+        [
+          [
+            6,
+            false
+          ],
+          [
+            0,
+            true
+          ],
+          [
+            5,
+            false
+          ]
+        ],
+        [
+          [
+            0,
+            false
+          ],
+          [
+            5,
+            false
+          ],
+          [
+            4,
+            true
+          ]
+        ],
+        [
+          [
+            5,
+            true
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            3,
+            true
+          ]
+        ],
+        [
+          [
+            4,
+            false
+          ],
+          [
+            3,
+            true
+          ],
+          [
+            2,
+            true
+          ]
+        ]
+      ]
+    }
+  ]
+}
