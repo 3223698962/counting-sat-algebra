@@ -24,10 +24,20 @@ Small Python package that checks the counting-polynomial skeleton for #3-SAT on 
 src/counting_sat_algebra/   # import name counting_sat_algebra
 tests/                      # pytest
 benches/                    # fixed-seed formulas and the Step 6 scan record
+docs/STATUS.md              # short orientation of the current tip (Chinese)
 docs/PROGRESS.md            # what was actually checked
+ROADMAP.md                  # steps 0–8 and the distance still open
+references/                 # offline preprint and Lean scaffold; not executed
 ```
 
 Core arithmetic uses `fractions.Fraction` from the standard library.
+
+## Documentation
+
+- [`docs/STATUS.md`](docs/STATUS.md) — short orientation of the current tip, in Chinese. What this repository is, the honesty limits, Steps 0–8 in one line each, and the distance still open.
+- [`ROADMAP.md`](ROADMAP.md) — the step checklist. Refuting ETH is not a success criterion.
+- [`docs/PROGRESS.md`](docs/PROGRESS.md) — the instances, counts, refusals, and operation counts that were actually recorded.
+- [`references/`](references/README.md) — local copies of the preprint and of a separate Lean scaffold. The Python package does not prove that paper. The Lean file’s main theorem ends in `sorry`, which is an unfinished-proof placeholder.
 
 ## Run
 
