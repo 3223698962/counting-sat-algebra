@@ -1,6 +1,6 @@
 # Progress
 
-The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.17.0 completes Steps 9–16: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements, actual DIMACS counts by independent components, contraction of the same global polynomial through its disjoint replacement supports, finite Taylor tensor elimination on connected supports whose intermediate tables fit explicit budgets, and a deterministic choice of Lemma 4.8's schedule together with one budget-feasible finite member. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`. Theorem 1.1 is not proved, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false. Selecting a finite parameter tuple is not a proof of the asymptotic time or space bound.
+The target is the local reference's deterministic exact counting algorithm and its time/space conclusions. Version 0.18.0 completes Steps 9–17: exact reference conditional expectations, rational design checks, streamed Section 3 Taylor recovery, structured full-parameter coordinate access, finite sparse placements, actual DIMACS counts by independent components, contraction of the same global polynomial through its disjoint replacement supports, finite Taylor tensor elimination on connected supports whose intermediate tables fit explicit budgets, a deterministic choice of Lemma 4.8's schedule together with one budget-feasible finite member, and the finite Section 5.1–5.2 sparse-system algebra. Complete Theorem 1.1 alignment remains open; current obligations are in `REFERENCE_ALIGNMENT.md`. Theorem 1.1 is not proved, ETH is not refuted, and there is no general \(2^{o(n)}\) algorithm. `theorem_1_1_complete` and `lean_proof_complete` stay false. Selecting a finite parameter tuple is not a proof of the asymptotic time or space bound. Step 17 does not implement Theorem 1.1.
 
 The Step 0–8 sections below preserve historical measurements. Step 7/8 Boolean-budget refusals are reproduced through the explicit legacy mode. They no longer describe the default scheduler. The older Step 6 distance list is a historical snapshot, updated below by the new reference alignment.
 
@@ -682,6 +682,31 @@ The count 1 matches the single assignment of alternating-polarity unit clauses. 
 
 All 214 pytest tests and all 31 reference checks pass at version 0.17.0. `--reference` writes Steps 9–16 to `benches/reference_alignment.json`. `--step16` selects these rows, also saved in `artifacts/step16-verification.json`. Both reports keep `theorem_1_1_complete=false` and `lean_proof_complete=false`. No wall times are recorded.
 
+## Step 17 — sparse systems, Lemma 5.1, and the truncated product
+
+Shipped in `sparse_systems.py`. A polynomial is a list of variable-index sets. Duplicate monomials cancel modulo 2, a repeated index inside one monomial is stored once, and the empty monomial is the constant 1. The supplied list must have degree at most \(k\) and length at most \((\log_2 n)^c\), with that inequality decided by exact integer arithmetic. The integer lift sums the monomial products. On a Boolean point it is even exactly when the \(\mathbb F_2\) equation is zero.
+
+Lemma 5.1 builds
+\[
+p_\ell(Y)=(1-Y)^\ell\sum_{j=0}^{\ell-1}\binom{\ell+j-1}{j}Y^j
+\]
+and divides by the monic \(h(Y)=Y^2-Y\). The construction uses only integers. For \(\ell=2\), \(p_2(Y)=1-3Y^2+2Y^3=(1-Y)+(2Y-1)h(Y)\). For \(\ell=1,2,3,4\) and every integer \(y\) from \(-6\) through \(12\), \(p_\ell(y)\equiv 1\{2\mid y\}\pmod{2^\ell}\). Label `CHECKED`.
+
+The product keeps a running count of \(h\) factors and drops any term whose count reaches \(\ell\). At \(\ell=2\) the retained powers are \((0,0)\), \((0,1)\) and \((1,0)\). The omitted term is divisible by 4 at integer inputs. Each retained term has at most \(m_{test}\) linear factors and at most \(\ell-1\) quadratic factors. Label `CHECKED`.
+
+| system | result | label | record |
+| --- | --- | --- | --- |
+| \(n=4\), \(x_0x_1+x_2=0\), \(x_3+1=0\), \(\ell=5\) | count 4 | `COUNTED` | 16 Boolean points, 15 retained terms, coefficient width 7 bits, input-degree bound 20 |
+| empty equations, \(n=5\) | count 32 | `COUNTED` | \(2^5\), no scan and no term table |
+| constant equation \(1=0\), \(n=4\) | count 0 | `COUNTED` | no scan |
+| same \(n=4\) system, term budget 2 | no count | `REFUSED` | term table not allocated, coefficients not constructed, 0 vectors |
+| same system, coefficient budget 1 bit | no count | `REFUSED` | construction stops, term table not allocated, 0 vectors |
+| same system, cube budget 1 | no count | `REFUSED` | no scan |
+
+The count 4 is the least nonnegative residue of the truncated indicator modulo \(2^5\). It matches an independent \(\mathbb F_2\) scan, and the residue equals the common-zero indicator at every one of the 16 points. Sections 5.3–5.5 are not run: there are no replacement rows and no sum in the Section 3 algebra \(A_\ell\). Section 6 and Appendix D are not run. The cube scan is not Theorem 2.2's bit-complexity bound.
+
+All 227 pytest tests and all 40 reference checks pass at version 0.18.0. `--reference` writes Steps 9–17 to `benches/reference_alignment.json`. `--step17` selects these nine rows, also saved in `artifacts/step17-verification.json`. Both reports keep `theorem_1_1_complete=false` and `lean_proof_complete=false`. No wall times are recorded. Step 17 does not implement Theorem 1.1.
+
 ## Current distance to the reference conclusion
 
-Finite members of the parameter schedule can now be chosen and, when the budgets allow, placed and counted or refused. Lemma 4.8's closed form itself is not yet inside those budgets: every machine-feasible n checked here fails r ≥ 2 or Q > R before D is formed. Passing Lemma 4.7 at n=16384, r=2, Q=3, R=2, τ=5/16 does not prove the asymptotic time or space bound, and it does not meet R ≥ 32 or 6R ≤ Q. Sections 5–6 still require sparse polynomial systems, equation selection and disjoint sparsification with the stated length control. Step 14's disjoint-support contraction and Step 15's finite Taylor elimination do not supply Appendix D's general modular contraction or its sharper bound. Independent-component counts and disjoint-support counts are not a general connected-instance bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions.
+Finite members of the parameter schedule can now be chosen and, when the budgets allow, placed and counted or refused. Lemma 4.8's closed form itself is not yet inside those budgets: every machine-feasible n checked here fails r ≥ 2 or Q > R before D is formed. Passing Lemma 4.7 at n=16384, r=2, Q=3, R=2, τ=5/16 does not prove the asymptotic time or space bound, and it does not meet R ≥ 32 or 6R ≤ Q. Section 5.1–5.2 now has an exact finite implementation. Sections 5.3–5.5 still have to attach those factors to replacement forms and sum them with the Section 3 routine. Section 6 still requires equation selection and disjoint sparsification with the stated length control. Step 14's disjoint-support contraction and Step 15's finite Taylor elimination do not supply Appendix D's general modular contraction or its sharper bound. Independent-component counts, disjoint-support counts, and the Step 17 cube scan are not a general connected-instance bound. Exact bit-complexity, total working space and the actual Lean machine proof remain open. See `REFERENCE_ALIGNMENT.md` for the distinct bounds and acceptance conditions. Step 17 does not implement Theorem 1.1.

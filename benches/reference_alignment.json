@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.17.0",
+  "version": "0.18.0",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, and finite members of the Lemma 4.8 parameter schedule; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, and finite Section 5.1–5.2 sparse-system checks. Section 6, Appendix D, and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
   "wall_times_recorded": false,
   "steps": [
     9,
@@ -14,7 +14,8 @@
     13,
     14,
     15,
-    16
+    16,
+    17
   ],
   "failed_step": null,
   "all_checks_passed": true,
@@ -796,6 +797,169 @@
       "jet_products": 262144,
       "peak_table_entries": 72,
       "note": "Finite Taylor elimination on these supports. Not Appendix D."
+    },
+    {
+      "name": "lemma-5.1-integers",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "ell_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "integer_samples": 19,
+      "max_coefficient_bits": 5,
+      "count_checked": false,
+      "note": "Even y is congruent to 1 and odd y to 0 modulo 2^ell. Finite check only."
+    },
+    {
+      "name": "lemma-5.1-ell-2-product",
+      "n": 0,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "coefficients": [
+        [
+          1,
+          -1
+        ],
+        [
+          -1,
+          2
+        ]
+      ],
+      "p_coefficients": [
+        1,
+        0,
+        -3,
+        2
+      ],
+      "retained_powers": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "omitted_powers": [
+        1,
+        1
+      ],
+      "linear_factor_bound": 2,
+      "quadratic_factor_bound": 1,
+      "count_checked": false,
+      "note": "The omitted h(y1)h(y2) term is divisible by 4 at integer inputs."
+    },
+    {
+      "name": "sparse-f2-lift",
+      "n": 4,
+      "m": 1,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "monomial_allowance_n4_c1": 2,
+      "monomial_allowance_n1024_c3": 1000,
+      "duplicates_cancelled": true,
+      "empty_monomial_is_one": true,
+      "count_checked": false,
+      "note": "(log2 n)^c is an exact integer comparison. n=4 is below the theorem size."
+    },
+    {
+      "name": "tiny-common-zeros-n4",
+      "n": 4,
+      "m": 2,
+      "brute": 4,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 4,
+      "ell": 5,
+      "terms": 15,
+      "boolean_vectors": 16,
+      "coefficient_bits": 7,
+      "input_degree_bound": 20,
+      "linear_factor_bound": 2,
+      "quadratic_factor_bound": 4,
+      "pointwise_indicators": true,
+      "term_table_allocated": true,
+      "note": "Exhaustive residue on 16 points. Not Section 5.3, Section 6, or Theorem 1.1."
+    },
+    {
+      "name": "empty-system-n5",
+      "n": 5,
+      "m": 0,
+      "brute": 32,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 32,
+      "boolean_vectors": 0,
+      "term_table_allocated": false,
+      "note": "An empty equation list is 2^n. No cube was scanned."
+    },
+    {
+      "name": "constant-one-equation",
+      "n": 4,
+      "m": 1,
+      "brute": 0,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 0,
+      "boolean_vectors": 0,
+      "term_table_allocated": false,
+      "note": "The constant equation 1 = 0 has no solutions. No partial search."
+    },
+    {
+      "name": "term-table-budget",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "term_table_allocated": false,
+      "coefficients_constructed": false,
+      "term_budget": 2,
+      "reason": "retained term count exceeds budget 2; term table not allocated"
+    },
+    {
+      "name": "coefficient-bit-budget",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "term_table_allocated": false,
+      "coefficients_constructed": false,
+      "coefficient_bit_budget": 1,
+      "reason": "Beigel–Tarui coefficient bit length 3 exceeds budget 1; parity coefficients not constructed"
+    },
+    {
+      "name": "cube-budget",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "boolean_vectors": 0,
+      "term_table_allocated": false,
+      "coefficients_constructed": false,
+      "boolean_vector_budget": 1,
+      "reason": "Boolean cube 2^4 exceeds budget 1; no assignments scanned"
     }
   ]
 }

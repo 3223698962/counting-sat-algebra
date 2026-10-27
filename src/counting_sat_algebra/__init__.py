@@ -8,11 +8,15 @@ placements. Step 13 counts independent components and supports DIMACS input.
 Step 14 contracts disjoint supports of the actual replaced factors. Step 15
 uses finite Taylor tensor elimination on connected supports. Step 16 chooses
 Lemma 4.8's integer schedule and runs a budget-feasible finite member when
-Lemma 4.7 accepts it. The dense matrix remains limited to side 256.
+Lemma 4.7 accepts it. Step 17 builds finite Section 5.1–5.2 objects: sparse
+F2 systems, integer lifts, Lemma 5.1's coefficient division, and the truncated
+product. Those checks are exhaustive on a budgeted cube. The dense matrix
+remains limited to side 256.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
 Finite comparisons and numerical admission do not establish those bounds.
+Step 17 does not implement Theorem 1.1.
 """
 
 from .blocked_sum import (
@@ -42,6 +46,12 @@ from .sparse_placement import (
 from .component_count import ComponentCountResult, count_cnf_components
 from .support_count import SupportCountPlan, SupportCountResult, count_placed_formula_by_support
 from .tensor_count import ContractionBudgets, ContractionPlan, ContractionResult, count_placed_formula_by_contraction
+from .sparse_systems import (
+    STEP17_SCOPE, BudgetRefusal, CommonZeroResult, ParityPolynomials, Section5Budgets,
+    SparseSystem, TruncatedProduct, brute_common_zeros, build_truncated_product,
+    construct_parity_polynomials, count_common_zeros, integer_lift, monomial_allowance,
+    sparse_polynomial, sparse_system,
+)
 from .dimacs import parse_dimacs, read_dimacs, format_dimacs
 from .hermite import (
     HermiteRecovery,
@@ -95,6 +105,21 @@ __all__ = [
     "ContractionPlan",
     "ContractionResult",
     "count_placed_formula_by_contraction",
+    "STEP17_SCOPE",
+    "BudgetRefusal",
+    "CommonZeroResult",
+    "ParityPolynomials",
+    "Section5Budgets",
+    "SparseSystem",
+    "TruncatedProduct",
+    "brute_common_zeros",
+    "build_truncated_product",
+    "construct_parity_polynomials",
+    "count_common_zeros",
+    "integer_lift",
+    "monomial_allowance",
+    "sparse_polynomial",
+    "sparse_system",
     "count_placed_formula_by_support",
     "check_sparse_design",
     "place_sparse_formula",
@@ -164,4 +189,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.17.0"
+__version__ = "0.18.0"
