@@ -18,6 +18,7 @@ Usage:
   python -m counting_sat_algebra.verify --step8
   python -m counting_sat_algebra.verify --step14
   python -m counting_sat_algebra.verify --step15
+  python -m counting_sat_algebra.verify --step16
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1054,7 +1055,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–Q): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–R): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1107,8 +1108,14 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
-    if any(step in steps for step in (9, 10, 11, 12, 13, 14, 15)):
-        parts.append("Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, structured matrix entries, sparse admitted placements, independent CNF components, disjoint replacement supports and finite connected Taylor contraction. Complete Theorem 1.1 alignment remains open.")
+    if any(step in steps for step in (9, 10, 11, 12, 13, 14, 15, 16)):
+        parts.append(
+            "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
+            "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
+            "replacement supports and finite connected Taylor contraction. Step 16 chooses Lemma 4.8's "
+            "schedule and runs a budget-feasible finite member when Lemma 4.7 accepts it. "
+            "Complete Theorem 1.1 alignment remains open."
+        )
     parts.append("No Theorem 1.1, no 2^{o(n)} claim.")
     return " ".join(parts)
 
@@ -1119,7 +1126,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–15. The full path stays in ``main``."""
+    """Run a subset of Steps 2–16. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1227,7 +1234,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 15)"
+        description="Counting algorithm reference verifier (Steps 0 through 16)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1282,8 +1289,9 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step13', action='store_true', help='check exact component counts including a large disconnected 3-CNF')
     parser.add_argument('--step14', action='store_true', help='count the global placed polynomial through disjoint replacement supports')
     parser.add_argument('--step15', action='store_true', help='count connected replacement supports by budgeted Taylor tensor elimination')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–15 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step15)')
+    parser.add_argument('--step16', action='store_true', help='choose Lemma 4.8 parameters and run a budget-feasible finite member')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–16 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step16)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1314,11 +1322,12 @@ def main(argv: List[str] | None = None) -> int:
             (13, args.step13 or args.reference),
             (14, args.step14 or args.reference),
             (15, args.step15 or args.reference),
+            (16, args.step16 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step15')
+        parser.error('--output requires --reference or --step9 through --step16')
     if selected:
         return _run_selected(
             selected,
@@ -1327,7 +1336,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 15")
+    print("counting_sat_algebra.verify — Steps 0 through 16")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
@@ -1479,7 +1488,10 @@ def main(argv: List[str] | None = None) -> int:
         "entries. Step 12 checks a sparse placement admitted by every Lemma 4.7 "
         "hypothesis. Step 13 counts independent components exactly. Step 14 "
         "contracts disjoint replacement supports of the same global polynomial. Step 15 "
-        "eliminates variables in connected supports within intermediate-table budgets. Complete "
+        "eliminates variables in connected supports within intermediate-table budgets. Step 16 "
+        "evaluates Lemma 4.8's closed form and, where the sparse budgets allow, places and counts "
+        "one finite tuple that passes every Lemma 4.7 numerical hypothesis. That execution is not "
+        "a proof of the asymptotic time or space bound. Complete "
         "Theorem 1.1 alignment remains open. "
         f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "
         f"2**{FULL_M0_LOG2_DIMENSION_AT_R2} at r=2); structured entry queries pass. "

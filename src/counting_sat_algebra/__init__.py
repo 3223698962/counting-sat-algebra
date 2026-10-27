@@ -6,8 +6,9 @@ streamed shared-measurement Taylor recovery, and structured auxiliary entry
 queries even at R=32, Q=192. Step 12 connects those entries to sparse admitted
 placements. Step 13 counts independent components and supports DIMACS input.
 Step 14 contracts disjoint supports of the actual replaced factors. Step 15
-uses finite Taylor tensor elimination on connected supports. The dense matrix
-remains limited to side 256.
+uses finite Taylor tensor elimination on connected supports. Step 16 chooses
+Lemma 4.8's integer schedule and runs a budget-feasible finite member when
+Lemma 4.7 accepts it. The dense matrix remains limited to side 256.
 
 The target is reference Theorem 1.1's exact count with its time/space bounds.
 The general-formula reduction and complete asymptotic pipeline remain open.
@@ -28,7 +29,11 @@ from .blocked_sum import (
 from .design import BlockDesign, make_design, popcount_design
 from .common_count import CommonCountPlan, CommonCountResult, count_placed_formula
 from .conditional_balance import ConditionalSchedules, choose_schedules
-from .reference_parameters import ReferenceParameters, check_reference_parameters
+from .reference_parameters import (
+    AsymptoticChoice, ChoiceBudgets, Lemma48Proposal, ParameterTuple,
+    ReferenceParameters, check_reference_parameters, choose_asymptotic_parameters,
+    choose_asymptotic_parameters_for_cnf, lemma_4_8_integers, lemma_4_8_proposal,
+)
 from .structured_auxiliary import StructuredAuxiliary, build_structured_auxiliary
 from .sparse_placement import (
     SparsePlacedFormula, SparsePlacementBudgets, SparseScheduleOutcome,
@@ -101,10 +106,18 @@ __all__ = [
     "CommonCountPlan",
     "CommonCountResult",
     "ConditionalSchedules",
+    "AsymptoticChoice",
+    "ChoiceBudgets",
+    "Lemma48Proposal",
+    "ParameterTuple",
     "ReferenceParameters",
     "StructuredAuxiliary",
     "build_structured_auxiliary",
     "check_reference_parameters",
+    "choose_asymptotic_parameters",
+    "choose_asymptotic_parameters_for_cnf",
+    "lemma_4_8_integers",
+    "lemma_4_8_proposal",
     "choose_schedules",
     "count_placed_formula",
     "AuxiliarySlice",
@@ -151,4 +164,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.16.0"
+__version__ = "0.17.0"

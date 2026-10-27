@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.16.0",
+  "version": "0.17.0",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports and finite connected Taylor contraction; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, and finite members of the Lemma 4.8 parameter schedule; no general-input asymptotic claim.",
   "wall_times_recorded": false,
   "steps": [
     9,
@@ -13,7 +13,8 @@
     12,
     13,
     14,
-    15
+    15,
+    16
   ],
   "failed_step": null,
   "all_checks_passed": true,
@@ -555,6 +556,246 @@
       "count": null,
       "boolean_vectors": 0,
       "reason": "factor support bound 13 exceeds budget 12; no numerical tables created"
+    },
+    {
+      "name": "lemma48-integers-lambda-2**19",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "log_n": 524288,
+      "log_log_n": 19,
+      "r": 2,
+      "Q": 215,
+      "R": 2900,
+      "preliminary_guard_passed": false,
+      "dimension_formed": false,
+      "matrix_allocated": false,
+      "numerical_hypotheses_admitted": false,
+      "note": "Q <= R, so tau and D are not formed; this lambda is not an executed instance"
+    },
+    {
+      "name": "lemma48-units-n16384",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "log_n": 14,
+      "log_log_n": 4,
+      "beta": 1,
+      "r": 0,
+      "Q": 0,
+      "R": 16,
+      "tau": null,
+      "dimension": null,
+      "dimension_formed": false,
+      "matrix_allocated": false,
+      "numerical_hypotheses_admitted": false,
+      "reasons": [
+        "preliminary guard failed: tau, D and the interval are formed only after r >= 2 and Q > R",
+        "r=0 < 2",
+        "Q=0 <= R=16"
+      ],
+      "placement_started": false
+    },
+    {
+      "name": "finite-member-units-n8192",
+      "n": 8192,
+      "m": 8192,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "source": "none",
+      "numerical_hypotheses_admitted": false,
+      "examined": 1,
+      "admitted_candidates": 0,
+      "obstacles": [
+        "r=2, Q=2, R=1: binomial tail 7/16 exceeds every tau <= 1/2",
+        "r=2, Q=3: 2(b+w)D^2 = 16384 > M = 8192",
+        "r=2, Q=4: 2(b+w)D^2 = 262144 > M = 8192",
+        "r=2, Q=5: 2(b+w)D^2 = 4194304 > M = 8192",
+        "r=2, Q=6: 2(b+w)D^2 = 67108864 > M = 8192",
+        "r=2, Q=7: 2(b+w)D^2 = 1073741824 > M = 8192",
+        "r=2, Q=8: 2(b+w)D^2 = 17179869184 > M = 8192",
+        "r=3, Q=2: 2(b+w)D^2 = 26244 > M = 8192"
+      ],
+      "reasons": [
+        "no budget-bounded tuple meets every Lemma 4.7 numerical hypothesis"
+      ],
+      "placement_started": false,
+      "matrix_allocated": false
+    },
+    {
+      "name": "finite-member-units-n16384",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "source": "finite-budget-member",
+      "numerical_hypotheses_admitted": true,
+      "r": 2,
+      "Q": 3,
+      "R": 2,
+      "tau": "5/16",
+      "hand_tau": "1/2",
+      "measurement_allowance": 10240,
+      "hand_measurement_allowance": 16384,
+      "interval": [
+        0,
+        1
+      ],
+      "dimension": 64,
+      "tail": "5/32",
+      "tail_limit": "5/32",
+      "alphabet": 8,
+      "trials": 262144,
+      "examined": 3,
+      "admitted_candidates": 1,
+      "meets_r_at_least_32": false,
+      "meets_six_r_at_most_q": false,
+      "count_checked": false,
+      "note": "Least tau meeting the exact tail. Not the Lemma 4.8 closed form, and not R>=32, 6R<=Q."
+    },
+    {
+      "name": "finite-member-trials-budget",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "source": "finite-budget-member",
+      "numerical_hypotheses_admitted": true,
+      "placeable": false,
+      "trials": 262144,
+      "trial_budget": 1,
+      "placement_started": false,
+      "matrix_allocated": false,
+      "reasons": [
+        "Lemma 4.7 admits this tuple, but the sparse-placement budgets refuse it before any schedule search or matrix allocation",
+        "alphabet 8 and candidate trials 262144 were not started"
+      ]
+    },
+    {
+      "name": "dense-full-m0-still-refused",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "r": 2,
+      "Q": 192,
+      "R": 32,
+      "matrix_allocated": false,
+      "note": "The dense side-length cap is unchanged. Step 16 does not allocate full M0."
+    },
+    {
+      "name": "chosen-placement-n16384",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "numerical_hypotheses_admitted": true,
+      "tau": "5/16",
+      "storage": {
+        "occupied_coordinates": 16384,
+        "mode_coordinate_queries": 163840,
+        "pullback_candidates": 34816,
+        "polynomial_entries": 59392,
+        "measurement_entries": 14336,
+        "dense_polynomial_slots": 536870912
+      },
+      "multiplicity": 256,
+      "group_ranks": [
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          2048,
+          2048
+        ]
+      ],
+      "measurement_allowance": 10240,
+      "independent_measurements": 4096,
+      "count_checked": false,
+      "reason": "all Lemma 4.7 hypotheses, sparse kernel and restoration checks passed"
+    },
+    {
+      "name": "chosen-n16384-common-budget",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "q": 5461,
+      "J": 5462,
+      "boolean_vector_bound_bits": 36697,
+      "boolean_vectors": 0,
+      "reason": "Boolean vector bound an integer of 36697 bits exceeds budget 500000; no enumeration started"
+    },
+    {
+      "name": "chosen-n16384-support",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "expected_count": 1,
+      "count_validation": "one assignment for independent alternating-polarity unit clauses",
+      "same_chosen_placement": true,
+      "memo_enabled": true,
+      "plan": {
+        "components": 10240,
+        "free_variables": 0,
+        "largest_component": 4,
+        "degree_cap": 14336,
+        "max_component_degree": 4,
+        "boolean_vector_bound": 49152
+      },
+      "boolean_vectors": 96,
+      "local_evaluations": 13,
+      "memo_hits": 10227,
+      "note": "Disjoint replacement supports are not a general connected-instance bound."
+    },
+    {
+      "name": "chosen-n16384-tensor",
+      "n": 16384,
+      "m": 16384,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 1,
+      "expected_count": 1,
+      "count_validation": "one assignment for independent alternating-polarity unit clauses",
+      "same_chosen_placement": true,
+      "memo_enabled": false,
+      "plan": {
+        "components": 10240,
+        "free_variables": 0,
+        "largest_component": 4,
+        "max_component_degree": 4,
+        "max_bucket_variables": 4,
+        "boolean_vector_bound": 176128,
+        "jet_product_bound": 262144,
+        "peak_table_entries": 72,
+        "peak_table_coefficients": 360,
+        "planning_steps": 268288
+      },
+      "boolean_vectors": 176128,
+      "factor_evaluations": 98304,
+      "jet_products": 262144,
+      "peak_table_entries": 72,
+      "note": "Finite Taylor elimination on these supports. Not Appendix D."
     }
   ]
 }

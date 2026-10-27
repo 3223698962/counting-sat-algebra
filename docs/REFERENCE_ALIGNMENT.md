@@ -1,6 +1,6 @@
 # 与 references 的实现对齐
 
-目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.16.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。
+目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.17.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。
 
 ## 需要达到的结论
 
@@ -23,6 +23,8 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 | Lemma 4.5 | `conditional_balance.py` | 精确最小化 \(\mathbb E[\Phi/(M(b+w))+\Xi/(Qn)]\)；包含共享变量和共享因子的碰撞依赖；逐步期望、初值和终值用 Fraction 核对 |
 | Definition 3.1 的核条件 | `linear_algebra.py`、`replacement_matrix.py` | 每个组的测量矩阵消元一次；检查目标向量属于行空间，从而覆盖整个有理数核；布尔枚举作为显式可选对照 |
 | Lemma 4.7 | `reference_parameters.py` | 检查平衡不等式、R<Q、区间和精确二项式尾界；不分配矩阵 |
+| Lemma 4.8 的整数日程 | `reference_parameters.py` | 按证明顺序计算 λ、ν、β、r、Q、R；仅在 r≥2 且 Q>R 之后才形成 τ、D 和中心区间。机器可放置的 n 上该闭式在形成 D 之前失败 |
+| 预算内的有限参数成员 | `reference_parameters.py`、`sparse_placement.py` | 只保留 `check_reference_parameters` 接受的元组；τ 取满足精确尾界的最小允许值。通过后再调用既有稀疏放置和计数后端。这不是渐近时间或空间界的证明 |
 | Lemma 3.2 | `common_count.py` | 流式枚举整数测量元组；两次扫描每个局部布尔组；代表元不必满足固定比特条件；不存可达测量表 |
 | Lemma 3.3、式 (3.13) | `common_count.py` | 枚举 \(U\subseteq E\)、\(|E|\le q\)，恢复截断 Taylor 系数；在 \(\mathbb Q[z]/(z^{q+1})\) 内求值，再做 Hermite 恢复 |
 | 式 (4.7)、(4.10) | `structured_auxiliary.py` | 通过交换轨道的 Krawtchouk 系数查询 M0 和 P 的条目；在 R=32、Q=192 上也可查询；不分配完整稠密数组 |
@@ -35,7 +37,7 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 
 测量矩阵的冗余行通过选取原来的独立整数行删除，保留整数性和绝对行和上界。每行的测量范围收紧到负系数之和与正系数之和之间，仍覆盖所有布尔输入。该范围是参考文献 `[-D,D]` 的子集。
 
-完整算子的结构化描述支持有限个条目查询和受预算限制的测量模态枚举。`place_sparse_formula` 已将这些条目和测量描述接入占用坐标上的放置，公共计数入口同时接受稠密和稀疏放置。预算覆盖条目查询、测量候选、消元和枚举；完整渐近参数族尚未执行。
+完整算子的结构化描述支持有限个条目查询和受预算限制的测量模态枚举。`place_sparse_formula` 已将这些条目和测量描述接入占用坐标上的放置，公共计数入口同时接受稠密和稀疏放置。预算覆盖条目查询、测量候选、消元和枚举。Step 16 会计算 Lemma 4.8 的闭式，并在预算内执行一个通过 Lemma 4.7 全部数值前提的有限元组。该闭式在这些 n 上于形成 D 之前失败；有限元组的执行不是渐近界的证明。
 
 分量入口采用 r=2、Q=2、R=1 的有限局部设计，直接核验其恢复和核条件；这些小分量不满足 Lemma 4.7 的大 n 前提。局部设计的准确性与 Lemma 4.7 的渐近存在性是不同的核验。每个分量都重新放置，不能假设全局放置的 H(t) 自动按原 CNF 分量分解。
 
@@ -57,8 +59,14 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 - 1024 个变量的连通路径再加 2 个声明自由变量：计数为 4·Fibonacci(1026)（`COUNTED`），最大支持 1024，自由变量 2，桶宽 2，局部布尔向量 8186，峰值表项 4094。DIMACS `--backend tensor` 且允许该分量大小时，计数和扫描次数相同。闭式来自无相邻零布尔串的递推，不是全空间枚举。
 - 两个耦合的替换因子：计数为 1（`COUNTED`）。在 T=1 恢复的喷射为 7/4、1/2、−1/4，与独立全空间 Hasse 喷射逐项一致（系数对照为 `CHECKED`）。这次系数对照使用了全空间求和；长路径计数测试会禁用该神谕。
 - 一个宽度为 13 的因子：`REFUSED`。因子支持上界 13 超过预算 12，布尔向量扫描为 0，不建数值表，不返回计数。诱导出的过宽消除桶，以及后面才超预算的分量，同样在任何数值表之前拒绝。
+- Lemma 4.8 在 16384 个交替单元子句上给出 r=0、Q=0、R=16，λ=14、ν=4、β=1。初步守卫失败，τ 和 D 都没有形成，也没有分配矩阵。标签为 `CHECKED`。λ=2¹⁹ 的整数是 ν=19、r=2、Q=215、R=2900，因为 Q≤R，同样不形成 D。
+- 8192 个交替单元子句：预算内没有任何元组通过 Lemma 4.7。r=2、Q=2、R=1 的尾概率 7/16 大于每个 τ≤1/2；r=2、Q=3 需要 2(b+w)D²=16384>M。标签为 `CHECKED`。没有开始放置。
+- 16384 个交替单元子句：选择器给出 r=2、Q=3、R=2、τ=5/16，区间 {0,1}，尾概率 5/32，恰好等于 τ/(rb)。这比手选的 τ=1/2 更紧，测量允许量 2τn 从 16384 降到 10240。该元组不满足 R≥32 或 6R≤Q。标签为 `CHECKED`。它不是 Lemma 4.8 的闭式。
+- 同一选择上的稀疏放置复现 Step 12 的存储：多项式条目 59392、测量条目 14336、稠密多项式位置数 536870912、重数 256、最大组 8192、三个节点的组秩均为 (2048,2048)。独立测量数 4096，落在 10240 的允许量内。
+- 同一放置的三个既有后端：共享测量在枚举前拒绝，q=5461、J=5462，布尔向量上界 36697 位，实际扫描为 0，标签 `REFUSED`。支持集复用计数为 1（`COUNTED`），13 次局部求值、10227 次复用、96 个局部布尔向量。有限 Taylor 消元计数为 1（`COUNTED`），桶宽 4、局部布尔向量 176128、喷射乘法 262144、峰值表项 72。候选试验预算为 1 时，在日程搜索之前拒绝。稠密 `build_auxiliary_slice(2, 192, 32)` 仍在分配前拒绝，边长仍报告为 2³⁸⁴。
+- 这些有限元组的选择和运行不是 Lemma 4.8 的渐近时间或空间界，也不是 Sections 5–6 或 Appendix D。Step 15 仍是有限 Taylor 消元。独立分量计数和不相交支持集计数不是一般连通实例的界。
 
-205 项 pytest 全部通过；`--reference` 的 21 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.16.0，步骤为 9–15。它区分 `COUNTED`、`CHECKED`、`REFUSED`，分别记录两种复用模式和 Step 15 的实际结果，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`，不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行也保存在 `artifacts/step15-verification.json`。
+214 项 pytest 全部通过；`--reference` 的 31 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.17.0，步骤为 9–16。它区分 `COUNTED`、`CHECKED`、`REFUSED`，分别记录两种复用模式、Step 15 的实际结果和 Step 16 的参数选择，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`，不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。
 
 命令：
 
@@ -68,16 +76,17 @@ pytest -q
 python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 python -m counting_sat_algebra.verify --step14
 python -m counting_sat_algebra.verify --step15
+python -m counting_sat_algebra.verify --step16
 python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
 python -m counting_sat_algebra count examples/connected_path.cnf --backend tensor --output benches/connected_path.json
 ```
 
-`--step9` 至 `--step15` 可以分别运行上述七组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。
+`--step9` 至 `--step16` 可以分别运行上述八组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Step 16 的同一组有限检查。
 
 ## 尚未完成的条件
 
-1. 自动选择和执行满足全部条件的渐近参数族，使稀疏放置和计数在一般输入上满足所需界。当前支持调用者提供的参数；16384 变量放置可通过分离的支持集完成计数，共享测量路线仍超出预算。桶宽不超过预算的连通支持可由 Step 15 计数；更宽的因子或消除桶仍在建表前拒绝。
+1. Lemma 4.8 的闭式已能精确计算，并在预算允许时执行一个通过 Lemma 4.7 的有限成员。机器可放置的 n 上，闭式在形成 D 之前失败；n=16384 的有限成员是 r=2、Q=3、R=2、τ=5/16，不满足 R≥32 或 6R≤Q。这次执行没有证明渐近时间或空间界，也没有让一般输入自动获得该界。共享测量路线在该放置上仍超出预算。桶宽不超过预算的连通支持可由 Step 15 计数；更宽的因子或消除桶仍在建表前拒绝。调用者仍可直接提供参数。
 2. 实现 Section 5 的稀疏多项式方程、截断系数代数以及 Section 6 的方程选择与互不重叠的稀疏化。现有蕴涵环复制不满足所需的变量长度控制。
 3. 实现 Appendix D 的一般模收缩，才能对齐 Theorem 1.1 的较强时间界。Step 14 的有限不相交支持集收缩，以及 Step 15 在小中间表上的有限 Taylor 变量消去，都没有给出这一一般算法或复杂度证明。
 4. 完成精确位复杂度、总空间的分析，以及 Lean 主定理中的实际机器构造与证明。有限存储统计、独立分量计数、不相交支持集计数和有限连通收缩都不能证明这些界。
