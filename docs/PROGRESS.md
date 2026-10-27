@@ -1,6 +1,6 @@
 # Progress
 
-Steps 0, 1, 2, and a small-parameter Step 3 are implemented and checked against brute-force counting, or against the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement Hermite interpolation, sparsification, or Theorem 1.1. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups.
+Steps 0, 1, 2, a small-parameter Step 3, and an exact Step 4 Hermite check are implemented and compared with brute-force counting, or with the full-space sum H(t), on small instances. This repository does not refute ETH. It does not implement sparsification or Theorem 1.1. The matrix M0 is built only at side length r**(2Q) ≤ 64. The Step 2 measurement loop is exponential in the number of groups. Step 4 uses fewer distinct sample points than D+1 and still enumerates the cube at each point.
 
 ## Step 0
 
@@ -111,7 +111,7 @@ Shipped in `replacement_matrix.py`. This is the auxiliary matrix
 
 M0 = V0 f_I(W0)
 
-and the rows built from it, at side lengths 4, 9, 16, and 64. It is not the matrix at the parameter list R ≥ 32, 6R ≤ Q. Schedules are written out by hand. Hermite interpolation is not implemented. Theorem 1.1 is not implemented.
+and the rows built from it, at side lengths 4, 9, 16, and 64. It is not the matrix at the parameter list R ≥ 32, 6R ≤ Q. Schedules are written out by hand. Hermite interpolation is not part of this matrix. Theorem 1.1 is not implemented.
 
 Coordinates are pairs of length-Q schedules with entries in {0, …, r−1}. There are D = r**(2Q) of them. V0 exchanges the two schedules, W0 = (1/2) Σ_s (I − Π_s), and f_I is the polynomial of degree at most R−1 with f_I(j) = (−1)^j on R consecutive integers. The row is
 
@@ -186,15 +186,90 @@ Summing the four assignments gives H(T) = 1 − 2T + T²/4. The same polynomial 
 
 Full M0 is still absent. The parameter list that accompanies that matrix asks for R ≥ 32 and 6R ≤ Q before a tail bound is invoked. The smallest such integers are R = 32 and Q = 192. At r = 2 the side length is 2^384. `build_auxiliary_slice` refuses every side length above 64 and says so in the error. A scheduler that would also keep groups of size at most 2n/r and label multiplicity at most 2M/D needs n on the order of D². That inequality is already false for every formula this repository compares with brute force, so the scheduler is not run. The four placements above are the simplification: the same matrix formulas, hand-written schedules, and direct checks. Nothing in this step runs in 2^{o(n)}.
 
-## Next: Step 4
+## Step 4 — Hermite / multi-coefficient interpolation
 
-Hermite or multi-coefficient interpolation: several Taylor or Hasse coefficients at each sample point, and fewer sample points than the degree cap. That step is not in this tree.
+Shipped in `hermite.py`. H is treated as a univariate polynomial of degree at most D = m·k·R, the same cap `degree_bound` and `interpolate_H0` use. The Lagrange path reads the value H(t) at t = 1, …, D+1. This step reads Hasse coefficients
+
+H^{[k]}(t) = H^{(k)}(t) / k!
+
+at fewer distinct t. The Newton form with repeated nodes takes those coefficients as its divided differences. Taylor coefficients are k! times the Hasse coefficients. The number of conditions stays D+1. A degree-D polynomial is not recovered from fewer conditions than that.
+
+The jet is exact. For one assignment the linear forms are polynomials in T. Each clause factor Φ_e = 1 − ∏(1 − L_v) is evaluated in Q[u]/(u^{order+1}), u = T − t, and the jets are summed over the cube. One pass returns every requested coefficient at that t. Derivative orders are not separate passes. Arithmetic per assignment grows quadratically with the jet width, because each product is a truncated convolution.
+
+Three patterns are run whenever they produce different multiplicity tuples:
+
+- `paired`: at most two coefficients per point (the value and the first Hasse derivative). Point count ceil((D+1)/2). The last point may be value-only.
+- `triple`: at most three coefficients per point (derivative orders 0, 1, and 2, and a shorter tail if the cap does not divide evenly). Point count ceil((D+1)/3).
+- `single-point`: all D+1 coefficients at t = 1. One point. When D+1 ≤ 2 this is the same pattern as `paired`, and only one row is recorded.
+
+Sample points are t = 1, 2, …, so 0 is not a node. H(0) is the interpolant. On width-1 hand formulas k = 1, so the cap is m·1·R. On every 3-CNF k = 3.
+
+### What was checked
+
+Every row below matched three ways: Hermite H(0), the direct sum `eval_H_at` at 0, and `interpolate_H0` on the same family and the same k. That common value equalled the brute-force model count, and it was an integer. The jet of order D at t = 1 reproduced `eval_H_at` at every integer from 0 through D+1. The degree read from that jet agreed with the degree read from forward differences of H(1), …, H(D+2), and the same degree was read from the jet at t = 2. The leading Hasse coefficient does not depend on the base point.
+
+Three polynomials were expanded by hand, then compared with both `eval_H_at` and the jet:
+
+- one negative unit, ⟨P, X⟩ = X(1+T), H(T) = 1 − T. At t = 1 the jet is (0, −1). #F = 1.
+- two positive units, ⟨P, X⟩ = X_v + T(X_0 + X_1), H(T) = 1 + 6T + 6T^2. At t = 1 the jet is (13, 18, 6). The ordinary derivatives are (13, 18, 12). #F = 1. The first Hasse coefficient also equals the centered difference (H(2) − H(0))/2 = 18, which is exact because the degree is 2.
+- (x) ∧ (¬x) with ⟨P, X⟩ = X(1+T) on both occurrences, H(T) = −T − T^2. At t = 1 the jet is (−2, −3, −1). #F = 0, and the jet is not zero, so the recovered count is not a constant-zero polynomial.
+
+On every recorded instance the measured degree equalled the cap. The cap was tight for these families. No condition was dropped for a slack bound. That is one family per formula, not a proof for every replacement.
+
+| instance | n | m | R | k | D | deg | #F | Lagrange points |
+|----------|---|---|---|---|---|-----|----|-----------------|
+| negative-unit | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 2 |
+| unit-pair | 2 | 2 | 1 | 1 | 2 | 2 | 1 | 3 |
+| contradiction-n1 | 1 | 2 | 1 | 1 | 2 | 2 | 0 | 3 |
+| one-clause-n3 | 3 | 1 | 1 | 3 | 3 | 3 | 7 | 4 |
+| random-n4-m4-r1 | 4 | 4 | 1 | 3 | 12 | 12 | 9 | 13 |
+| random-n4-m3-r2 | 4 | 3 | 2 | 3 | 18 | 18 | 10 | 19 |
+| random-n6-m6-r1 | 6 | 6 | 1 | 3 | 18 | 18 | 28 | 19 |
+| bounded-n6-m4-r1 | 6 | 4 | 1 | 3 | 12 | 12 | 44 | 13 |
+
+Multiplicities are the number of Hasse coefficients at t = 1, then t = 2, and so on. Their sum is the condition count, and it equals the Lagrange point count D+1. A blank triple cell means that pattern repeated single-point.
+
+| instance | paired multiplicities | triple multiplicities | single-point |
+|----------|-----------------------|-------------------------|--------------|
+| negative-unit | | | (2,) — 1 point |
+| unit-pair | (2, 1) — 2 points | | (3,) — 1 point |
+| contradiction-n1 | (2, 1) — 2 points | | (3,) — 1 point |
+| one-clause-n3 | (2, 2) — 2 points | (3, 1) — 2 points | (4,) — 1 point |
+| random-n4-m4-r1 | (2, 2, 2, 2, 2, 2, 1) — 7 points | (3, 3, 3, 3, 1) — 5 points | (13,) — 1 point |
+| random-n4-m3-r2 | (2, 2, 2, 2, 2, 2, 2, 2, 2, 1) — 10 points | (3, 3, 3, 3, 3, 3, 1) — 7 points | (19,) — 1 point |
+| random-n6-m6-r1 | (2, 2, 2, 2, 2, 2, 2, 2, 2, 1) — 10 points | (3, 3, 3, 3, 3, 3, 1) — 7 points | (19,) — 1 point |
+| bounded-n6-m4-r1 | (2, 2, 2, 2, 2, 2, 1) — 7 points | (3, 3, 3, 3, 1) — 5 points | (13,) — 1 point |
+
+`one-clause-n3` is the positive 3-clause on n = 3 with replacement seed 0, the same family as the Step 0 single-clause test. The two `random-n4` rows and `random-n6-m6-r1` use the Step 0 seeds (formula seed 11, 13, 14 and replacement seed 111, 113, 114). `bounded-n6-m4-r1` is the Step 1 bench formula, replacement seed 42. Its model count 44 and degree 12 are the same figures as the Step 1 table. For `negative-unit`, D+1 = 2, so the paired pattern and the single-point pattern are the same one node.
+
+Cube passes equal the number of distinct points. Assignments enumerated for that scheme are passes times 2^n. The Lagrange path enumerates (D+1)·2^n assignments and reads one value from each pass.
+
+| instance | 2^n | Lagrange assignments | paired | triple | single-point | single-point jet width |
+|----------|-----|----------------------|--------|----------|--------------|------------------------|
+| negative-unit | 2 | 4 | | | 2 | 2 |
+| unit-pair | 4 | 12 | 8 | | 4 | 3 |
+| contradiction-n1 | 2 | 6 | 4 | | 2 | 3 |
+| one-clause-n3 | 8 | 32 | 16 | 16 | 8 | 4 |
+| random-n4-m4-r1 | 16 | 208 | 112 | 80 | 16 | 13 |
+| random-n4-m3-r2 | 16 | 304 | 160 | 112 | 16 | 19 |
+| random-n6-m6-r1 | 64 | 1216 | 640 | 448 | 64 | 19 |
+| bounded-n6-m4-r1 | 64 | 832 | 448 | 320 | 64 | 13 |
+
+`paired` roughly halves the number of cube passes and keeps the jet width at 2, so the extra arithmetic per assignment is a small constant. `single-point` uses one pass and a jet of width D+1. That pass does Θ(D²) rational operations per assignment. It is not a factor-of-D saving over the Lagrange path, and on a large cap it can be more arithmetic than D+1 scalar evaluations. The reproducible cost is the pair (passes, jet width). One run of `python -m counting_sat_algebra.verify --step4` marked every row OK. The slowest case on that run was `random-n6-m6-r1` at about half a second, and that figure includes the Lagrange comparison. It is not a complexity result.
+
+### Obstacle
+
+Producing the jet still scans {0,1}^n. Packing derivatives into a node reduces the number of distinct sample points and, for a short jet, the number of cube passes. It does not evaluate H below exponential cost in n, and it does not reduce the number of conditions below D+1. On these instances the degree sat on the cap, so there was no unused room in the bound either. Sparsification is not implemented. Theorem 1.1 is not implemented. Nothing in this step runs in 2^{o(n)}.
+
+## Next: Step 5
+
+Counting-preserving sparsification, or variable copying, at small n, and a path from a general small k-CNF into a bounded-occurrence instance. That step is not in this tree.
 
 ## Known gaps
 
 - Full M0, at the parameter list R ≥ 32 and 6R ≤ Q, is not built. The matrix in this tree has side length at most 64.
-- No Hermite interpolation, no sparsification, no Theorem 1.1.
+- No sparsification and no Theorem 1.1. Step 4 does not remove the 2^n pass inside each sample point.
 - Step 2 matches the full sum on the instances above. Measurement enumeration for the popcount design is (r + 1)^b, exponential in the number of groups, and on the recorded r = 2 scan it does more local work than summing the cube.
-- Interpolation cost on the Step 0/1 path is still Θ(2^n · D).
-- The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table.
+- The Step 0/1 Lagrange path is still Θ(2^n · D) scalar evaluations. The Step 4 paired path is about half as many cube passes, with a jet of width 2. The single-point path is one pass with Θ(D²) arithmetic per assignment. Neither is subexponential.
+- The Step 1 degree table is the bench set plus one pytest draw, all at R = 1. Step 3 has its own four-row degree table. The Step 4 degree column is the eight rows above; on each of them the measured degree equalled the cap.
 - Self-reduction deletes fixed variables from clauses and then calls brute force on all 2^n bits, so the integer it sees is not the number of extensions. The CLI only needs a yes/no answer and checks the witness it returns.

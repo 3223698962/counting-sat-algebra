@@ -35,12 +35,14 @@ Build the pieces of the counting algorithm on instances small enough to compare 
 - [x] Full M0 is absent. The parameter list with R ≥ 32 and 6R ≤ Q forces side length 2^384 at r = 2, above the cap of 64. Schedules are hand-written. The point R = Q = 2 is an exact identity and sits outside the hypothesis R < Q
 - Not claimed: Theorem 1.1, a subexponential runtime, or 2^{o(n)}
 
-## Not started
-
 ### Step 4 — Hermite / multi-coefficient interpolation
 
-- [ ] Several Taylor or Hasse coefficients at each sample point
-- [ ] Fewer sample points, compared with the degree cap
+- [x] Exact rational Hermite interpolation from Hasse coefficients of H. The coefficient of index k is the k-th Taylor coefficient divided by k!. Both were checked on three closed forms
+- [x] The jet at a sample t is the formal derivative of the clause product, summed over {0,1}^n in one pass. Derivative orders are not separate passes. The condition count stays D+1, packed into fewer distinct points than the Lagrange path: at most two coefficients per point, at most three, or every coefficient at t = 1
+- [x] H(0) matches brute-force #F and `interpolate_H0` on the closed forms, on Step 0 random formulas, and on the Step 1 bench row n6-m4-r1 (7 paired points against 13, #F = 44). On these draws the measured degree equalled the cap
+- Not claimed: fewer than D+1 conditions, a subexponential evaluation, Theorem 1.1, or 2^{o(n)}. A full jet of order D does quadratic arithmetic per assignment. Each sample point still costs 2^n
+
+## Not started
 
 ### Step 5 — sparsification and a reduction from general small k-CNF
 
@@ -66,6 +68,7 @@ src/counting_sat_algebra/
   bounded_occurrence.py                                                # Step 1
   design.py, blocked_sum.py                                            # Step 2
   replacement_matrix.py                                                # Step 3
+  hermite.py                                                           # Step 4
 benches/
 docs/PROGRESS.md
 ```
