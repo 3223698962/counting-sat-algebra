@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.22.0",
+  "version": "0.22.1",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,

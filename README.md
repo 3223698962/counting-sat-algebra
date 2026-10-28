@@ -1,6 +1,6 @@
 # counting-sat-algebra
 
-以 `references/` 中的计数算法为对照，逐步实现确定性的精确 #SAT 计数，并核验时间与空间结论。当前版本为 **0.22.0**。
+以 `references/` 中的计数算法为对照，逐步实现确定性的精确 #SAT 计数，并核验时间与空间结论。当前版本为 **0.22.1**。这一版拆分参考检查包并收紧 CI 门禁；有限检查的结果与 0.22.0 相同。
 
 当前已实现参考文献 Sections 3、4 的若干部件：精确条件期望日程、线性代数设计检查、共享测量求和、Taylor 系数恢复、完整参数下的辅助算子条目查询和有限参数的稀疏放置。DIMACS 计数入口通过独立连通分量调用代数计数后端，局部后端为 `--backend common` 或 `--backend tensor`。Step 14 按实际替换多项式的支持集分解，已从同一 16384 变量全局放置恢复精确计数 1。Step 15 在连通支持上做有限 Taylor 张量消元，中间表必须落在显式预算内。它不是 Appendix D 的一般模收缩，也不给出该渐近界。Step 16 按 Lemma 4.8 计算参数日程，并在预算内运行一个通过 Lemma 4.7 全部数值前提的有限元组。该闭式在这些 n 上于形成 D 之前失败；有限元组的运行不是渐近时间或空间界的证明。Step 17 实现 Section 5.1–5.2 的有限对象：稀疏 \(\mathbb F_2\) 单项式、整数提升、Lemma 5.1 的系数除法，以及总 \(h\) 次小于 \(\ell\) 的截断乘积。4 个变量的实例在 \(2^5\) 下的最小非负剩余是 4，与独立的 16 点扫描一致。超预算时在分配项表或扫描之前拒绝，不返回部分计数。Step 18 把这些方程因子写成 \(A_\ell\) 中的替换形式，并用 Section 3 的测量扫描求和。同一 4 变量实例的 \(V\) 系数是 \((-2,6,0,-192,2496)\)，未约化和 2308，模 \(2^5\) 仍是 4。有限设计不是 Lemma 4.8 的行；该分支上 \(D\) 没有形成。超预算时在枚举或分配喷射之前拒绝，不返回部分计数。Step 19 做 Section 6 的有限方程选择和互不重叠稀疏化：子句违反多项式、预算内的 Lemma 6.1 矩阵、贪心选行，以及在同一声明 \(n\) 上划分满足赋值。3 个变量的小公式叶计数是 \((3,1)\)，和为 **4**。\(n=2\) 的贪心在列表长度 1 时得到 \(N(A)=1\)。论文规模的 \(P=80000\) 和超预算搜索在分配前拒绝，不返回部分计数。Step 5 的蕴涵环复制会增加 \(n\)，不是 Lemma 6.3。Proposition 6.4 只核对有限整数；\(n=20\) 时 \(s=0\)，走穷举情形，不声称 \(O_k(\rho(n))\)。这不是 Appendix D，也不是 Theorem 2.2 的运行时间。一般 k-CNF 的整条管线与渐近复杂度结论仍未完成。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete` 与 `lean_proof_complete` 均为 false。Step 19 没有完成 Theorem 1.1。
 
@@ -27,6 +27,8 @@ python -m counting_sat_algebra count examples/count_demo.cnf --output benches/co
 ## 持续集成
 
 `.github/workflows/ci.yml` 在 pull request、推送到 `main`，以及手动 `workflow_dispatch` 时运行。同一引用上的新运行会取消尚未结束的运行。
+
+先跑的 `gates` 作业检查 UTF-8、`src/counting_sat_algebra/` 的模块大小（硬上限 65536 字节）、`docs/STATUS.md` 与 `references/lean/README.md` 中的包版本、`benches/reference_alignment.json` 和 `artifacts/step15-verification.json` 至 `artifacts/step21-verification.json` 里的诚实标志，以及 `ruff check`。`theorem_1_1_complete`、`lean_proof_complete` 或 `recursive_contraction` 为 true 时作业失败。详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
 Python 3.12 用 pip 缓存安装可编辑包后运行 `pytest -q` 和 `python -m counting_sat_algebra.verify --quick`。`--quick` 覆盖 Steps 0–21 的较小网格，并执行 Steps 9–21 的参考检查。该作业要求日志包含 `ALL TESTS PASSED`、参考小结的通过数等于检查数，并且仍写明 Theorem 1.1 未实现、没有 \(2^{o(n)}\) 结论。
 
@@ -101,14 +103,15 @@ print(result.plan.boolean_vector_bound, result.boolean_vectors)
 
 16384 变量放置仅存 **59392** 个多项式条目和 **14336** 个测量条目，对应稠密多项式位置数为 **536870912**。手选点使用 τ=1/2；Step 16 的选择器在同一 (r,Q,R) 上改用满足精确尾界的最小 τ=5/16，测量允许量从 16384 降到 10240，独立测量数 4096 仍落在允许量内。共享测量路线的计划为 q=5461、J=5462，超过扫描预算，实际扫描为零。Step 14 与 Step 16 的支持集路线都得到 **10240** 个实际支持分量；启用复用完成 13 次局部求值、10227 次复用，实际扫描 96。Step 16 的张量后端在同一放置上扫描 176128 个局部布尔向量并得到同一计数 1。32769 变量结果来自独立 CNF 分量重新放置；该实例通过数值前提，但未执行全局放置。这些独立分量计数和不相交支持集计数不是一般连通实例的时间界。Lemma 4.8 的闭式在这些 n 上没有形成 D，因此这次运行不是渐近界。
 
-322 项 pytest 与 84 项参考检查全部通过，`verify --quick` 和两项 CI 报告校验通过。完整参考报告保存在 `benches/reference_alignment.json`，版本为 0.22.0，步骤为 9–21，只记录计数、检查结果和操作统计。`artifacts/step15-verification.json` 单独保存 Step 15 的四行结果。`artifacts/step16-verification.json` 单独保存 Step 16 的十行结果。`artifacts/step17-verification.json` 单独保存 Step 17 的九行结果。`artifacts/step18-verification.json` 单独保存 Step 18 的七行结果。`artifacts/step19-verification.json` 单独保存 Step 19 的九行结果。`artifacts/step20-verification.json` 与 `artifacts/step21-verification.json` 各保存对应步骤的十四行结果。Step 21 没有完成 Theorem 1.1。
+322 项 pytest 与 84 项参考检查全部通过，`verify --quick` 和 CI 报告校验通过。完整参考报告保存在 `benches/reference_alignment.json`，版本为 0.22.1，步骤为 9–21，只记录计数、检查结果和操作统计。`artifacts/step15-verification.json` 单独保存 Step 15 的四行结果。`artifacts/step16-verification.json` 单独保存 Step 16 的十行结果。`artifacts/step17-verification.json` 单独保存 Step 17 的九行结果。`artifacts/step18-verification.json` 单独保存 Step 18 的七行结果。`artifacts/step19-verification.json` 单独保存 Step 19 的九行结果。`artifacts/step20-verification.json` 与 `artifacts/step21-verification.json` 各保存对应步骤的十四行结果。Step 21 没有完成 Theorem 1.1。
 
 [对齐说明](docs/REFERENCE_ALIGNMENT.md) 区分 Theorem 1.1 的较强时间界、Sections 3–6 的较弱时间界和未完成的 Lean 主定理。当前测试不能作为 ETH 结论、一般 \(2^{o(n)}\) 算法或完整形式化证明。
 
 ## 文件
 
-- [ROADMAP.md](ROADMAP.md)：已完成步骤与剩余管线。
+- [ROADMAP.md](ROADMAP.md)：尚未完成的工作。已完成清单在 [docs/steps/completed.md](docs/steps/completed.md)。
 - [docs/STATUS.md](docs/STATUS.md)：中文现状。
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：核心、后端、见证的分层，以及模块大小门禁。
 - [docs/PROGRESS.md](docs/PROGRESS.md)：原始检查记录与新步骤结果。
 - [docs/REFERENCE_ALIGNMENT.md](docs/REFERENCE_ALIGNMENT.md)：与参考定理逐项对齐。
 - [docs/APPENDIX_D.md](docs/APPENDIX_D.md)：Step 20 模网络与分层恢复的 API、范围和预算。

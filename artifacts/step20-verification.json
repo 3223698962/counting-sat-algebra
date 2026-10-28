@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.21.0",
+  "version": "0.22.1",
   "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation and tapered Hermite recovery. Proposition 6.4 does not claim an O_k(rho(n)) bound. Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts and prospective child topologies. Proposition 6.4 does not claim an O_k(rho(n)) bound. Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
   "wall_times_recorded": false,
   "steps": [
     20

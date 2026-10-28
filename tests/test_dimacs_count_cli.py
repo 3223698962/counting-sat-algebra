@@ -1,7 +1,6 @@
 """DIMACS parsing and the actual count command, including refusal output."""
 
 import json
-from pathlib import Path
 
 import pytest
 

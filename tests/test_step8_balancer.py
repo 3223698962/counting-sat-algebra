@@ -27,7 +27,6 @@ from counting_sat_algebra.replacement_matrix import (
 from counting_sat_algebra.scheduler import (
     BALANCER_DESIGN_BOOLEAN_BUDGET,
     BALANCER_MAX_ALPHABET,
-    BALANCER_MAX_TRIALS,
     _finish_chosen_placement,
     _search_block_reason,
     _search_schedules,

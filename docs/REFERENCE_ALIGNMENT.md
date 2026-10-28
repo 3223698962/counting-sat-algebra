@@ -1,6 +1,6 @@
 # 与 references 的实现对齐
 
-目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.22.0；此文件记录目标和实际完成的范围。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。
+目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.22.1；此文件记录目标和实际完成的范围。0.22.1 不改变有限检查。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。
 
 ## 需要达到的结论
 
@@ -92,7 +92,7 @@ Step 20 的十四项检查覆盖模系数环、CNF 网络计数 196、相等树�
 
 Step 21 的十四项检查覆盖整数日程、对数见证、D.6 平方守卫、共享端点与平行边的精确期望、统一填充、多坐标副本位、实际子拓扑、自动布局恢复，以及标签、跟踪、分数更新、填充和子图预算拒绝。128 边匹配在 `r=2,a=1,Δ=4` 上通过 D.6，得到 64 个包，但不缩减到 `M/8`。8192 边匹配在 `r=64,a=1,Δ=4` 上默认拒绝；显式有限模式生成 4096 个包，最大子拓扑 256 条边、度数 4，张量求值为零。后者实际结论为 `CHECKED`，但 D.6 第一条件要求 `M≥134217728`，依旧不成立，且该元组不是 D.4 日程成员。自动布局接入 Step 20 后，两条重复单元子句加自由变量的精确计数为 2（`COUNTED`），扫描 6656 个端口赋值对，求值 33280 次条目。详见 [PACKET_PACKING.md](PACKET_PACKING.md)。
 
-322 项 pytest 全部通过；`--reference` 的 84 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.22.0，步骤为 9–21。它区分 `COUNTED`、`CHECKED`、`REFUSED`，记录原有计数、参数、设计检查，以及 Step 20 和 Step 21 各十四行的有限 Appendix D 检查，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`；Appendix D 结果的 `recursive_contraction=false`。报告不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。Step 19 的九行保存在 `artifacts/step19-verification.json`。Step 20 与 Step 21 的十四行分别保存在 `artifacts/step20-verification.json` 和 `artifacts/step21-verification.json`。`verify --quick` 和两项 CI 报告校验也已通过。
+322 项 pytest 全部通过；`--reference` 的 84 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.22.1，步骤为 9–21。它区分 `COUNTED`、`CHECKED`、`REFUSED`，记录原有计数、参数、设计检查，以及 Step 20 和 Step 21 各十四行的有限 Appendix D 检查，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`；Appendix D 结果的 `recursive_contraction=false`。报告不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。Step 19 的九行保存在 `artifacts/step19-verification.json`。Step 20 与 Step 21 的十四行分别保存在 `artifacts/step20-verification.json` 和 `artifacts/step21-verification.json`。`verify --quick` 和两项 CI 报告校验也已通过。
 
 命令：
 
