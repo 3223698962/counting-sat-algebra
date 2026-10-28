@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import List, Tuple
 import random
 
-from .cnf import CNF, brute_count, concatenate_disjoint, random_3cnf
+from .cnf import brute_count, concatenate_disjoint, random_3cnf
 
 
 def product_identity_check(

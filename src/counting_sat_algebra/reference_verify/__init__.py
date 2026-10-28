@@ -1,0 +1,62 @@
+"""Executable finite alignment checks for reference Sections 3–6 and Appendix D.
+
+Section 5 checks are the finite monomial, Lemma 5.1, and truncated-product
+objects, plus the finite Section 5.3–5.5 replacement sum in A_ell. Section 6
+checks are budgeted equation selection and disjoint sparsification on a fixed
+n. Step 20 adds Appendix D coefficient rings, networks and local recovery.
+Step 21 adds finite collision packing and prospective child topologies.
+Recursive modular contraction and Theorem 1.1 remain open; the checks do not
+claim Proposition 6.4's running time.
+
+Each ``run_*_suite`` family lives in its own module. This package re-exports
+the entry points imported by ``verify`` and the tests.
+"""
+
+from .appendix_d import run_appendix_d_suite
+from .asymptotic import run_asymptotic_family_suite
+from .common import run_common_count_suite
+from .component import run_component_count_suite
+from .design import run_reference_design_suite
+from .packet_packing import run_packet_packing_suite
+from .report import write_reference_report
+from .section5 import run_section5_suite
+from .section5_replacement import run_section5_replacement_suite
+from .section6 import run_section6_suite
+from .sparse_placement import run_sparse_placement_suite
+from .structured import run_structured_auxiliary_suite
+from .support import run_support_count_suite
+from .tensor import run_tensor_count_suite
+
+REFERENCE_SUITES = (
+    (9, run_reference_design_suite),
+    (10, run_common_count_suite),
+    (11, run_structured_auxiliary_suite),
+    (12, run_sparse_placement_suite),
+    (13, run_component_count_suite),
+    (14, run_support_count_suite),
+    (15, run_tensor_count_suite),
+    (16, run_asymptotic_family_suite),
+    (17, run_section5_suite),
+    (18, run_section5_replacement_suite),
+    (19, run_section6_suite),
+    (20, run_appendix_d_suite),
+    (21, run_packet_packing_suite),
+)
+
+__all__ = [
+    'REFERENCE_SUITES',
+    'run_appendix_d_suite',
+    'run_asymptotic_family_suite',
+    'run_common_count_suite',
+    'run_component_count_suite',
+    'run_packet_packing_suite',
+    'run_reference_design_suite',
+    'run_section5_replacement_suite',
+    'run_section5_suite',
+    'run_section6_suite',
+    'run_sparse_placement_suite',
+    'run_structured_auxiliary_suite',
+    'run_support_count_suite',
+    'run_tensor_count_suite',
+    'write_reference_report',
+]
