@@ -79,6 +79,12 @@ from .modular_packing import (
     PackingPlan, PackingResult, appendix_d_integers, appendix_d_proposal,
     check_packing, child_topology, choose_collision_labels, pack_network, packing_hypotheses,
 )
+from .modular_modes import (
+    STEP22_SCOPE, FrozenModeDescription, ModeBudgets, ModeRequest, ModeWitness,
+    SupportRecord, WeightedMode, admit_exponent_tuple, admit_support, build_mode_table,
+    recover_crossing_residue, recover_network_with_modes, retained_degree_ok,
+    support_admissible,
+)
 from .equation_selection import (
     STEP19_SCOPE, DisjointCountResult, GreedySelectionResult, InitialMatrixResult,
     Proposition64Schedule, Section6Budgets, SparsificationTree,
@@ -135,6 +141,20 @@ from .sparsify import (
 )
 
 __all__ = [
+    "STEP22_SCOPE",
+    "FrozenModeDescription",
+    "ModeBudgets",
+    "ModeRequest",
+    "ModeWitness",
+    "SupportRecord",
+    "WeightedMode",
+    "admit_exponent_tuple",
+    "admit_support",
+    "build_mode_table",
+    "recover_crossing_residue",
+    "recover_network_with_modes",
+    "retained_degree_ok",
+    "support_admissible",
     "STEP21_SCOPE",
     "AppendixDIntegers",
     "AppendixDProposal",
@@ -302,4 +322,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.22.1"
+__version__ = "0.23.0"

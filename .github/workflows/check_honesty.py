@@ -5,8 +5,8 @@ The flags are theorem_1_1_complete, lean_proof_complete, and
 recursive_contraction. They must stay false in the committed reference
 report, the step verification artifacts, and in Python assignments under
 src/counting_sat_algebra. Absence of recursive_contraction is a failure on
-the reference report and on the Step 20 and Step 21 artifacts, because those
-checks are the ones that record the flag.
+the reference report and on the Step 20, Step 21, and Step 22 artifacts,
+because those checks are the ones that record the flag.
 """
 
 from __future__ import annotations
@@ -20,13 +20,14 @@ from pathlib import Path
 FLAGS = ('theorem_1_1_complete', 'lean_proof_complete', 'recursive_contraction')
 ROOT = Path(__file__).resolve().parents[2]
 STEP_ARTIFACTS = tuple(
-    ROOT / 'artifacts' / f'step{step}-verification.json' for step in range(15, 22)
+    ROOT / 'artifacts' / f'step{step}-verification.json' for step in range(15, 23)
 )
 REFERENCE_REPORT = ROOT / 'benches' / 'reference_alignment.json'
 RECURSIVE_REQUIRED = {
     REFERENCE_REPORT,
     ROOT / 'artifacts' / 'step20-verification.json',
     ROOT / 'artifacts' / 'step21-verification.json',
+    ROOT / 'artifacts' / 'step22-verification.json',
 }
 
 
