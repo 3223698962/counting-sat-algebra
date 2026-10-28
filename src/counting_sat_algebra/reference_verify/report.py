@@ -30,10 +30,10 @@ def write_reference_report(
             'sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and '
             'finite Section 6 equation selection with disjoint sparsification, and finite Appendix D '
             'coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, '
-            'collision parameter schedules, packet layouts and prospective child topologies. '
-            'Proposition 6.4 does not claim an O_k(rho(n)) bound. '
-            'Appendix D recursive contraction and Theorem 1.1 are not implemented; '
-            'no general-input asymptotic claim.'
+            'collision parameter schedules, packet layouts, prospective child topologies, and '
+            'finite D.4.5 weighted modes. Proposition 6.4 does not claim an O_k(rho(n)) bound. '
+            'Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are '
+            'not implemented; no general-input asymptotic claim.'
         ),
         wall_times_recorded=False,
         steps=steps,

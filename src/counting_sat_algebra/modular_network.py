@@ -1,9 +1,10 @@
 """Finite Boolean tensor networks and the Appendix D.2 CNF encoding.
 
 Contraction here is the direct, streamed leaf routine of Appendix D.1.
-It is exponential in the number of edges, with a preflight budget.  The
-mode expansion and recursive child contractions from D.4.5–D.4.7 are not
-implemented. Finite collision layouts are constructed in modular_packing.
+It is exponential in the number of edges, with a preflight budget.  Finite
+weighted modes live in modular_modes. This module does not expand them, and
+recursive child contractions from D.4.7 are not implemented. Finite collision
+layouts are constructed in modular_packing.
 """
 
 from __future__ import annotations
@@ -18,8 +19,8 @@ from .modular_ring import Element, ModularBudgetRefusal, ModularRing
 STEP20_SCOPE = (
     "Finite Appendix D.1–D.2 networks and D.4.1, D.4.3–D.4.4 local arithmetic "
     "and recovery. Direct edge and port-pair enumeration is budgeted. "
-    "Step 20 itself does not construct collision labels or packet topology. "
-    "Weighted modes, recursive child contractions, and Lemma D.2's "
+    "Step 20 itself does not construct collision labels, packet topology, or "
+    "weighted modes. Recursive child contractions and Lemma D.2's "
     "sparse-system encoding remain open. No Theorem D.1 time/space bound or "
     "Theorem 1.1 implementation; no general 2^{o(n)} algorithm."
 )

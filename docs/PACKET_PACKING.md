@@ -1,8 +1,8 @@
 # Step 21：碰撞标签、分包与子网络拓扑
 
-版本 0.22.0 在 `modular_packing.py` 中实现 Appendix D.4.2 的整数日程、精确条件期望标签和统一填充分包，并构造 D.4.6 的子网络端口拓扑。当前包版本是 0.22.1；本节的算法范围没有变化。自动生成的 `PacketLayout` 可以直接交给 [Step 20 的局部恢复](APPENDIX_D.md)。分包和拓扑构造均不求值张量条目。
+版本 0.22.0 在 `modular_packing.py` 中实现 Appendix D.4.2 的整数日程、精确条件期望标签和统一填充分包，并构造 D.4.6 的子网络端口拓扑。当前包版本是 0.23.0；本节的分包算法没有变化。自动生成的 `PacketLayout` 可以直接交给 [Step 20 的局部恢复](APPENDIX_D.md)。分包和拓扑构造均不求值张量条目。有限 D.4.5 模式在 [Step 22](WEIGHTED_MODES.md)，不在本文件的函数里展开。
 
-这一阶段尚未实现 D.4.5 的加权模式、D.4.6 的包张量系数及其不可变创建时描述、D.4.7 的递归收缩，以及 D.3 的关联单项式编码。`recursive_contraction`、`theorem_1_1_complete` 和 `lean_proof_complete` 均保持 false。
+这一阶段尚未实现 D.4.6 的包张量系数及其不可变创建时描述、D.4.7 的递归收缩，以及 D.3 的关联单项式编码。`recursive_contraction`、`theorem_1_1_complete` 和 `lean_proof_complete` 均保持 false。
 
 ## 接口
 

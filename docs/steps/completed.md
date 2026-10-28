@@ -202,3 +202,13 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Preflight label trials, score updates, optional trace and conservative padded storage before label search. Check child budgets before allocating its topology. Export `verify --step21`; add 33 pytest tests and 14 reference rows. Full v0.22.0 verification passes 322 pytest tests and 84 reference checks, with `--quick` and both CI validators
 - See [PACKET_PACKING.md](../PACKET_PACKING.md) for APIs, exact formulas, finite witnesses and refusal semantics
 
+### Step 22 — finite D.4.5 weighted modes
+
+- [x] Build an explicit mode table for one packet and one active node. Weight is \(b+1\). Source and target are the two symbols of that coordinate. Real columns are recorded and not evaluated
+- [x] Refuse before allocation when the mode count, the \(6M/D\) weight class, the exponent-tuple product, or the partial-choice bound does not fit. The refusal has no table, no tuple list, and no count
+- [x] Keep only exponent tuples whose weighted degree is strictly below the precision. An inadmissible degree record, \(\deg X > \deg U + \deg Z\), is refused before it is stored. That inequality is a checklist shape, not the SqrtLog incidence polynomial
+- [x] Recover one crossing Cauchy entry by the truncated geometric series and compare it with Step 20's local polynomial. On \(a=2,t=1,x=0,y=2,\zeta=1\), precision 4, the residue is **8**. Coefficient valuations are \((3,4,5)\)
+- [x] After the mode table is admitted, recover the two-edge network through the existing Step 20 routine: **9+4V**, 224 port pairs, 448 entry evaluations. Mode-budget refusal does not call that routine. Packet-tensor evaluations stay 0
+- [x] Export `verify --step22`. The frozen description does not carry cache, rows, or origins. `recursive_contraction` stays false
+- See [WEIGHTED_MODES.md](../WEIGHTED_MODES.md) and [LEAN_SPEC_CHECKLIST.md](../LEAN_SPEC_CHECKLIST.md)
+

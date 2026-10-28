@@ -23,7 +23,8 @@ STEP21_SCOPE = (
     "Finite Appendix D.4.2 integer schedules, exact collision conditional expectations, "
     "packet orientations and child topologies. The D.6 collision guard is M >= "
     "2*D_arr^2*Delta. Checked finite conclusions do not imply those hypotheses. "
-    "D.4.5 modes, recursive child contractions, D.3 incidence encoding and the "
+    "Weighted-mode expansion is a separate finite witness. Recursive child "
+    "contractions, D.3 incidence encoding and the "
     "Theorem D.1 time/space bounds remain open. No Theorem 1.1 implementation "
     "or general 2^{o(n)} algorithm."
 )

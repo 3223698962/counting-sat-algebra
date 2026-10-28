@@ -24,6 +24,7 @@ Usage:
   python -m counting_sat_algebra.verify --step19
   python -m counting_sat_algebra.verify --step20
   python -m counting_sat_algebra.verify --step21
+  python -m counting_sat_algebra.verify --step22
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1060,7 +1061,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–W): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–X): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1113,7 +1114,7 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
-    if any(step in steps for step in range(9, 22)):
+    if any(step in steps for step in range(9, 23)):
         parts.append(
             "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
             "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
@@ -1124,6 +1125,7 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "Step 19 checks finite Section 6 equation selection and disjoint sparsification on a fixed n. "
             "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered Hermite recovery. "
             "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
+            "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
             "Proposition 6.4's running time is not claimed. Appendix D recursive contraction is not implemented. "
             "Complete Theorem 1.1 alignment remains open."
         )
@@ -1137,7 +1139,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–21. The full path stays in ``main``."""
+    """Run a subset of Steps 2–22. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1245,7 +1247,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 21)"
+        description="Counting algorithm reference verifier (Steps 0 through 22)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1306,8 +1308,9 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step19', action='store_true', help='check finite Section 6 equation selection and disjoint sparsification')
     parser.add_argument('--step20', action='store_true', help='check Appendix D modular networks, Cauchy deformation and tapered recovery')
     parser.add_argument('--step21', action='store_true', help='check Appendix D collision packing and prospective child topology')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–21 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step21)')
+    parser.add_argument('--step22', action='store_true', help='check finite Appendix D.4.5 weighted modes')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–22 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step22)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1344,11 +1347,12 @@ def main(argv: List[str] | None = None) -> int:
             (19, args.step19 or args.reference),
             (20, args.step20 or args.reference),
             (21, args.step21 or args.reference),
+            (22, args.step22 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step21')
+        parser.error('--output requires --reference or --step9 through --step22')
     if selected:
         return _run_selected(
             selected,
@@ -1357,7 +1361,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 21")
+    print("counting_sat_algebra.verify — Steps 0 through 22")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
@@ -1519,6 +1523,7 @@ def main(argv: List[str] | None = None) -> int:
         "declared n is unchanged and Proposition 6.4's running time is not claimed. "
         "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered recovery. "
         "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
+        "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
         "Appendix D recursive contraction is not implemented. Complete "
         "Theorem 1.1 alignment remains open. "
         f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "

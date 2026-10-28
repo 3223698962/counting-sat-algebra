@@ -5,8 +5,9 @@ objects, plus the finite Section 5.3–5.5 replacement sum in A_ell. Section 6
 checks are budgeted equation selection and disjoint sparsification on a fixed
 n. Step 20 adds Appendix D coefficient rings, networks and local recovery.
 Step 21 adds finite collision packing and prospective child topologies.
-Recursive modular contraction and Theorem 1.1 remain open; the checks do not
-claim Proposition 6.4's running time.
+Step 22 adds finite D.4.5 weighted modes. Packet tensors and recursive
+modular contraction remain open. The checks do not claim Proposition 6.4's
+running time or Theorem 1.1.
 
 Each ``run_*_suite`` family lives in its own module. This package re-exports
 the entry points imported by ``verify`` and the tests.
@@ -26,6 +27,7 @@ from .sparse_placement import run_sparse_placement_suite
 from .structured import run_structured_auxiliary_suite
 from .support import run_support_count_suite
 from .tensor import run_tensor_count_suite
+from .weighted_modes import run_weighted_modes_suite
 
 REFERENCE_SUITES = (
     (9, run_reference_design_suite),
@@ -41,6 +43,7 @@ REFERENCE_SUITES = (
     (19, run_section6_suite),
     (20, run_appendix_d_suite),
     (21, run_packet_packing_suite),
+    (22, run_weighted_modes_suite),
 )
 
 __all__ = [
@@ -58,5 +61,6 @@ __all__ = [
     'run_structured_auxiliary_suite',
     'run_support_count_suite',
     'run_tensor_count_suite',
+    'run_weighted_modes_suite',
     'write_reference_report',
 ]

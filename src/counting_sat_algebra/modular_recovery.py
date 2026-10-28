@@ -1,7 +1,7 @@
 """Finite Cauchy deformation and tapered Hermite recovery (D.4.3–D.4.4).
 
 The evaluation of (D.8) still streams all independent row/column port pairs.
-It does not use the recursive modes or child networks of (D.16).  All nodes,
+It does not use D.4.5 mode tuples or the child networks of (D.16).  All nodes,
 precisions, interpolation storage and pair scans are planned before evaluation.
 """
 
