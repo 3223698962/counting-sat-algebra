@@ -22,6 +22,7 @@ from .cnf import CNF, Literal
 from .component_count import count_cnf_components
 from .lean_encoding import clause_bit_length, formula_bit_length, literal_code
 from .lean_greedy import GreedyBudgets, count_cnf_greedy
+from .lean_high import HighBudgets
 from .lean_parameters import choose_sparse_parameter, occurrence_cap
 from .lean_query import count_cnf_ternary
 from .lean_ring import LeanAlgebraBudgets
@@ -111,6 +112,7 @@ class StreamingCountResult:
     peak_live_coefficients: int = 0
     peak_algebra_bits: int = 0
     max_ring_precision: int = 0
+    high_loop: bool = False
     hash_rounds: int = 0
     hash_candidates: int = 0
     hash_marked_queries: int = 0
@@ -118,6 +120,8 @@ class StreamingCountResult:
     hash_history_rows: int = 0
     hash_initial_mass: int = 0
     hash_final_mass: int = 0
+    hash_high_ranks: int = 0
+    hash_high_cardinality: int = 0
     same_declared_n: bool = True
     completed_leaves_retained: int = 0
     backend: str = 'lean'
@@ -314,6 +318,8 @@ def count_cnf_streaming(
     tensor_budgets: ContractionBudgets = ContractionBudgets(),
     native_budgets: LeanAlgebraBudgets = LeanAlgebraBudgets(),
     greedy_budgets: GreedyBudgets = GreedyBudgets(),
+    high_loop: bool = False,
+    high_budgets: HighBudgets = HighBudgets(),
 ) -> StreamingCountResult:
     """Preflight the frontier, then replay it with finite algebraic leaf counts.
 
@@ -330,7 +336,7 @@ def count_cnf_streaming(
     )
     if min(max_component_variables, vector_budget, total_vector_budget, memo_entries) < 0:
         raise ValueError('leaf budgets must be nonnegative integers')
-    receipt = dict(n=cnf.n, leaf_backend=leaf_backend)
+    receipt = dict(n=cnf.n, leaf_backend=leaf_backend, high_loop=high_loop)
     plan = _Traversal()
     execution = _Traversal()
     work = dict(
@@ -341,6 +347,7 @@ def count_cnf_streaming(
         peak_polynomial_terms=0, peak_live_coefficients=0, peak_algebra_bits=0,
         max_ring_precision=0, hash_rounds=0, hash_candidates=0, hash_marked_queries=0,
         hash_accepted_queries=0, hash_history_rows=0, hash_initial_mass=0, hash_final_mass=0,
+        hash_high_ranks=0, hash_high_cardinality=0,
     )
 
     def finish(status: str, count: int | None, reason: str) -> StreamingCountResult:
@@ -414,6 +421,7 @@ def count_cnf_streaming(
                 elif leaf_backend == 'hash':
                     result = count_cnf_greedy(
                         _to_cnf(cnf.n, leaf), depth=greedy_budgets.depth,
+                        high_loop=high_loop, high_budgets=high_budgets,
                         budgets=replace(
                             greedy_budgets,
                             max_marked_queries=(
@@ -439,6 +447,10 @@ def count_cnf_streaming(
                     work['hash_history_rows'] += result.history_rows
                     work['hash_initial_mass'] += result.initial_mass
                     work['hash_final_mass'] += result.final_mass
+                    work['hash_high_ranks'] += result.high_ranks
+                    work['hash_high_cardinality'] = max(
+                        work['hash_high_cardinality'], result.high_cardinality
+                    )
                     work['native_source_polynomials'] += result.source_polynomials
                     for name in ('monomial_products', 'scalar_operations'):
                         work[name] += getattr(result, name)

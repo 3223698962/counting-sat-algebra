@@ -28,12 +28,14 @@ constructs ternary Newton digits and exact accepted/marked query counts
 through shared-marker truncation and finite squarefree polynomial sums.
 Step 25 constructs the scheduled sparse ternary code with regenerated rows
 and selects history rows by accumulated marked-violation mass before the
-separate final accepted query. The DIMACS Lean backend connects the native
-and hash leaves to the same frontier.
+separate final accepted query. Step 26 computes the early high-incidence
+threshold and the high-variable frontend, and routes the hash leaf queries
+through the streamed conditioned rank loop. The DIMACS Lean backend connects
+the native and hash leaves to the same frontier.
 
 The active roadmap follows the supplied SqrtLogSpace counting program.
-The high-variable loop, counting extensions, placement, streamed Taylor
-leaves and Python time/space refinement remain open.
+The counting extension, placement, streamed Taylor leaves and Python
+time/space refinement remain open.
 The supplied Lean library has theorem proof source; local kernel validation
 is pending. Finite comparisons do not establish general asymptotic bounds.
 Appendix D packet tensors and recursive contraction remain a later route.
@@ -82,6 +84,10 @@ from .lean_encoding import (
 from .lean_greedy import (
     STEP25_SCOPE, GreedyBudgets, GreedyCountResult, count_cnf_greedy, occurrence_bound,
     select_history_rows,
+)
+from .lean_high import (
+    STEP26_SCOPE, HighBudgets, HighFrontend, HighLoopResult, count_cnf_high_loop,
+    early_log, early_threshold, high_frontend,
 )
 from .lean_parameters import SparseParameter, choose_sparse_parameter, parameter_test
 from .lean_ring import (
@@ -188,6 +194,8 @@ __all__ = [
     "SparseCodeParameters", "SparseCodeResult", "SparseCodeRows", "SparseTannerCode",
     "canonical_hash_candidates", "certify_sparse_code", "construct_sparse_code", "radix_words",
     "search_local_ternary_matrix", "search_walsh_shifts", "sparse_code_parameters",
+    "STEP26_SCOPE", "HighBudgets", "HighFrontend", "HighLoopResult", "count_cnf_high_loop",
+    "early_log", "early_threshold", "high_frontend",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -369,4 +377,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.25.0"
+__version__ = "0.26.0"

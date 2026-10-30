@@ -1,6 +1,6 @@
 # Lean 声明到 Python 义务
 
-包版本 **0.25.0**。新加入的 Lean 库以 `SqrtLogSpace/Final.lean` 为精确计数终点。下表按源码依赖列出 Python 已实现的有限义务和下一阶段连接；路线顺序见 [ROADMAP.md](../ROADMAP.md)，代数定义见 [LEAN_NATIVE.md](LEAN_NATIVE.md)。Lean 路径均相对于 `references/lean/math/lean/OAI/Algorithms/SubexponentialSAT/`。
+包版本 **0.26.0**。新加入的 Lean 库以 `SqrtLogSpace/Final.lean` 为精确计数终点。下表按源码依赖列出 Python 已实现的有限义务和下一阶段连接；路线顺序见 [ROADMAP.md](../ROADMAP.md)，代数定义见 [LEAN_NATIVE.md](LEAN_NATIVE.md)。Lean 路径均相对于 `references/lean/math/lean/OAI/Algorithms/SubexponentialSAT/`。
 
 | 主线义务 | Lean 来源 | 当前 Python 状态与验收条件 |
 | --- | --- | --- |
@@ -11,7 +11,7 @@
 | 接受/标记查询 | `SqrtLogSpace/HashQueryCount.lean` | Step 24 已保留原子句编号、重复和 ambient n，`fixed` 只条件化原坐标；核对接受数、标记违反数及 `3^t>2^n` 唯一读回。单位行计数才直接给出原 CNF #SAT。 |
 | 可再生稀疏码 | `SqrtLogSpace/` 下的 `SparseCodeSearch.lean`、`SparseCodeRows.lean`、`NativeCodeAssembly.lean` | Step 25 已按日程整数生成并独立核对宽度、距离和出现次数；逐行从槽位再生，预算失败不保留部分码。Lean 日程深度超出 Python 预算时显式拒绝。 |
 | 查询评分与贪心选择 | `SqrtLogSpace/` 下的 `HashGreedyProgram`、`NativeLeafRun.lean`、`HashQueryCount.lean` | Step 25 已接通：对候选行逐子句累加 `count_ternary_query` 标记违反计数，严格最小只保留当前最佳；零违反质量时单独执行只含历史行的接受查询，独立暴力核对接受集恰为原 CNF 模型集。 |
-| 高变量与查询准备 | `SqrtLogSpace/HighQueryProgram.lean`、`SqrtLogSpace/NativeQueryPreparation.lean`、`SqrtLog/LeafQueryFrontend` | **未接通。** 同一原 n 上流式遍历高赋值，重建度数/出现次数守卫和完整计数累加。单个 fixed 查询不代替这个循环。 |
+| 高变量与查询准备 | `SqrtLogSpace/HighQueryProgram.lean`、`SqrtLogSpace/NativeQueryPreparation.lean`、`SqrtLog/LeafQueryFrontend` | Step 26 已接通有限版本：早期阈值、截断、高变量掩码与两条上界；同一原 n 上逐秩流式遍历高赋值并完整累加，`--high-loop` 将 hash 叶的全部查询路由到该循环。完整参数前端与出现次数守卫仍随整机精化待办。 |
 | 扩张环、放置与 Taylor 叶 | `SqrtLog/RingCore.lean` 与 `SqrtLogSpace/` 下的 `BooleanDifferences.lean`、`QueryStreamProgram.lean`、`QueryJetSemantics.lean`、`QueryCountReconstruction.lean` | **未接通。** 构造实际计数扩张、节点与放置，保持 QJ>degree；再生修正对并立即累加所有 J 系数，完成 Hermite 恢复，替换完整支持表。 |
 | 原始机器与全前缀资源 | `SqrtLogSpace/Final.lean`：`compiled_exact_count_and_sat`、`exact_count_and_sat`、`exact_count_eth` | **未完成 Python 精化。** 标量操作与逻辑编码位数不等于机器步数或 visited-tape 空间。需核对整条成功/失败路径并在锁定环境内编译入口、保存实际 `#print axioms` 输出。 |
 

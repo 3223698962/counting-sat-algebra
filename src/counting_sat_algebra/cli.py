@@ -41,6 +41,7 @@ def count_main(argv=None) -> int:
     parser.add_argument('--leaf-backend', choices=('common', 'tensor', 'native', 'hash'), default='common', help='algebraic leaf evaluator for --backend lean; native uses ternary squarefree sums, hash runs sparse-code greedy selection with a separate accepted query')
     parser.add_argument('--hash-depth', type=int, default=1, help='candidate depth of the hash leaf; the Lean schedule depth is distanceDenom, above the Python budgets')
     parser.add_argument('--max-hash-candidates', type=int, default=300_000, help='maximum canonical ternary candidates per hash round and leaf')
+    parser.add_argument('--high-loop', action='store_true', help='route the hash leaf marked and accepted queries through the streamed high-variable rank loop')
     parser.add_argument('--max-ring-precision', type=int, default=64, help='maximum t for native residues modulo 3^t')
     parser.add_argument('--max-algebra-terms', type=int, default=16_384, help='maximum terms per native squarefree polynomial')
     parser.add_argument('--max-algebra-products', type=int, default=2_000_000, help='global native monomial product budget across all leaves')
@@ -93,6 +94,7 @@ def count_main(argv=None) -> int:
                     depth=args.hash_depth,
                     max_candidates=args.max_hash_candidates,
                 ),
+                high_loop=args.high_loop,
             )
         else:
             result = count_cnf_components(cnf, max_component_variables=args.max_component_variables,

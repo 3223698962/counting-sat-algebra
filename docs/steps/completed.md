@@ -241,3 +241,14 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Connect `--backend lean --leaf-backend hash`; share marked-query budgets across the frontier and refuse without a partial total after an earlier leaf completed
 - [x] Export 15 `verify --step25` rows and 18 pytest checks; keep the theorem, Lean and recursive-contraction flags false
 - The Lean schedule's candidate depth `distanceDenom` is above the Python candidate budgets, so the depth is an explicit finite parameter. The high-variable loop, counting extensions, placement, streamed Taylor leaves and whole-machine resource refinement remain open
+
+### Step 26 — high-variable frontend and the streamed rank loop
+
+- [x] Compute EarlyThreshold's integer threshold from Asymptotic.L = floor(log2 (n+16)) + 1 and the exact ceiling cutoff (totalScope\*threshold)/ambient on the original declared n
+- [x] Build the ambient-order high mask and independently recheck the membership rule, both integer bounds (cardinality\*(cutoff+1) <= totalScope, cardinality\*threshold <= ambient) and the equal-degree boundary exclusion
+- [x] Stream all 2^|H| high assignments through the binary odometer; every rank runs one real conditioned query with the high bits fixed and every total coordinate retained
+- [x] Verify the rank-sum identities against direct queries for unit rows, empty and explicit histories, marked clauses and base-fixed coordinates, including a two-high-coordinate case with four ranks
+- [x] Route the hash leaf's marked and accepted queries through the loop with `--high-loop`; direct and routed greedy counts agree on the hub, star, forest and streamed examples
+- [x] Refuse without a partial count on rank, query and algebra budgets
+- [x] Export 12 `verify --step26` rows and 21 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The full parameter frontend, degree and occurrence guards, and the counting extension remain open obligations

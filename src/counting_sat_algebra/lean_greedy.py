@@ -23,6 +23,7 @@ from dataclasses import dataclass, fields, replace
 
 from .cnf import CNF
 from .lean_code import CodeBudgets, canonical_hash_candidates, construct_sparse_code
+from .lean_high import HighBudgets, count_cnf_high_loop, high_frontend
 from .lean_query import TernaryHashRow, count_ternary_query
 from .lean_ring import LeanAlgebraBudgets, natural
 
@@ -91,6 +92,11 @@ class GreedyCountResult:
     peak_algebra_bits: int = 0
     max_precision: int = 0
     count_word_bits: int = 0
+    high_loop: bool = False
+    high_threshold: int = 0
+    high_cutoff: int = 0
+    high_cardinality: int = 0
+    high_ranks: int = 0
     boolean_vectors: int = 0
     same_declared_n: bool = True
     rows: tuple[TernaryHashRow, ...] = ()
@@ -155,6 +161,8 @@ def _greedy_core(
     budgets: GreedyBudgets | None,
     native_budgets: LeanAlgebraBudgets | None,
     code_budgets: CodeBudgets | None,
+    high_loop: bool,
+    high_budgets: HighBudgets | None,
     *,
     final: bool,
 ) -> GreedyCountResult:
@@ -165,7 +173,12 @@ def _greedy_core(
     if depth < 1:
         raise ValueError('candidate depth must be positive')
     ledger = _Ledger(native_budgets or LeanAlgebraBudgets())
-    stats: dict = dict(n=n, m=m, depth=depth)
+    high_limits = high_budgets or HighBudgets()
+    frontend = high_frontend(cnf) if high_loop else None
+    stats: dict = dict(n=n, m=m, depth=depth, high_loop=high_loop, high_ranks=0)
+    if frontend is not None:
+        stats.update(high_threshold=frontend.threshold, high_cutoff=frontend.cutoff,
+                     high_cardinality=frontend.cardinality)
     rows: tuple[TernaryHashRow, ...] = ()
 
     def finish(status: str, count: int | None, reason: str) -> GreedyCountResult:
@@ -223,15 +236,25 @@ def _greedy_core(
             max_rounds = 2 * (n + m.bit_length() + 1)
         stats['max_rounds'] = max_rounds
 
+        def run_query(history: tuple[TernaryHashRow, ...], marked: int | None):
+            if frontend is None:
+                return count_ternary_query(
+                    cnf, history, marked_clause=marked, budgets=ledger.remaining()
+                )
+            routed = count_cnf_high_loop(
+                cnf, history, marked_clause=marked, budgets=high_limits,
+                native_budgets=ledger.remaining(),
+            )
+            stats['high_ranks'] += routed.ranks
+            return routed
+
         def mass(history: tuple[TernaryHashRow, ...]) -> int:
             total = 0
             for clause in range(m):
                 if stats['marked_queries'] >= limits.max_marked_queries:
                     raise _GreedyRefused('marked query budget exceeded')
-                query = count_ternary_query(
-                    cnf, history, marked_clause=clause, budgets=ledger.remaining()
-                )
-                stats['marked_queries'] += 1
+                query = run_query(history, clause)
+                stats['marked_queries'] += getattr(query, 'queries', 1)
                 ledger.record(query)
                 if not query.counted:
                     raise _GreedyRefused(f'a marked query refused: {query.reason}')
@@ -262,7 +285,7 @@ def _greedy_core(
             stats['rounds'] += 1
             current = stats['current_mass'] = best_score
         if final:
-            query = count_ternary_query(cnf, rows, budgets=ledger.remaining())
+            query = run_query(rows, None)
             stats['accepted_queries'] = 1
             ledger.record(query)
             if not query.counted:
@@ -293,9 +316,14 @@ def select_history_rows(
     budgets: GreedyBudgets | None = None,
     native_budgets: LeanAlgebraBudgets | None = None,
     code_budgets: CodeBudgets | None = None,
+    high_loop: bool = False,
+    high_budgets: HighBudgets | None = None,
 ) -> GreedyCountResult:
     """Run the greedy rounds only; the final accepted query is not executed."""
-    return _greedy_core(cnf, depth, occurrence, budgets, native_budgets, code_budgets, final=False)
+    return _greedy_core(
+        cnf, depth, occurrence, budgets, native_budgets, code_budgets,
+        high_loop, high_budgets, final=False,
+    )
 
 
 def count_cnf_greedy(
@@ -306,12 +334,19 @@ def count_cnf_greedy(
     budgets: GreedyBudgets | None = None,
     native_budgets: LeanAlgebraBudgets | None = None,
     code_budgets: CodeBudgets | None = None,
+    high_loop: bool = False,
+    high_budgets: HighBudgets | None = None,
 ) -> GreedyCountResult:
     """Select history rows by real marked scores, then count the accepted query.
 
     The quality gate is the accumulated violation mass: it reaches zero
     exactly when the accepted set has no clause-violating assignment, so the
-    separate final query counts exactly the CNF models. A refusal returns no
-    count, including after partial marked-query work.
+    separate final query counts exactly the CNF models. With ``high_loop`` the
+    marked and accepted queries route through the streamed high-variable rank
+    loop; the accumulated totals are identical on the original declared n. A
+    refusal returns no count, including after partial marked-query work.
     """
-    return _greedy_core(cnf, depth, occurrence, budgets, native_budgets, code_budgets, final=True)
+    return _greedy_core(
+        cnf, depth, occurrence, budgets, native_budgets, code_budgets,
+        high_loop, high_budgets, final=True,
+    )

@@ -9,9 +9,11 @@ Step 22 adds finite D.4.5 weighted modes. Step 23 checks Lean-compatible
 syntax and a streamed disjoint frontier. Step 24 checks constructed ternary
 indicator digits, shared marker truncation and native accepted/marked
 queries. Step 25 checks the scheduled sparse ternary code, its regenerated
-rows and the violation-mass greedy selector. The active roadmap follows
-the supplied SqrtLogSpace program; the high-variable loop, packing and
-streamed Taylor leaves remain open. These checks do not establish Python asymptotic bounds or replace
+rows and the violation-mass greedy selector. Step 26 checks the early
+high-incidence threshold, the high-variable frontend and the streamed
+conditioned rank loop. The active roadmap follows the supplied SqrtLogSpace
+program; the counting extension, packing and streamed Taylor leaves remain
+open. These checks do not establish Python asymptotic bounds or replace
 Lean kernel verification. Appendix D packet tensors and recursive modular
 contraction remain open.
 
@@ -25,6 +27,7 @@ from .common import run_common_count_suite
 from .component import run_component_count_suite
 from .design import run_reference_design_suite
 from .lean_greedy import run_lean_greedy_suite
+from .lean_high import run_lean_high_suite
 from .lean_streaming import run_lean_streaming_suite
 from .lean_native import run_lean_native_suite
 from .packet_packing import run_packet_packing_suite
@@ -56,6 +59,7 @@ REFERENCE_SUITES = (
     (23, run_lean_streaming_suite),
     (24, run_lean_native_suite),
     (25, run_lean_greedy_suite),
+    (26, run_lean_high_suite),
 )
 
 __all__ = [
@@ -66,6 +70,7 @@ __all__ = [
     'run_component_count_suite',
     'run_lean_streaming_suite',
     'run_lean_greedy_suite',
+    'run_lean_high_suite',
     'run_lean_native_suite',
     'run_packet_packing_suite',
     'run_reference_design_suite',
