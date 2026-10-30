@@ -28,6 +28,6 @@
 ## 结论能否达到
 
 - 主论文 Theorem 1.1 与因子分解推论都要求完整的计数引擎加资源精化；当前 `theorem_1_1_complete`、`lean_proof_complete`、`recursive_contraction` 全部保持 false，本仓库没有任何一般输入的 \(2^{o(n)}\) 声明。
-- 两条证明线各自的完成状态要分开记录：SqrtLogSpace 主线已有 Steps 23–26 的有限见证，剩余计数扩张、流式 Taylor 叶与整机资源；Appendix D（与因子分解应用同族）已有 Steps 20–22 的有限部件，剩余 D.4.6/D.4.7/D.3 递归。任何一条的「已完成」都不能替代另一条。
+- 两条证明线各自的完成状态要分开记录：SqrtLogSpace 主线已有 Steps 23–28 的有限见证（含扩张环与流式修正对读回），剩余生产叶切换与整机资源；Appendix D（与因子分解应用同族）已有 Steps 20–22 的有限部件，剩余 D.4.6/D.4.7/D.3 递归。任何一条的「已完成」都不能替代另一条。详见 [RESOURCES_AND_CONCLUSION.md](RESOURCES_AND_CONCLUSION.md)。
 - Lean 内核核验在本机不可执行：没有 `elan`/`lean`/`lake` 工具链（网络可达，但 Mathlib 级依赖构建超出单次会话），应用论文的 36,000 行证明也不在本仓库。静态审计（`artifacts/lean-reference-audit.json`）覆盖的是 SqrtLogSpace 参考库，不是本文档描述的应用证明。
 - 可推进的下一步（与 [ROADMAP.md](../ROADMAP.md) 的 Appendix D 路线一致）：D.4.6 包张量系数 → D.4.7 子网络递归 → D.3 编码，并用 Step 22 已核对的交叉余数逐层检查乘性缺口；该路线与 SqrtLogSpace 主线的流式 Taylor 叶相互独立。

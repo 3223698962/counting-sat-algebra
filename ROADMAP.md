@@ -11,8 +11,8 @@
 3. [x] **参数前端和高出现变量循环。** 接通 `LeafQueryFrontend`、`HighQueryProgram.lean` 与原声明 n 上的高变量条件化：`lean_high.py` 计算早期阈值 `sqrt(L)+1` 与截断 `ceil(totalScope·t/n)`、给出环境次序高变量掩码和两条整数上界，并逐秩流式执行条件化查询、精确累加；`--high-loop` 把 hash 叶的全部查询路由到该循环，秩和恒等于直接计数。Step 26 落地。
 4. [x] **计数扩张环、分组和替换。** 接通 `RingCore`、`NativeQueryPreparation.lean` 与实际放置：`lean_ext.py` 以完整枚举搜索不可约单首提升、构造模 `3^t` 的扩张与固定互异节点（差为可逆元），核对 `Q*J > degree`、两条整数上界与唯一自然数读回，并用精确 Taylor 喷射与 Newton–Hermite 重建（除节点差外不做除法）独立见证。完整 ABI 放置、分组替换和流式叶仍待接通。Step 27 落地。
 5. [ ] **流式 Taylor 查询叶。** 对齐 `BooleanDifferences.lean`、`QueryStreamProgram.lean`、`QueryJetSemantics.lean`、`QueryCountReconstruction.lean`：Step 28 已落地修正对分解（`fold` 顺序的深度优先流）、逐节点 J 系数块与 Newton–Hermite 读回的有限移植，覆盖计数与条件数失配核对；把生产叶切换到该流式路径（含立即 `U` 特化与完整修正对再生）仍待接通。
-6. [ ] **整条机器的资源与精化。** 将源多项式、固定行/布局和再生游标接到同一实际运行。核对所有成功与失败分支的计数字宽度、算术临时量、输入/前沿/叶存储和每个前缀的空间界。Python 的标量操作统计与逻辑编码位数不是 Lean 原始机器步数或已访问磁带格数，需要独立的精化证明。
-7. [ ] **Lean 内核核验与可重复环境。** 使用库声明的 `leanprover/lean4:v4.34.1` 和锁定依赖编译具体入口，保存 `#print axioms` 输出；再核对 Python 实现和对应声明。静态源码审计已经通过，但当前环境尚未运行 Lean/Lake。
+6. [ ] **整条机器的资源与精化。** 将源多项式、固定行/布局和再生游标接到同一实际运行。核对所有成功与失败分支的计数字宽度、算术临时量、输入/前沿/叶存储和每个前缀的空间界。Python 的标量操作统计与逻辑编码位数不是 Lean 原始机器步数或已访问磁带格数，需要独立的精化证明。现已记录六类操作/逻辑位数收据（见 [docs/RESOURCES_AND_CONCLUSION.md](docs/RESOURCES_AND_CONCLUSION.md)），等价关系仍未建立。
+7. [ ] **Lean 内核核验与可重复环境。** 使用库声明的 `leanprover/lean4:v4.34.1` 和锁定依赖编译具体入口，保存 `#print axioms` 输出；再核对 Python 实现和对应声明。静态源码审计已经通过；本环境已核查无 `elan`/`lean`/`lake` 工具链（网络可达但 Mathlib 级构建超范围），核验命令见 [references/lean/README.md](references/lean/README.md)。
 
 ## Remaining work — Appendix D 后续路线
 

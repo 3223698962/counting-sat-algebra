@@ -73,5 +73,6 @@ assert marked.count == 4
 - [docs/PROGRESS.md](docs/PROGRESS.md)：历史结果与各步骤的操作统计。
 - [docs/APPENDIX_D.md](docs/APPENDIX_D.md)、[PACKET_PACKING.md](docs/PACKET_PACKING.md)、[WEIGHTED_MODES.md](docs/WEIGHTED_MODES.md)：已实现的有限 Appendix D 部件。
 - [docs/APPLICATION_FACTORING.md](docs/APPLICATION_FACTORING.md)：因子分解应用说明、引擎归属与结论距离。
+- [docs/RESOURCES_AND_CONCLUSION.md](docs/RESOURCES_AND_CONCLUSION.md)：资源收据、三条路线的结论可达性与开放义务。
 
 CI 核对 UTF-8、模块大小、版本、有限结果标志和报告完整性，并运行 Ruff、pytest 与 `verify --quick`。绿色 CI 表示这些检查通过，不替代 Lean 内核验证或完整 Python 复杂度分析。

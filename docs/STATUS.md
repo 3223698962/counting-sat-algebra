@@ -44,4 +44,4 @@ python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-
 
 `theorem_1_1_complete=false`：本项目尚未实现论文 Theorem 1.1 所要求的一般输入和完整复杂度结论。`lean_proof_complete=false`：尚未完成本地 Lean 核验与 Python 程序精化。`recursive_contraction=false`：Appendix D 的递归仍未执行。
 
-剩余依赖已列在 [ROADMAP.md](../ROADMAP.md)：把生产叶切换到流式路径、实际放置、完整机器资源和内核核验。实现范围见 [LEAN_NATIVE.md](LEAN_NATIVE.md)，源声明义务见 [LEAN_SPEC_CHECKLIST.md](LEAN_SPEC_CHECKLIST.md)。
+剩余依赖已列在 [ROADMAP.md](../ROADMAP.md)：把生产叶切换到流式路径、实际放置、完整机器资源和内核核验；资源收据与三条路线的结论可达性评估见 [RESOURCES_AND_CONCLUSION.md](RESOURCES_AND_CONCLUSION.md)。实现范围见 [LEAN_NATIVE.md](LEAN_NATIVE.md)，源声明义务见 [LEAN_SPEC_CHECKLIST.md](LEAN_SPEC_CHECKLIST.md)。
