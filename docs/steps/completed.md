@@ -252,3 +252,16 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Refuse without a partial count on rank, query and algebra budgets
 - [x] Export 12 `verify --step26` rows and 21 pytest checks; keep the theorem, Lean and recursive-contraction flags false
 - The full parameter frontend, degree and occurrence guards, and the counting extension remain open obligations
+
+### Step 27 — counting extension rings and Hermite placement
+
+- [x] Reproduce LeafParametersProgram.produce exactly: L, w = floor(log2 L) + 1, s = isqrt(L)/w^2, r, layout denominator, Q, energy, radius R, t, d, N and J, all by integer arithmetic
+- [x] Check the guard boundary without enumerating inputs: Q = 0 below the threshold, the K = 2^24 radius case refuses (4R > Q), K = 2^25 passes with card\*threshold <= ambient and the field cap 3^d <= 16(Q+1)^2
+- [x] Search the irreducible monic lift by complete odometer enumeration with a division test, and verify the first witness against an independent multiplication oracle on every rejected prefix
+- [x] Build the extension ring O = (Z/3^t)[X]/(F): commutativity, distributivity, reduced representatives, residue units, Newton-lifted inverses and non-unit refusals
+- [x] Verify unique natural readback below 3^t: natCast injectivity, decodeCount round trips and the 3^t-periodic zero test
+- [x] Fix the radix nodes 1..Q with unit pairwise differences and physical 2t-bit coefficient words; reject 0 and 3^d
+- [x] Recover degree-below-Q\*J targets exactly from exact Taylor jets by Newton-Hermite with divisions only by node differences; detect mismatches at the condition count
+- [x] Check the Hermite margin Q\*J > width\*R\*(2\*factors + 3(t-1) + 1) with the exact division-plus-one identity, and refuse on degree, candidate, division and ring budgets
+- [x] Export 12 `verify --step27` rows and 26 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The full native placement into the ABI, grouping replacement and the streamed Taylor leaf remain open obligations

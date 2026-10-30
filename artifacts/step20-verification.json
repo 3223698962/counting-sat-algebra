@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.26.0",
+  "version": "0.27.0",
   "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,

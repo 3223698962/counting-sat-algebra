@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.26.0",
+  "version": "0.27.0",
   "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
@@ -24,7 +24,8 @@
     23,
     24,
     25,
-    26
+    26,
+    27
   ],
   "failed_step": null,
   "all_checks_passed": true,
@@ -3273,6 +3274,255 @@
       "free_bits": 256,
       "zero_variables": 1,
       "empty_clause": 0,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-schedule-early-levels",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "levels": [
+        5,
+        5,
+        5,
+        9,
+        11,
+        13
+      ],
+      "node_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-schedule-guard-and-hermite-margin",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "small_q": 0,
+      "boundary_q": 87381,
+      "boundary_radius": 25473,
+      "guarded_q": 131072,
+      "guarded_radius": 31994,
+      "guarded_precision_bits": 33554433,
+      "guarded_jet_order_bits": 33554434,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-irreducible-search-first-witness",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "witnesses": [
+        {
+          "degree": 1,
+          "witness": [
+            0
+          ],
+          "tested": 1
+        },
+        {
+          "degree": 2,
+          "witness": [
+            1,
+            0
+          ],
+          "tested": 2
+        },
+        {
+          "degree": 3,
+          "witness": [
+            1,
+            2,
+            0
+          ],
+          "tested": 8
+        },
+        {
+          "degree": 4,
+          "witness": [
+            2,
+            1,
+            0,
+            0
+          ],
+          "tested": 6
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-extension-ring-arithmetic",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "defining_polynomial": [
+        1,
+        0
+      ],
+      "x_squared": [
+        8,
+        0
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-residue-units-and-newton-inverse",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "modulus": 9,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-unique-natural-readback",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "modulus": 9,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-nodes-distinct-unit-differences",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "nodes": [
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-jets-and-hermite-recovery",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "recovered": [
+        [
+          3,
+          0
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          8,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-single-node-full-jet-recovery",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "order": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-node-stream-geometry",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "words": 3,
+      "bits": 24,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-search-refusals-without-witness",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "refusals": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-ext-terminal-precision-one",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
       "recursive_contraction": false,
       "theorem_1_1_complete": false,
       "lean_proof_complete": false

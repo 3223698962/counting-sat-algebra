@@ -1,6 +1,6 @@
 # Architecture
 
-当前包版本 **0.26.0**。主线按新加入的 Lean `SqrtLogSpace/Final.lean` 移植精确计数程序。Step 23 提供保留声明 n 的流式互不重叠前沿，Step 24 提供原生三元代数查询和计数叶，Step 25 提供日程稀疏码与违反质量贪心选行，Step 26 提供高变量前端与流式秩循环。原 Sections 3–6 与 Appendix D 的有限后端继续保留。
+当前包版本 **0.27.0**。主线按新加入的 Lean `SqrtLogSpace/Final.lean` 移植精确计数程序。Step 23 提供保留声明 n 的流式互不重叠前沿，Step 24 提供原生三元代数查询和计数叶，Step 25 提供日程稀疏码与违反质量贪心选行，Step 26 提供高变量前端与流式秩循环，Step 27 提供计数扩张环与 Hermite 放置条件。原 Sections 3–6 与 Appendix D 的有限后端继续保留。
 
 新 Lean 库有最终定理的证明源码，静态导入闭包审计通过；本机尚未执行内核编译。旧单文件中的 `sorry` 只描述历史脚手架。本包尚未实现一般输入的完整渐近算法与资源精化，`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 保持 false。具体区别见 [Lean 参考说明](../references/lean/README.md)。
 
@@ -22,6 +22,7 @@ Step numbers are historical milestones. The code is easier to read as three laye
 | Native ternary queries | `lean_query.py` | Newton indicator digits, shared U truncation and squarefree sums; counts history acceptance, marked clause violations or unit-row CNF leaves |
 | Sparse-code greedy leaves | `lean_code.py`, `lean_greedy.py` | Scheduled ternary code with slot-regenerated rows and the violation-mass greedy selector; the separate final accepted query counts the leaf. The Lean schedule depth exceeds the Python candidate budgets |
 | High-variable loops | `lean_high.py` | Early threshold, ceiling cutoff, ambient-order mask and the streamed conditioned rank loop; the hash leaf can route every query through it |
+| Counting extension rings | `lean_ext.py` | Scheduled ring parameters, the searched irreducible monic lift, fixed radix nodes with unit differences and the Q*J > degree Hermite condition with exact Taylor jets |
 | Section 5–6 | `sparse_systems.py`, `algebra_count.py`, `equation_selection.py` | Budgeted finite algebra on a declared \(n\) |
 | Appendix D leaf and recovery | `modular_network.py`, `modular_recovery.py` | Direct edge scans and tapered Hermite recovery |
 | Collision layout | `modular_packing.py` | Labels, packets, and a child port topology. No tensor evaluation and no recursive call |
@@ -37,7 +38,7 @@ The active path follows the supplied SqrtLogSpace counting program:
 
 - `lean_sparsify.py` stores only the current frontier. Its finite core selection and branching match the tested Lean semantics; general time and all-prefix space transfer remain open.
 - `lean_query.py` constructs the indicator itself and performs no Boolean assignment scan. Full squarefree support tables can still grow exponentially. Its present CNF leaf uses J=1; the dense t*J ring is not yet a complete streamed Taylor evaluator.
-- `lean_code.py` builds the scheduled ternary code and regenerates rows; `lean_greedy.py` scores canonical candidates by accumulated marked-violation mass and counts the separate final accepted query; `lean_high.py` streams the high-incidence assignments and accumulates the conditioned queries without changing any count. Counting extensions, placement, correction-pair regeneration, Hermite reconstruction and whole-program resource accounting remain open.
+- `lean_code.py` builds the scheduled ternary code and regenerates rows; `lean_greedy.py` scores canonical candidates by accumulated marked-violation mass and counts the separate final accepted query; `lean_high.py` streams the high-incidence assignments and accumulates the conditioned queries without changing any count; `lean_ext.py` builds the counting extension ring with fixed nodes and checks the Hermite margin. Streamed Taylor leaves, native placement, correction-pair regeneration and whole-program resource accounting remain open.
 - Scalar-operation receipts and logical encoding sizes do not measure the Lean primitive machine or Python heap. Those require whole-program resource accounting and refinement.
 
 Appendix D remains a later route. `modular_modes.py` checks one finite D.4.5 packet; D.4.6 packet coefficients, D.4.7 recursive children and D.3 incidence encoding remain open. Step 21 supplies child port topology and Step 22 a frozen mode description, without cache, rows or origins. Step 15's finite Taylor elimination does not supply that recursion.
@@ -57,4 +58,4 @@ Grandfathered until a later split that existing tests cover: `verify.py`, `param
 
 ## Gates
 
-`.github/workflows/ci.yml` runs a fast `gates` job on pull requests and pushes to `main`, in addition to pytest and `verify --quick`. That job checks UTF-8 text, the size limits above, version mentions in `docs/STATUS.md` and `references/lean/README.md`, the false completion flags and matching versions in `benches/reference_alignment.json` and `artifacts/step15-verification.json` through `artifacts/step26-verification.json`, and `ruff check` (`E9`, `F`). `ruff format --check` covers `reference_verify/` and `.github/workflows`. `check_verify_report.py` requires the complete Steps 9–26 report and its K–AB success summary. These gates do not invoke Lean.
+`.github/workflows/ci.yml` runs a fast `gates` job on pull requests and pushes to `main`, in addition to pytest and `verify --quick`. That job checks UTF-8 text, the size limits above, version mentions in `docs/STATUS.md` and `references/lean/README.md`, the false completion flags and matching versions in `benches/reference_alignment.json` and `artifacts/step15-verification.json` through `artifacts/step27-verification.json`, and `ruff check` (`E9`, `F`). `ruff format --check` covers `reference_verify/` and `.github/workflows`. `check_verify_report.py` requires the complete Steps 9–27 report and its K–AC success summary. These gates do not invoke Lean.

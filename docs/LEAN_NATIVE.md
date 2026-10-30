@@ -1,6 +1,6 @@
 # Lean 原生三元计数查询
 
-包版本 **0.26.0**。Step 24 将新 Lean 库中的三元指示系数、共享标记截断和查询语义实现为可运行的有限 Python 后端；Step 25 增加日程三元稀疏码、逐行再生和违反质量贪心选行，`--backend lean --leaf-backend hash` 用它们计数流式稀疏化叶；Step 26 计算早期阈值与高变量前端，并可按秩流式路由全部查询。当前查询直接展开平方自由支持表，完整的计数扩张、分组替换和流式 Taylor 叶仍列在 [ROADMAP.md](../ROADMAP.md)。
+包版本 **0.27.0**。Step 24 将新 Lean 库中的三元指示系数、共享标记截断和查询语义实现为可运行的有限 Python 后端；Step 25 增加日程三元稀疏码、逐行再生和违反质量贪心选行，`--backend lean --leaf-backend hash` 用它们计数流式稀疏化叶；Step 26 计算早期阈值与高变量前端，并可按秩流式路由全部查询；Step 27 构造计数扩张环、固定节点与 `Q*J > degree` 的 Hermite 条件。当前查询直接展开平方自由支持表，完整的流式 Taylor 叶、分组替换和实际放置仍列在 [ROADMAP.md](../ROADMAP.md)。
 
 ## 源声明与接口
 
@@ -18,6 +18,7 @@
 | `SparseCodeSearch.lean`、`SparseCodeRows.lean`：`localSearch`、`graphSearch`、`serializedRows` | `construct_sparse_code`、`SparseTannerCode.row`、`certify_sparse_code` | 日程整数、两个完整搜索、槽位再生与独立证书 |
 | `HashGreedy`、`HashGreedyCNF`：`mass`、`best`、`history`、`loopCap` | `select_history_rows`、`count_cnf_greedy` | 标记质量累加、严格最小保留最早、零质量后的单独接受查询 |
 | `HighQueryProgram.lean`、`HighQueryCount.lean`：`highSet`、`threshold`、`rankSum` | `high_frontend`、`count_cnf_high_loop` | 早期阈值、截断与掩码；逐秩条件化查询与精确累加 |
+| `RingCore.lean`、`IrreducibleSearch.lean`、`RingModelNodes.lean`：`Base`、`O`、`poly`、`passes`、`residueNode`、`difference_isUnit` | `counting_extension`、`node_element`、`ExtensionSchedule` | 日程整数、不可约单首搜索、固定节点与唯一自然数读回 |
 
 这些是源码和有限行为的对应关系。Python 测试与静态源码审计不提供 Lean 内核编译或 Python 程序精化证明。
 
@@ -101,14 +102,22 @@ assert accepted.marker_sums == (8, 36, 45, 0)  # modulus = 81
 
 秩循环把高坐标排序后按二进制里程枚举全部 `2^|H|` 个赋值；每个秩执行一次真实条件化查询（高比特固定、其余坐标保留），把精确计数累加。`rankSum_fullCount` 使累计和等于原声明 n 上的无条件计数：hub 公式（8 变量、7 子句）直接计数 **129**，两秩之和相同；两 hub 公式 4 秩。`rows=None` 走逐子句单位行；空历史保留全部比特。`--high-loop` 让 hash 叶的全部标记/接受查询都经过该循环，直接与路由计数一致。秩数与代数工作均有预算；拒绝不返回部分计数。
 
+## 计数扩张环与 Hermite 放置
+
+日程整数按 `LeafParametersProgram.produce` 精确复现：`L = floor(log2(n+16)) + 1`、`w = floor(log2 L) + 1`、`s = isqrt(L)/w²`、`r = max(2,s)`、`layoutDen = 64·(bit_length r)`、`Q = L/layoutDen`、`R = isqrt(128·Q·E) + 4`（`E = bit_length(64·occ·r·L²)`）、`t = ambient + size(clauses) + 1`、`d = size(Q) + 1`、`N = r^(2Q)`、`J = width·R·(2·factors + 3(t−1) + 1)/Q + 1`。守卫在 `Q ≥ 2`、`4R ≤ Q`、`16·Q·r² ≤ freeCount` 等整数条件处判定；有限见证在 K=2^24 处按 `4R > Q` 拒绝、K=2^25 处通过，`Q*J > width·R·(2·factors + 3(t−1) + 1)` 由整除加一的恒等式保证。
+
+扩张环 `O = (Z/3^t)[X]/(F)`：`F` 由完整里程枚举的首个通过候选给出（独立乘法分解器核对每个被拒前缀），系数按 2t 位小端字编码。节点是基数 3 数字向量 1..Q，两两差为非零剩余类、必为可逆元；单位可逆性用牛顿提升（剩余域 Fermat 反演 3^d−2 起步）到达全精度。计数在 `3^t` 以内时由常数系数唯一读回（`natCast_injective_below`）。
+
+Hermite 放置：先算目标多项式在节点处的 J 个精确 Taylor 喷射 `target(X + θ) mod X^J`（整数二项系数，无除法），再用 Newton–Hermite 重建——除节点差外不做除法，`Q*J > degree` 时唯一且与目标逐系数一致；条件数以内的目标精确恢复、达到条件数的目标被检出不等。
+
 ## 预算、收据与下一步
 
-`LeanAlgebraBudgets` 限制变量、子句、原始文字与行项数、编码长度、精度、单个支持表项数、活跃系数、逻辑编码位数、单项式乘法和标量操作。`CodeBudgets` 限制矩阵项、图维数、候选、字检查、操作和编码位数；`GreedyBudgets` 限制候选深度、候选数、轮数、标记查询数与历史行/项数。`HighBudgets` 限制单个查询的秩数与条件化查询数；`--high-loop` 只改变查询的执行路径，不改变计数。拒绝不返回部分码或部分计数，已完成工作保留在收据中。默认 `max_precision=64`、`max_polynomial_terms=16384`、`max_monomial_products=2000000`、`max_scalar_operations=8000000`。超预算返回 `status='refused', count=None`；调用参数无效时抛出 `ValueError`。
+`LeanAlgebraBudgets` 限制变量、子句、原始文字与行项数、编码长度、精度、单个支持表项数、活跃系数、逻辑编码位数、单项式乘法和标量操作。`CodeBudgets` 限制矩阵项、图维数、候选、字检查、操作和编码位数；`GreedyBudgets` 限制候选深度、候选数、轮数、标记查询数与历史行/项数。`HighBudgets` 限制单个查询的秩数与条件化查询数；`--high-loop` 只改变查询的执行路径，不改变计数。`ExtensionBudgets` 限制扩张度数、候选、除法检查与环操作；搜索与环构造的拒绝不返回任何见证。拒绝不返回部分码或部分计数，已完成工作保留在收据中。默认 `max_precision=64`、`max_polynomial_terms=16384`、`max_monomial_products=2000000`、`max_scalar_operations=8000000`。超预算返回 `status='refused', count=None`；调用参数无效时抛出 `ValueError`。
 
 原生查询的计量器累计整个查询的操作。流式前沿让全部叶共享乘法和标量操作预算；峰值存储取各叶的最大值，前沿存储单独报告。若第一叶已完成而第二叶拒绝，总计数与 SAT 结果仍为空，已完成工作保留在收据中。独立的 `TruncatedRing` 检查每次稠密运算的工作上界；它不记录任意外部调用序列的累计工作。
 
 活跃的不可变支持表通过弱引用跟踪，另计临时表、输出系数与准备数据。`peak_algebra_bits` 使用每项 n 位支持掩码、固定宽度系数和 framing 的逻辑编码；这些值不是 Python 对象的堆占用、位运算次数或实际磁带空间。
 
-当前 native 计数相当于没有 Z 展开的 `J=1` 查询。虽已实现一般 `t*J` 稠密环，它还没有接到节点求值、修正对和 Hermite 恢复。完整平方自由支持表仍可能指数增长；零布尔扫描不能建立一般多项式空间或次指数时间。下一阶段依次接通扩张环与分组放置、流式 Taylor 叶，以及整条机器的资源精化。
+当前 native 计数相当于没有 Z 展开的 `J=1` 查询。虽已实现一般 `t*J` 稠密环，它还没有接到节点求值、修正对和 Hermite 恢复。完整平方自由支持表仍可能指数增长；零布尔扫描不能建立一般多项式空间或次指数时间。下一阶段依次接通流式 Taylor 叶、分组放置，以及整条机器的资源精化。
 
-独立核对入口为 `python -m counting_sat_algebra.verify --step24`（17 项：Newton 系数、共享截断、查询语义、前沿计数和预算拒绝）、`--step25`（15 项：日程整数、距离与 Walsh 首选见证、行再生、候选流、贪心轨迹与流式 hash 叶）与 `--step26`（12 项：阈值、截断与掩码、秩和恒等式、路由一致性与预算拒绝）。单元测试还独立核对小精度的 Hermite/Hasse 条件、稠密卷积和小布尔立方语义。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均保持 false。
+独立核对入口为 `python -m counting_sat_algebra.verify --step24`（17 项：Newton 系数、共享截断、查询语义、前沿计数和预算拒绝）、`--step25`（15 项：日程整数、距离与 Walsh 首选见证、行再生、候选流、贪心轨迹与流式 hash 叶）、`--step26`（12 项：阈值、截断与掩码、秩和恒等式、路由一致性与预算拒绝）与 `--step27`（12 项：日程整数、守卫边界、不可约搜索、环运算、单位与读回、节点、Hermite 恢复与拒绝）。单元测试还独立核对小精度的 Hermite/Hasse 条件、稠密卷积和小布尔立方语义。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均保持 false。

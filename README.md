@@ -1,8 +1,8 @@
 # counting-sat-algebra
 
-根据 `references/` 中的论文和 Lean 程序逐步实现确定性的精确 #SAT 计数。当前版本为 **0.26.0**，主线已转向新加入的 `SubexponentialSAT/SqrtLogSpace`：保留声明变量数，流式遍历互不重叠的稀疏化叶，叶内先装配日程稀疏码，再用违反质量贪心选择历史行，最后单独执行接受查询并累加完整的自然数计数；hash 叶可选地把标记与接受查询路由到流式高变量秩循环。
+根据 `references/` 中的论文和 Lean 程序逐步实现确定性的精确 #SAT 计数。当前版本为 **0.27.0**，主线已转向新加入的 `SubexponentialSAT/SqrtLogSpace`：保留声明变量数，流式遍历互不重叠的稀疏化叶，叶内先装配日程稀疏码，再用违反质量贪心选择历史行，最后单独执行接受查询并累加完整的自然数计数；hash 叶可选地把标记与接受查询路由到流式高变量秩循环，计数扩张环与 Hermite 放置已有有限见证。
 
-Step 23 实现 Lean 二进制语法、精确二进参数搜索、规范化和深度优先计数前沿。Step 24 新增模 `3^t` 的 Newton 指示系数、共享标记截断、布尔平方自由多项式求和，以及真实的接受/标记违反计数查询。Step 25 按日程整数构造三元稀疏码并逐行再生，用真实标记查询累加全部子句的违反质量做贪心选择，核对零质量后单独执行接受查询。Step 26 计算早期高出现阈值与高变量前端，并可按秩流式路由全部查询。`--backend lean --leaf-backend native|hash` 已接通这些部件。完整的 Lean 叶程序移植仍需计数扩张环、分组放置与流式 Taylor 恢复。
+Step 23 实现 Lean 二进制语法、精确二进参数搜索、规范化和深度优先计数前沿。Step 24 新增模 `3^t` 的 Newton 指示系数、共享标记截断、布尔平方自由多项式求和，以及真实的接受/标记违反计数查询。Step 25 按日程整数构造三元稀疏码并逐行再生，用真实标记查询累加全部子句的违反质量做贪心选择，核对零质量后单独执行接受查询。Step 26 计算早期高出现阈值与高变量前端，并可按秩流式路由全部查询。Step 27 构造模 `3^t` 的计数扩张环、固定互异节点与 `Q*J > degree` 的 Hermite 条件。`--backend lean --leaf-backend native|hash` 已接通这些部件。完整的 Lean 叶程序移植仍需流式 Taylor 叶、分组放置与整机资源。
 
 新的 Lean 参考源码含精确计数和全执行前缀的多项式空间定理。静态审计覆盖 **3969 个本地模块**，没有缺失的本地导入、代码级 `sorry`/`admit` 或 `axiom` 声明。审计不等于 Lean 内核验证；本机尚未编译该库。旧的单文件脚手架另行保留，详见 [Lean 参考说明](references/lean/README.md)。
 
@@ -18,6 +18,7 @@ python -m counting_sat_algebra.verify --reference --output benches/reference_ali
 python -m counting_sat_algebra.verify --step24 --output artifacts/step24-verification.json
 python -m counting_sat_algebra.verify --step25 --output artifacts/step25-verification.json
 python -m counting_sat_algebra.verify --step26 --output artifacts/step26-verification.json
+python -m counting_sat_algebra.verify --step27 --output artifacts/step27-verification.json
 python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-audit.json
 ```
 
@@ -58,7 +59,7 @@ assert accepted.count == 8
 assert marked.count == 4
 ```
 
-接受查询计算历史哈希方程的公共零点。标记查询再要求某个原始子句被违反，用于后续贪心选行的精确评分。它们和原 CNF 的 #SAT 有不同语义；`count_cnf_ternary(F)` 以逐子句的单位哈希行计数原公式。`count_cnf_greedy(F)` 装配日程稀疏码并用上述标记查询做贪心选择，零质量后单独执行接受查询得到原 CNF 的精确计数。`count_cnf_high_loop(F, rows)` 用同一批真实查询逐秩枚举高变量赋值并精确累加，秩和恒等于直接查询计数。定义、预算和数学恒等式见 [LEAN_NATIVE.md](docs/LEAN_NATIVE.md)。
+接受查询计算历史哈希方程的公共零点。标记查询再要求某个原始子句被违反，用于后续贪心选行的精确评分。它们和原 CNF 的 #SAT 有不同语义；`count_cnf_ternary(F)` 以逐子句的单位哈希行计数原公式。`count_cnf_greedy(F)` 装配日程稀疏码并用上述标记查询做贪心选择，零质量后单独执行接受查询得到原 CNF 的精确计数。`count_cnf_high_loop(F, rows)` 用同一批真实查询逐秩枚举高变量赋值并精确累加，秩和恒等于直接查询计数。`extension_schedule(ambient, ...)` 复现日程整数并核对 `Q*J > degree`；`counting_extension(t, d)` 搜索不可约单首提升并给出固定节点与唯一自然数读回。定义、预算和数学恒等式见 [LEAN_NATIVE.md](docs/LEAN_NATIVE.md)。
 
 ## 项目文件
 

@@ -30,12 +30,13 @@ Step 25 constructs the scheduled sparse ternary code with regenerated rows
 and selects history rows by accumulated marked-violation mass before the
 separate final accepted query. Step 26 computes the early high-incidence
 threshold and the high-variable frontend, and routes the hash leaf queries
-through the streamed conditioned rank loop. The DIMACS Lean backend connects
-the native and hash leaves to the same frontier.
+through the streamed conditioned rank loop. Step 27 constructs the counting
+extension ring, the fixed nodes and the Q*J > degree Hermite placement. The
+DIMACS Lean backend connects the native and hash leaves to the same frontier.
 
 The active roadmap follows the supplied SqrtLogSpace counting program.
-The counting extension, placement, streamed Taylor leaves and Python
-time/space refinement remain open.
+The streamed Taylor leaf, placement and Python time/space refinement
+remain open.
 The supplied Lean library has theorem proof source; local kernel validation
 is pending. Finite comparisons do not establish general asymptotic bounds.
 Appendix D packet tensors and recursive contraction remain a later route.
@@ -84,6 +85,12 @@ from .lean_encoding import (
 from .lean_greedy import (
     STEP25_SCOPE, GreedyBudgets, GreedyCountResult, count_cnf_greedy, occurrence_bound,
     select_history_rows,
+)
+from .lean_ext import (
+    STEP27_SCOPE, CountingExtension, ExtensionBudgets, ExtensionRefusal,
+    counting_extension, extension_schedule, hermite_reconstruct, is_irreducible_f3,
+    layout_cutoff, layout_energy, layout_q, layout_r, node_code_words, node_element,
+    node_stream, search_irreducible_polynomial, taylor_jets,
 )
 from .lean_high import (
     STEP26_SCOPE, HighBudgets, HighFrontend, HighLoopResult, count_cnf_high_loop,
@@ -196,6 +203,11 @@ __all__ = [
     "search_local_ternary_matrix", "search_walsh_shifts", "sparse_code_parameters",
     "STEP26_SCOPE", "HighBudgets", "HighFrontend", "HighLoopResult", "count_cnf_high_loop",
     "early_log", "early_threshold", "high_frontend",
+    "STEP27_SCOPE", "CountingExtension", "ExtensionBudgets", "ExtensionRefusal",
+    "counting_extension", "extension_schedule", "hermite_reconstruct",
+    "is_irreducible_f3", "layout_cutoff", "layout_energy", "layout_q", "layout_r",
+    "node_code_words", "node_element", "node_stream", "search_irreducible_polynomial",
+    "taylor_jets",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -377,4 +389,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.26.0"
+__version__ = "0.27.0"
