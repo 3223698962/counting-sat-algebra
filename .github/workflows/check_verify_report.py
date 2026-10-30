@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 ALLOWED_LABELS = frozenset({'COUNTED', 'CHECKED', 'REFUSED'})
-REFERENCE_STEPS = list(range(9, 29))
-QUICK_SUMMARY = re.compile(r'Reference \(K–AD\): (\d+)/(\d+) checks passed')
+REFERENCE_STEPS = list(range(9, 30))
+QUICK_SUMMARY = re.compile(r'Reference \(K–AE\): (\d+)/(\d+) checks passed')
 THEOREM_LINE = 'Theorem 1.1 is not implemented. This program does not refute ETH.'
 SCOPE_LINE = 'No Theorem 1.1, no 2^{o(n)} claim.'
 
@@ -39,7 +39,7 @@ def check_quick(path: Path) -> int:
     match = QUICK_SUMMARY.search(text)
     passed = total = 0
     if match is None:
-        errors.append('quick log is missing the Steps 9–28 summary')
+        errors.append('quick log is missing the Steps 9–29 summary')
     else:
         passed, total = int(match.group(1)), int(match.group(2))
         if total < 1 or passed != total:

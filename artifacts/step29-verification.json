@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "version": "0.29.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    29
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "lean-stream-degree-bound-and-order",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "fixture_order": 12,
+      "hub_fixed_degree": 12,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-marker-sums-match-native",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "cases": [
+        {
+          "n": 5,
+          "marked": null,
+          "fixed": [],
+          "count": 8
+        },
+        {
+          "n": 5,
+          "marked": 0,
+          "fixed": [],
+          "count": 4
+        },
+        {
+          "n": 8,
+          "marked": 0,
+          "fixed": [],
+          "count": 0
+        },
+        {
+          "n": 8,
+          "marked": 0,
+          "fixed": [
+            7
+          ],
+          "count": 0
+        },
+        {
+          "n": 8,
+          "marked": null,
+          "fixed": [
+            7
+          ],
+          "count": 65
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-accepted-and-marked-counts",
+      "n": 5,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 8,
+      "marked": 4,
+      "pairs": 243,
+      "precision": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-unit-row-leaf-counts",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "cases": [
+        {
+          "n": 4,
+          "m": 3,
+          "count": 9,
+          "pairs": 81
+        },
+        {
+          "n": 6,
+          "m": 4,
+          "count": 25,
+          "pairs": 729
+        },
+        {
+          "n": 8,
+          "m": 7,
+          "count": 129,
+          "pairs": 6561
+        },
+        {
+          "n": 8,
+          "m": 2,
+          "count": 196,
+          "pairs": 6561
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-replaces-a-refused-support-table",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 9,
+      "native_reason": "squarefree polynomial term budget exceeded; no partial count returned",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-budget-refusals",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "pair_reason": "correction pair budget exceeded; no partial count returned",
+      "precision_reason": "exact count reconstruction exceeds the ternary precision budget; no partial count returned",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-count-word-bounds",
+      "n": 5,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "count_word_bits": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-terminal-cases",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "free_bits": 256,
+      "tautology": 64,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-stream-streamed-leaf-backend",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "cases": [
+        {
+          "n": 4,
+          "count": 9,
+          "leaves": 2,
+          "pairs": 162
+        },
+        {
+          "n": 6,
+          "count": 25,
+          "leaves": 4,
+          "pairs": 2916
+        },
+        {
+          "n": 8,
+          "count": 196,
+          "leaves": 1,
+          "pairs": 6561
+        }
+      ],
+      "shared_refusal": 0,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}

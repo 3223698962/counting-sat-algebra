@@ -23,6 +23,8 @@ from .component_count import count_cnf_components
 from .lean_encoding import clause_bit_length, formula_bit_length, literal_code
 from .lean_greedy import GreedyBudgets, count_cnf_greedy
 from .lean_high import HighBudgets
+from .lean_stream import count_cnf_streamed
+from .lean_taylor import TaylorBudgets
 from .lean_parameters import choose_sparse_parameter, occurrence_cap
 from .lean_query import count_cnf_ternary
 from .lean_ring import LeanAlgebraBudgets
@@ -122,6 +124,8 @@ class StreamingCountResult:
     hash_final_mass: int = 0
     hash_high_ranks: int = 0
     hash_high_cardinality: int = 0
+    stream_pairs: int = 0
+    stream_point_evaluations: int = 0
     same_declared_n: bool = True
     completed_leaves_retained: int = 0
     backend: str = 'lean'
@@ -320,6 +324,7 @@ def count_cnf_streaming(
     greedy_budgets: GreedyBudgets = GreedyBudgets(),
     high_loop: bool = False,
     high_budgets: HighBudgets = HighBudgets(),
+    taylor_budgets: TaylorBudgets = TaylorBudgets(),
 ) -> StreamingCountResult:
     """Preflight the frontier, then replay it with finite algebraic leaf counts.
 
@@ -328,8 +333,10 @@ def count_cnf_streaming(
     Completed formulas, counts and branch histories are not stored.
     """
     limits = budgets or StreamingBudgets()
-    if leaf_backend not in ('common', 'tensor', 'native', 'hash'):
-        raise ValueError("leaf_backend must be 'common', 'tensor', 'native' or 'hash'")
+    if leaf_backend not in ('common', 'tensor', 'native', 'hash', 'stream'):
+        raise ValueError(
+            "leaf_backend must be 'common', 'tensor', 'native', 'hash' or 'stream'"
+        )
     max_component_variables, vector_budget, total_vector_budget, memo_entries = (
         operator.index(value) for value in
         (max_component_variables, vector_budget, total_vector_budget, memo_entries)
@@ -347,7 +354,7 @@ def count_cnf_streaming(
         peak_polynomial_terms=0, peak_live_coefficients=0, peak_algebra_bits=0,
         max_ring_precision=0, hash_rounds=0, hash_candidates=0, hash_marked_queries=0,
         hash_accepted_queries=0, hash_history_rows=0, hash_initial_mass=0, hash_final_mass=0,
-        hash_high_ranks=0, hash_high_cardinality=0,
+        hash_high_ranks=0, hash_high_cardinality=0, stream_pairs=0, stream_point_evaluations=0,
     )
 
     def finish(status: str, count: int | None, reason: str) -> StreamingCountResult:
@@ -459,6 +466,36 @@ def count_cnf_streaming(
                     ):
                         work[name] = max(work[name], getattr(result, name))
                     work['max_ring_precision'] = max(work['max_ring_precision'], result.precision)
+                elif leaf_backend == 'stream':
+                    result = count_cnf_streamed(
+                        _to_cnf(cnf.n, leaf),
+                        budgets=replace(
+                            taylor_budgets,
+                            max_pairs=taylor_budgets.max_pairs - work['stream_pairs'],
+                            max_assignments=(
+                                taylor_budgets.max_assignments
+                                - work['stream_point_evaluations']
+                            ),
+                        ),
+                        algebra_budgets=replace(
+                            native_budgets,
+                            max_monomial_products=(
+                                native_budgets.max_monomial_products
+                                - work['monomial_products']
+                            ),
+                            max_scalar_operations=(
+                                native_budgets.max_scalar_operations
+                                - work['scalar_operations']
+                            ),
+                        ),
+                    )
+                    work['native_queries'] += 1
+                    work['local_evaluations'] += int(result.counted)
+                    work['stream_pairs'] += result.pairs
+                    work['stream_point_evaluations'] += result.point_evaluations
+                    work['max_ring_precision'] = max(
+                        work['max_ring_precision'], result.precision
+                    )
                 else:
                     remaining = total_vector_budget - work['boolean_vectors']
                     result = count_cnf_components(

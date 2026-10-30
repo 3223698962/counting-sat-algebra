@@ -276,3 +276,13 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Refuse on order, pair, assignment, term, jet-order and stream-word budgets without a partial sum, including the first-order constant case
 - [x] Export 9 `verify --step28` rows and 29 pytest checks; keep the theorem, Lean and recursive-contraction flags false
 - The production native leaf still evaluates the full squarefree support table. Switching it to the streamed path with immediate U-specialization and complete pair regeneration, the native placement and the whole-machine resource refinement remain open
+
+### Step 29 — streamed pointwise correction-pair leaf
+
+- [x] Evaluate the native queries through the pointwise pair identity: one evaluation per correction pair, no squarefree support table, `polynomial_terms` always zero
+- [x] Bound the order by all row degrees plus the marked clause degree; a fully forced-violated clause contributes a constant zero; the precision rule `3^t > 2^n` mirrors the native path
+- [x] Match the native algebra exactly: accepted 8 and marked 4 with marker sums (8, 36, 45, 0) on the fixture; unit-row leaf counts 9/25/129/196 on the star, double star, hub and supplied example; randomised seeded cross-checks agree on counts, marker sums and precision
+- [x] Count a star instance whose native run refuses on the polynomial-term budget, evidencing the support-table replacement
+- [x] Connect `--leaf-backend stream` with shared pair and point-evaluation budgets; refusals publish no partial total
+- [x] Export 9 `verify --step29` rows and 26 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The full machine's degree reduction, the native placement and the whole-machine resource refinement remain open; the default leaf stays `common`

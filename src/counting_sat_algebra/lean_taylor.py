@@ -71,14 +71,11 @@ def assignment_count(variables: int, order: int) -> int:
     return sum((1 << variables) * comb(variables, j) for j in range(order))
 
 
-def iter_pairs(variables: int, order: int, budgets: TaylorBudgets | None = None):
-    """``DifferencePairs.fold`` order: coordinate by coordinate, none then out then in."""
+def pair_walk(variables: int, order: int):
+    """The unchecked ``DifferencePairs.fold`` stream; callers own the budgets."""
     variables, order = natural(variables, 'variables'), natural(order, 'order')
-    limits = budgets or TaylorBudgets()
-    if pair_count(variables, order) > limits.max_pairs:
-        raise TaylorRefusal('correction pair budget exceeded')
-    if assignment_count(variables, order) > limits.max_assignments:
-        raise TaylorRefusal('pair assignment budget exceeded')
+    if not order:
+        return
 
     def walk(coordinate: int, budget: int, prefix: tuple[int, ...]):
         if budget == 0:
@@ -91,6 +88,17 @@ def iter_pairs(variables: int, order: int, budgets: TaylorBudgets | None = None)
         yield from walk(coordinate + 1, budget - 1, prefix + (IN,))
 
     yield from walk(0, order, ())
+
+
+def iter_pairs(variables: int, order: int, budgets: TaylorBudgets | None = None):
+    """``DifferencePairs.fold`` order: coordinate by coordinate, none then out then in."""
+    variables, order = natural(variables, 'variables'), natural(order, 'order')
+    limits = budgets or TaylorBudgets()
+    if pair_count(variables, order) > limits.max_pairs:
+        raise TaylorRefusal('correction pair budget exceeded')
+    if assignment_count(variables, order) > limits.max_assignments:
+        raise TaylorRefusal('pair assignment budget exceeded')
+    yield from pair_walk(variables, order)
 
 
 def decode_pair(word: tuple[int, ...]) -> tuple[frozenset[int], frozenset[int]]:

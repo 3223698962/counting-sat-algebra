@@ -33,8 +33,10 @@ threshold and the high-variable frontend, and routes the hash leaf queries
 through the streamed conditioned rank loop. Step 27 constructs the counting
 extension ring, the fixed nodes and the Q*J > degree Hermite placement.
 Step 28 streams the correction pairs and re-reads the per-node Taylor
-coefficients by Newton Hermite. The DIMACS Lean backend connects the native
-and hash leaves to the same frontier.
+coefficients by Newton Hermite. Step 29 adds the streamed pointwise
+correction-pair leaf, which needs no squarefree support table. The DIMACS
+Lean backend connects the native, hash and stream leaves to the same
+frontier.
 
 The active roadmap follows the supplied SqrtLogSpace counting program.
 Packing, native placement and Python time/space refinement remain open.
@@ -96,6 +98,9 @@ from .lean_ext import (
 from .lean_high import (
     STEP26_SCOPE, HighBudgets, HighFrontend, HighLoopResult, count_cnf_high_loop,
     early_log, early_threshold, high_frontend,
+)
+from .lean_stream import (
+    STEP29_SCOPE, StreamedQueryResult, count_cnf_streamed, streamed_query_count,
 )
 from .lean_taylor import (
     STEP28_SCOPE, TaylorBudgets, TaylorRefusal, decode_pair, decode_stream,
@@ -219,6 +224,7 @@ __all__ = [
     "difference_coefficient", "direct_sum", "encode_pair", "iter_pairs",
     "node_coefficient_stream", "pair_count", "reconstruct_from_stream",
     "streamed_boolean_sum", "streamed_taylor_count",
+    "STEP29_SCOPE", "StreamedQueryResult", "count_cnf_streamed", "streamed_query_count",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -400,4 +406,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.28.0"
+__version__ = "0.29.0"
