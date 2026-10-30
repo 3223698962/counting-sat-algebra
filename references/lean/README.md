@@ -1,10 +1,38 @@
-# Lean materials (separate effort)
+# Lean reference materials
 
-These files are a local copy of a Lean formalization effort. They are not part of the Python package `counting_sat_algebra`. This repository does not build them, import them, or check them with Lean.
+Python package version **0.28.0** uses the newly supplied Lean library as its implementation reference. Source availability, Lean kernel verification and completion of the Python algorithm are separate facts.
 
-- [`378.md`](378.md) — scope note from `openai/math`, `lean/docs/378.md`. It states the aim of that formalization: for fixed \(k \ge 2\), a deterministic machine that exactly counts satisfying assignments of a canonically encoded \(k\)-CNF, within the time and visited-tape bounds written in the note. The October 25 manuscript’s sharper counting bound is quoted there as scope for that effort.
-- [`SubexponentialSAT.lean`](SubexponentialSAT.lean) — scaffold linked from that note as `ComparatorChallenges/SubexponentialSAT.lean` (namespace `OAI.Algorithms.SubexponentialSAT`). It defines CNF evaluation, a canonical encoding, a primitive-machine trace, and visited tape cells. The main statement, `exact_count_and_sat`, ends in `sorry`.
+## Supplied library
 
-In Lean, `sorry` is a placeholder for an unfinished proof. The declaration can be type-checked while the proof is absent. This file does not prove `exact_count_and_sat`, and it does not prove Theorem 1.1 of the preprint.
+The current source root is [`math/lean/`](math/lean/), with the algorithm under [`OAI/Algorithms/SubexponentialSAT/`](math/lean/OAI/Algorithms/SubexponentialSAT/). Its toolchain is `leanprover/lean4:v4.34.1`; Lake dependencies are pinned in `lake-manifest.json`.
 
-The Python package version 0.23.0 checks the finite instances from 0.22.1 and adds one finite D.4.5 weighted-mode witness. That includes interpolation, a blocked sum, a matrix slice of side length at most 256, Hermite recovery of \(H(0)\), occurrence copying, a parameter scan, exact reference conditional-expectation schedules, rational design checks, streamed shared-measurement Taylor recovery, and structured full-parameter coordinate queries. It constructs a sparse admitted placement at n=16384, Q=3, R=2, and counts supplied DIMACS CNFs through independently placed components. A disconnected 32769-variable instance has exact count 7^10923. The shared-measurement sum on the 16384-variable placement is refused before enumeration. Step 14 recovers its exact count 1 from the same replacement polynomials through disjoint supports. Step 15 counts some connected supports by finite Taylor tensor elimination when intermediate tables fit explicit budgets: the 13-variable path counts as 610, and a 1024-variable path plus two free bits counts as 4·Fibonacci(1026). A width-13 factor is refused before any numerical table is built. Step 15 is not Appendix D's general modular contraction or its asymptotic bound. Step 16 evaluates Lemma 4.8's integer schedule and, inside explicit budgets, places one finite tuple that passes every Lemma 4.7 numerical hypothesis. At n=16384 that tuple is r=2, Q=3, R=2, τ=5/16; the closed form itself fails before D is formed. Running that finite tuple does not prove the asymptotic bound. Steps 17–19 check finite Section 5 sparse systems, a replacement sum in \(A_\ell\), and Section 6 equation selection with disjoint sparsification on the same declared \(n\). Paper-scale searches are refused before allocation. Proposition 6.4's \(O_k(\rho(n))\) bound is not claimed. Step 20 checks finite Appendix D coefficient rings, CNF tensor networks, direct modular leaves, Cauchy local coordinates, and tapered Hermite recovery. An 8-variable example counts as 196. A two-edge network recovers \(9+4V\) modulo 32 with \(V^2=0\). Step 21 checks finite collision labels, packet layouts, and prospective child topologies. An explicit finite packing of an 8192-edge matching yields 4096 packets and a child topology of 256 edges. That tuple is not a D.4 schedule member, and packing evaluates no tensor entry. Step 22 checks a finite weighted-mode table and one crossing Cauchy residue. Packet-tensor coefficients and recursive child contraction are not implemented. These finite checks do not prove this Lean statement. `theorem_1_1_complete`, `lean_proof_complete`, and `recursive_contraction` stay false. The main Lean theorem still ends in `sorry`. Step 22 does not implement Theorem 1.1.
+- [`Main.lean`](math/lean/OAI/Algorithms/SubexponentialSAT/Main.lean) imports the current algorithm endpoints.
+- [`SubexpOrderedRawMainTheorem.lean`](math/lean/OAI/Algorithms/SubexponentialSAT/SubexpOrderedRawMainTheorem.lean), `mainTheorem_explicit`, gives the original externally encoded SAT signature. Its proof is a theorem reference, rather than a `by` block.
+- [`SqrtLogSpace/Final.lean`](math/lean/OAI/Algorithms/SubexponentialSAT/SqrtLogSpace/Final.lean), `compiled_exact_count_and_sat`, gives one fixed compiled program, exact count and SAT tapes, a canonical binary count word of length at most n+1, and a polynomial visited-tape bound at every prefix. `exact_count_and_sat` exposes the primitive-machine signature; `exact_count_eth` transports the bounds to n and the clause count.
+- `formalization.yaml` lists the SqrtLogSpace exact-count endpoint.
+
+The exact count's exponent uses the square of log log n, as explicitly defined in `SqrtLog/StatementScale.lean` and `SqrtLogSpace/Asymptotics.lean`. It is the weaker time target compared with the local manuscript's Appendix D bound. The roadmap follows this supplied counting program first.
+
+## Local audit and kernel verification
+
+`python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-audit.json` follows the current endpoints' local import closure and records a content hash. The current static audit covers **3969 local modules**, with no missing local imports, code-level `sorry`/`admit`, or local `axiom` declarations. Nested comments and strings are excluded from these searches.
+
+The audit records `kernel_verified=false`. This environment has not compiled the supplied library with Lean; Mathlib and the toolchain still need to be resolved for that check. In a prepared environment, run these commands from `math/lean/`:
+
+```bash
+lake build OAI.Algorithms.SubexponentialSAT.Main
+lake build OAI.Algorithms.SubexponentialSAT.SubexpOrderedRawMainTheorem
+lake env lean OAI/Algorithms/SubexponentialSAT/SqrtLogSpace/Final.lean
+```
+
+The final file includes `#print axioms` for its endpoints. Save that actual output when carrying out kernel verification. A source scan does not establish the theorem's transitive axiom set.
+
+## Historical scaffold
+
+[`SubexponentialSAT.lean`](SubexponentialSAT.lean) and [`378.md`](378.md) remain historical material. The single-file scaffold's `exact_count_and_sat` still ends in `sorry`; it is not the current library endpoint. The statement that all supplied Lean material is merely that scaffold is obsolete.
+
+## Python transfer
+
+Step 23 implements the binary syntax and streaming disjoint frontier. Step 24 implements ternary Newton digits, shared-marker truncation and finite accepted/marked query counts, with a native algebraic leaf available in the DIMACS command. Step 25 implements the scheduled ternary sparse code with regenerated rows and the violation-mass greedy selector, available as the hash leaf. Step 26 implements the early high-incidence threshold, the high-variable frontend and the streamed conditioned rank loop, which the hash leaf can use for every query. Step 27 implements the counting extension ring with the searched irreducible lift, fixed radix nodes and the Q*J > degree Hermite condition. Step 28 streams the correction pairs and re-reads the per-node Taylor coefficient blocks by Newton Hermite. Switching the production leaf to the streamed path, packing and native placement remain open. Python scalar operation counts and logical encoding charges are not primitive Lean-machine step or visited-tape measurements.
+
+`theorem_1_1_complete`, `lean_proof_complete` and `recursive_contraction` stay false in Python reports. In particular, `lean_proof_complete=false` records the pending local verification and Python refinement; it does not assert that the newly supplied source has a missing theorem proof.

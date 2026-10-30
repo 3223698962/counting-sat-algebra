@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "version": "0.28.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    28
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "lean-taylor-pair-counts-and-enumeration",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "samples": [
+        1,
+        5,
+        33
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-difference-extracts-monomial-coefficients",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-streamed-sum-equals-direct-and-brute",
+      "n": 4,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 116,
+      "pairs": 33,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-budget-refusals",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "refusals": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-node-stream-geometry-and-errors",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "words": 12,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-streamed-counts-and-unique-readback",
+      "n": 4,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "violation": 4,
+      "free_bits": 16,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-cnf-model-counts-through-the-stream",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "cases": [
+        {
+          "n": 4,
+          "m": 3,
+          "count": 9,
+          "pairs": 81
+        },
+        {
+          "n": 6,
+          "m": 4,
+          "count": 25,
+          "pairs": 729
+        },
+        {
+          "n": 8,
+          "m": 7,
+          "count": 129,
+          "pairs": 6561
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-first-order-and-terminal-cases",
+      "n": 4,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 48,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-taylor-stream-word-budget-refusal",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}

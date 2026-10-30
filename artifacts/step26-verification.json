@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "version": "0.28.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    26
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "lean-high-early-log-and-threshold",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "samples": [
+        5,
+        5,
+        11
+      ],
+      "thresholds": [
+        3,
+        3,
+        4
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-frontend-cutoff-bounds-and-mask",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "cases": [
+        {
+          "n": 8,
+          "m": 7,
+          "cutoff": 6,
+          "high": [
+            0
+          ],
+          "ranks": 2
+        },
+        {
+          "n": 4,
+          "m": 3,
+          "cutoff": 5,
+          "high": [],
+          "ranks": 1
+        },
+        {
+          "n": 6,
+          "m": 4,
+          "cutoff": 4,
+          "high": [],
+          "ranks": 1
+        },
+        {
+          "n": 16,
+          "m": 29,
+          "cutoff": 11,
+          "high": [
+            0,
+            1
+          ],
+          "ranks": 4
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-frontend-boundary-excludes-equal-degree",
+      "n": 4,
+      "m": 2,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "cutoff": 1,
+      "high": [
+        0
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-unit-rows-count-models",
+      "n": 8,
+      "m": 7,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 129,
+      "ranks": 2,
+      "queries": 2,
+      "high_cardinality": 1,
+      "accumulator_bits": 8,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-empty-history-retains-every-bit",
+      "n": 8,
+      "m": 7,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "hub": 256,
+      "star": 16,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-explicit-history-identities",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "accepted": 12,
+      "marked": 0,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-two-high-coordinates-sum-the-ranks",
+      "n": 16,
+      "m": 29,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 16386,
+      "ranks": 4,
+      "queries": 4,
+      "high_cardinality": 2,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-fixed-conditioned-totals",
+      "n": 8,
+      "m": 7,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "conditioned": 65,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-refusals-without-partial-counts",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "rank_reason": "high rank budget exceeded; no partial count returned",
+      "algebra_queries": 1,
+      "algebra_reason": "rank 0 refused: scalar operation budget exceeded; no partial count returned; no partial count returned",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-greedy-routing-identical-counts",
+      "n": 8,
+      "m": 7,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 129,
+      "high_ranks": 2074,
+      "marked_queries": 2072,
+      "rounds": 7,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-streamed-routed-leaves",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "hub": 129,
+      "hub_leaves": 2,
+      "hub_high_ranks": 1550,
+      "star": 9,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-high-loop-terminal-cases",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "free_bits": 256,
+      "zero_variables": 1,
+      "empty_clause": 0,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}

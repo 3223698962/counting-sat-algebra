@@ -212,3 +212,67 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Export `verify --step22`. The frozen description does not carry cache, rows, or origins. `recursive_contraction` stays false
 - See [WEIGHTED_MODES.md](../WEIGHTED_MODES.md) and [LEAN_SPEC_CHECKLIST.md](../LEAN_SPEC_CHECKLIST.md)
 
+### Step 23 — Lean-compatible syntax and streamed disjoint counting
+
+- [x] Encode and decode Lean's framed binary CNF syntax, preserve declared n and implement canonical little-endian natural count words of length at most n+1
+- [x] Choose the first dyadic M that passes the exact integer parameter test. For k=3, sigma=1, select M=512 at exponent 9 and check that all smaller choices fail
+- [x] Normalize clause sets and implement the priority-core disjoint split. Independently check each leaf's models, their disjointness and their union on finite inputs
+- [x] Preflight and replay a depth-first frontier without storing completed leaves or histories. Count the four-variable star as 9 and three independent stars as 125 while retaining the original variable set
+- [x] Connect common/tensor finite leaves to `--backend lean`, report the completed work on refusal and return no partial total. Export 14 `verify --step23` rows
+
+### Step 24 — native ternary indicator and exact query algebra
+
+- [x] Construct Newton indicator coefficients modulo `3^t`, normalize by `H^t` and divide into t three-coefficient digits; encode each coefficient in 2t bits
+- [x] Implement independent U/Z truncated dense arrays and complete-product marker readout; verify small-precision coefficients and convolution with independent oracles
+- [x] Implement immutable squarefree support tables with support-union multiplication, exact Boolean monomial weights and live-table/scratch logical storage charges
+- [x] Count accepted and marked clause-violation queries without Boolean assignment scans; preserve original clause IDs, repetitions, declared n and fixed-coordinate semantics. Verify accepted/marked counts 8/4 and nonzero higher marker sums
+- [x] Stream unit history rows for CNF leaves and connect `--leaf-backend native` to the disjoint frontier. Verify example count 196, star count 9 and three-star count 125
+- [x] Share monomial/scalar operation budgets across every leaf; refuse without partial total after an earlier leaf succeeds. Export 17 `verify --step24` rows
+- [x] Audit the supplied Lean endpoints' static import closure and record source hashes. No missing local imports, code-level placeholders or local axiom declarations are found among 3969 modules; kernel compilation remains pending
+- Full sparse-code search, greedy selection, counting extensions, placement, streamed Taylor leaves, whole-program resource refinement and Appendix D recursion remain open. See [LEAN_NATIVE.md](../LEAN_NATIVE.md) and [ROADMAP.md](../../ROADMAP.md)
+
+### Step 25 — scheduled sparse codes and violation-mass greedy selection
+
+- [x] Construct the scheduled ternary Tanner code from the exact SparseCodeParameters integers, including floor divisions and the least cube dimension; stream both promised searches and refuse without a partial code when a matrix, candidate, word or storage budget fails
+- [x] Regenerate every row from slots (column = source vertex times degree plus port, coefficient from the local matrix) and independently check the relative-distance identity, the kernel lower bound distanceDenom\*min_weight >= m, the depth bound and hand-built accept/reject certificates
+- [x] Enumerate the canonical ternary candidate family once per increasing odometer rank without storing a library; check coverage, ranks and per-tuple weights against an independent enumeration
+- [x] Score every candidate with real marked queries accumulating every clause's violation count; a strict minimum keeps the earliest candidate, and the default round cap is loopCap = 2\*(n + size m + 1)
+- [x] Reproduce the star's full greedy trajectory by brute force over assignments; zero mass accepts exactly the models, and the final accepted query runs separately from every trial
+- [x] Connect `--backend lean --leaf-backend hash`; share marked-query budgets across the frontier and refuse without a partial total after an earlier leaf completed
+- [x] Export 15 `verify --step25` rows and 18 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The Lean schedule's candidate depth `distanceDenom` is above the Python candidate budgets, so the depth is an explicit finite parameter. The high-variable loop, counting extensions, placement, streamed Taylor leaves and whole-machine resource refinement remain open
+
+### Step 26 — high-variable frontend and the streamed rank loop
+
+- [x] Compute EarlyThreshold's integer threshold from Asymptotic.L = floor(log2 (n+16)) + 1 and the exact ceiling cutoff (totalScope\*threshold)/ambient on the original declared n
+- [x] Build the ambient-order high mask and independently recheck the membership rule, both integer bounds (cardinality\*(cutoff+1) <= totalScope, cardinality\*threshold <= ambient) and the equal-degree boundary exclusion
+- [x] Stream all 2^|H| high assignments through the binary odometer; every rank runs one real conditioned query with the high bits fixed and every total coordinate retained
+- [x] Verify the rank-sum identities against direct queries for unit rows, empty and explicit histories, marked clauses and base-fixed coordinates, including a two-high-coordinate case with four ranks
+- [x] Route the hash leaf's marked and accepted queries through the loop with `--high-loop`; direct and routed greedy counts agree on the hub, star, forest and streamed examples
+- [x] Refuse without a partial count on rank, query and algebra budgets
+- [x] Export 12 `verify --step26` rows and 21 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The full parameter frontend, degree and occurrence guards, and the counting extension remain open obligations
+
+### Step 27 — counting extension rings and Hermite placement
+
+- [x] Reproduce LeafParametersProgram.produce exactly: L, w = floor(log2 L) + 1, s = isqrt(L)/w^2, r, layout denominator, Q, energy, radius R, t, d, N and J, all by integer arithmetic
+- [x] Check the guard boundary without enumerating inputs: Q = 0 below the threshold, the K = 2^24 radius case refuses (4R > Q), K = 2^25 passes with card\*threshold <= ambient and the field cap 3^d <= 16(Q+1)^2
+- [x] Search the irreducible monic lift by complete odometer enumeration with a division test, and verify the first witness against an independent multiplication oracle on every rejected prefix
+- [x] Build the extension ring O = (Z/3^t)[X]/(F): commutativity, distributivity, reduced representatives, residue units, Newton-lifted inverses and non-unit refusals
+- [x] Verify unique natural readback below 3^t: natCast injectivity, decodeCount round trips and the 3^t-periodic zero test
+- [x] Fix the radix nodes 1..Q with unit pairwise differences and physical 2t-bit coefficient words; reject 0 and 3^d
+- [x] Recover degree-below-Q\*J targets exactly from exact Taylor jets by Newton-Hermite with divisions only by node differences; detect mismatches at the condition count
+- [x] Check the Hermite margin Q\*J > width\*R\*(2\*factors + 3(t-1) + 1) with the exact division-plus-one identity, and refuse on degree, candidate, division and ring budgets
+- [x] Export 12 `verify --step27` rows and 26 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The full native placement into the ABI, grouping replacement and the streamed Taylor leaf remain open obligations
+
+### Step 28 — streamed correction pairs and Taylor readback
+
+- [x] Stream all correction pairs (|E| < J, U subset of E) in the exact fold order with strict-budget pruning; check the pair counts, the codec round trips and the enumeration against an independent mask family
+- [x] Extract every squarefree coefficient by the alternating difference sum and match the support table on all masks
+- [x] Verify the Boolean finite-difference identity: the streamed totals equal the direct weight sums and the brute-force point sums on signed probes, and the model indicators of the star, double star and hub give 9, 25 and 129
+- [x] Emit per-node blocks of the J exact Taylor coefficients of the shifted target as Q\*J\*d little-endian 2t-bit words, and rebuild them from the stream alone
+- [x] Recover the count by Newton-Hermite with Q\*J above the degree; detect short and trailing streams, reordered nodes and out-of-range readback
+- [x] Refuse on order, pair, assignment, term, jet-order and stream-word budgets without a partial sum, including the first-order constant case
+- [x] Export 9 `verify --step28` rows and 29 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The production native leaf still evaluates the full squarefree support table. Switching it to the streamed path with immediate U-specialization and complete pair regeneration, the native placement and the whole-machine resource refinement remain open

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.23.0",
-  "goal": "Reproduce the local reference exact-counting algorithm and verify its time and space bounds.",
+  "version": "0.28.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
   "theorem_1_1_complete": false,
   "lean_proof_complete": false,
-  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts and prospective child topologies. Proposition 6.4 does not claim an O_k(rho(n)) bound. Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
   "wall_times_recorded": false,
   "steps": [
     18

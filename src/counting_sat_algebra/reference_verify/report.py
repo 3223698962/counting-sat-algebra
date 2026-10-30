@@ -21,7 +21,7 @@ def write_reference_report(
     report = dict(
         schema_version=1,
         version=__version__,
-        goal='Reproduce the local reference exact-counting algorithm and verify its time and space bounds.',
+        goal='Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.',
         **COMPLETION_FLAGS,
         scope=(
             'Finite reference Sections 3 and 4 checks, sparse admitted placements, independent '
@@ -31,7 +31,12 @@ def write_reference_report(
             'finite Section 6 equation selection with disjoint sparsification, and finite Appendix D '
             'coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, '
             'collision parameter schedules, packet layouts, prospective child topologies, and '
-            'finite D.4.5 weighted modes. Proposition 6.4 does not claim an O_k(rho(n)) bound. '
+            'finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint '
+            'counting frontier with finite algebraic leaves, ternary Newton coefficient words, '
+            'shared marker truncation and exact accepted/marked counts through finite squarefree '
+            'polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, '
+            'streamed Taylor leaves and the Python bit-complexity transfer remain open. '
+            "The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. "
             'Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are '
             'not implemented; no general-input asymptotic claim.'
         ),

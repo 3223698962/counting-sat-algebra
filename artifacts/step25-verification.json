@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "version": "0.28.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    25
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "lean-code-scheduled-integer-parameters",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "cases": [
+        "m=4,B=1",
+        "m=16,B=1",
+        "m=16384,B=1",
+        "m=256,B=2"
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-relative-distance-and-kernel-bound",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "certificates": [
+        {
+          "m": 4,
+          "B": 1,
+          "minimum_weight": 1,
+          "kernel_depth": 4
+        },
+        {
+          "m": 16,
+          "B": 1,
+          "minimum_weight": 1,
+          "kernel_depth": 16
+        },
+        {
+          "m": 64,
+          "B": 1,
+          "minimum_weight": 1,
+          "kernel_depth": 64
+        },
+        {
+          "m": 256,
+          "B": 2,
+          "minimum_weight": 1,
+          "kernel_depth": 256
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-local-distance-first-witness",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "witness": [
+        [
+          1,
+          1
+        ]
+      ],
+      "candidates": 5,
+      "exhausted_candidates": 9,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-walsh-first-witness",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "small_witness": [
+        1,
+        0
+      ],
+      "small_candidates": 2,
+      "wide_witness": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "wide_candidates": 7,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-slot-rows-regenerate",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "hand_rows": 16,
+      "hand_terms": [
+        3,
+        3,
+        0,
+        0,
+        3,
+        3,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        2,
+        2,
+        4,
+        4
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-certificate-arithmetic",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-certify-accept-and-reject",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "rejected": 2,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-budget-refusals",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "scheduled_reason": "local matrix entry budget exceeded; no partial sparse code returned",
+      "large_reason": "local matrix entry budget exceeded; no partial sparse code returned",
+      "local_reason": "code candidate budget exceeded",
+      "walsh_reason": "code candidate budget exceeded",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-code-canonical-candidate-stream",
+      "n": 3,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "candidates": 81,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-star-matches-brute-trajectory",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": 9,
+      "rounds": 3,
+      "initial_mass": 12,
+      "final_mass": 0,
+      "marked_queries": 84,
+      "occurrence_bound": 3,
+      "brute_trail": [
+        12,
+        4,
+        1,
+        0
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-zero-mass-accepts-exactly-models",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "accepted": 9,
+      "models": 9,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-streamed-hash-leaves",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "cases": [
+        {
+          "name": "star",
+          "count": 9,
+          "leaves": 2,
+          "marked_queries": 200,
+          "rounds": 5
+        },
+        {
+          "name": "demo",
+          "count": 196,
+          "leaves": 1,
+          "marked_queries": 26,
+          "rounds": 2
+        },
+        {
+          "name": "forest",
+          "count": 25,
+          "leaves": 4,
+          "marked_queries": 1072,
+          "rounds": 16
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-refusals-without-partial-count",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "budget_reason": "candidate rank budget exceeded; no partial count returned",
+      "round_reason": "the greedy round cap was reached with positive violation mass; no partial count returned",
+      "algebra_reason": "a marked query refused: scalar operation budget exceeded; no partial count returned; no partial count returned",
+      "round_marked_queries": 52,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-terminal-cases",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "free_bits": 256,
+      "empty_clause": 0,
+      "single_clause": 4,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-greedy-shared-budget-no-partial-total",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "marked_queries": 50,
+      "leaves_counted": 1,
+      "reason": "algebraic leaf refused: marked query budget exceeded; no partial count returned",
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}
