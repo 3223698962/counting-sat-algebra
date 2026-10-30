@@ -10,6 +10,7 @@ from .dimacs import read_dimacs
 from .lean_greedy import GreedyBudgets
 from .lean_sparsify import StreamingBudgets, StreamingCountResult, count_cnf_streaming
 from .lean_ring import LeanAlgebraBudgets
+from .lean_taylor import TaylorBudgets
 from .tensor_count import ContractionBudgets
 
 
@@ -23,6 +24,8 @@ def count_document(result: ComponentCountResult | StreamingCountResult) -> dict:
         data['algorithm'] = (
             'Lean-guided streaming disjoint sparsification with sparse-code greedy hash leaves'
             if result.leaf_backend == 'hash' else
+            'Lean-guided streaming disjoint sparsification with pointwise correction-pair leaves'
+            if result.leaf_backend == 'stream' else
             'Lean-guided streaming disjoint sparsification with native ternary squarefree queries'
             if result.leaf_backend == 'native' else
             'Lean-guided streaming disjoint sparsification with finite algebraic leaves'
@@ -38,7 +41,9 @@ def count_main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog='counting_sat_algebra count', description='Exactly count a DIMACS CNF within explicit component and enumeration budgets.')
     parser.add_argument('path', type=Path, help='DIMACS .cnf input')
     parser.add_argument('--backend', choices=('common', 'tensor', 'lean'), default='common', help='algebraic backend or streaming disjoint sparsification')
-    parser.add_argument('--leaf-backend', choices=('common', 'tensor', 'native', 'hash'), default='common', help='algebraic leaf evaluator for --backend lean; native uses ternary squarefree sums, hash runs sparse-code greedy selection with a separate accepted query')
+    parser.add_argument('--leaf-backend', choices=('common', 'tensor', 'native', 'hash', 'stream'), default='common', help='algebraic leaf evaluator for --backend lean; native uses ternary squarefree sums, hash runs sparse-code greedy selection with a separate accepted query, stream uses pointwise correction pairs without support tables')
+    parser.add_argument('--max-stream-pairs', type=int, default=2_000_000, help='global correction-pair budget across all stream leaves')
+    parser.add_argument('--max-stream-evaluations', type=int, default=20_000_000, help='global point-evaluation budget across all stream leaves')
     parser.add_argument('--hash-depth', type=int, default=1, help='candidate depth of the hash leaf; the Lean schedule depth is distanceDenom, above the Python budgets')
     parser.add_argument('--max-hash-candidates', type=int, default=300_000, help='maximum canonical ternary candidates per hash round and leaf')
     parser.add_argument('--high-loop', action='store_true', help='route the hash leaf marked and accepted queries through the streamed high-variable rank loop')
@@ -95,6 +100,10 @@ def count_main(argv=None) -> int:
                     max_candidates=args.max_hash_candidates,
                 ),
                 high_loop=args.high_loop,
+                taylor_budgets=TaylorBudgets(
+                    max_pairs=args.max_stream_pairs,
+                    max_assignments=args.max_stream_evaluations,
+                ),
             )
         else:
             result = count_cnf_components(cnf, max_component_variables=args.max_component_variables,
@@ -124,6 +133,8 @@ def count_main(argv=None) -> int:
                 print(f"native monomial products = {result.monomial_products}; scalar operations = {result.scalar_operations}; maximum polynomial terms = {result.peak_polynomial_terms}")
             if isinstance(result, StreamingCountResult) and result.leaf_backend == 'hash':
                 print(f"hash rounds = {result.hash_rounds}; marked queries = {result.hash_marked_queries}; accepted queries = {result.hash_accepted_queries}; final violation mass = {result.hash_final_mass}")
+            if isinstance(result, StreamingCountResult) and result.leaf_backend == 'stream':
+                print(f"stream pairs = {result.stream_pairs}; point evaluations = {result.stream_point_evaluations}")
         else:
             print(result.reason)
         if args.output is not None:

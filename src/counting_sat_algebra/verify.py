@@ -5,7 +5,7 @@ Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, a
 Step 3 tiny replacement-matrix slice, Step 4 Hermite recovery of H(0),
 Step 5 occurrence copying with #F' = #F on instances inside the brute window,
 and a Step 6 parameter scan that records matches and refusals.
-Steps 9–22 retain the finite reference suites. Steps 23–27 check the
+Steps 9–22 retain the finite reference suites. Steps 23–29 check the
 Lean-guided disjoint frontier, native ternary accepted/marked queries, the
 scheduled sparse codes, the violation-mass greedy selector, the streamed
 high-variable loop, the counting extension rings and the streamed correction
@@ -15,7 +15,7 @@ Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
   python -m counting_sat_algebra.verify --step2 ... --step8
-  python -m counting_sat_algebra.verify --step14 ... --step28
+  python -m counting_sat_algebra.verify --step14 ... --step29
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1052,7 +1052,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–AD): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–AE): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1105,7 +1105,7 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
-    if any(step in steps for step in range(9, 29)):
+    if any(step in steps for step in range(9, 30)):
         parts.append(
             "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
             "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
@@ -1128,6 +1128,7 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "Step 27 checks the counting extension ring, the fixed nodes and the "
             "Q*J > degree Hermite condition. "
             "Step 28 checks the streamed correction pairs and the Taylor readback. "
+            "Step 29 streams the pointwise correction-pair leaf without support tables. "
             "Packing and Python resource refinement remain open. "
             "Proposition 6.4's running time is not claimed. Appendix D recursive contraction is not implemented. "
             "Complete Theorem 1.1 alignment remains open."
@@ -1142,7 +1143,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–28. The full path stays in ``main``."""
+    """Run a subset of Steps 2–29. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1250,7 +1251,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 28)"
+        description="Counting algorithm reference verifier (Steps 0 through 29)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1318,8 +1319,9 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step26', action='store_true', help='check the high-variable frontend and the streamed conditioned rank loop')
     parser.add_argument('--step27', action='store_true', help='check counting extension rings and Hermite placement')
     parser.add_argument('--step28', action='store_true', help='check streamed correction pairs and the Taylor readback')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–28 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step28)')
+    parser.add_argument('--step29', action='store_true', help='check the streamed pointwise correction-pair leaf')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–29 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step29)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1363,11 +1365,12 @@ def main(argv: List[str] | None = None) -> int:
             (26, args.step26 or args.reference),
             (27, args.step27 or args.reference),
             (28, args.step28 or args.reference),
+            (29, args.step29 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step28')
+        parser.error('--output requires --reference or --step9 through --step29')
     if selected:
         return _run_selected(
             selected,
@@ -1376,7 +1379,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 28")
+    print("counting_sat_algebra.verify — Steps 0 through 29")
     print("Legacy Steps 0–8 checks (interpolation, blocked sums, Hermite recovery,")
     print("occurrence copying, a parameter scan and the bounded balancer).")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
@@ -1545,6 +1548,7 @@ def main(argv: List[str] | None = None) -> int:
         "Step 27 checks the counting extension ring, the fixed nodes and the "
         "Q*J > degree Hermite condition. "
         "Step 28 checks the streamed correction pairs and the Taylor readback. "
+        "Step 29 streams the pointwise correction-pair leaf without support tables. "
         "Packing and Python resource refinement remain open. "
         "Appendix D recursive contraction is not implemented. Complete "
         "Theorem 1.1 alignment remains open. "
