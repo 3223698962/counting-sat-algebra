@@ -5,6 +5,9 @@ Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, a
 Step 3 tiny replacement-matrix slice, Step 4 Hermite recovery of H(0),
 Step 5 occurrence copying with #F' = #F on instances inside the brute window,
 and a Step 6 parameter scan that records matches and refusals.
+Steps 9–22 retain the finite reference suites. Steps 23–25 check the
+Lean-guided disjoint frontier, native ternary accepted/marked queries, the
+scheduled sparse codes and the violation-mass greedy selector.
 
 Usage:
   python -m counting_sat_algebra.verify
@@ -25,6 +28,9 @@ Usage:
   python -m counting_sat_algebra.verify --step20
   python -m counting_sat_algebra.verify --step21
   python -m counting_sat_algebra.verify --step22
+  python -m counting_sat_algebra.verify --step23
+  python -m counting_sat_algebra.verify --step24
+  python -m counting_sat_algebra.verify --step25
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1061,7 +1067,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–X): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–AA): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1114,7 +1120,7 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "schedule_placement does not make that call. The schedule cube was "
             "not enumerated."
         )
-    if any(step in steps for step in range(9, 23)):
+    if any(step in steps for step in range(9, 26)):
         parts.append(
             "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
             "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
@@ -1126,6 +1132,14 @@ def _selected_scope(steps: Sequence[int]) -> str:
             "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered Hermite recovery. "
             "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
             "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
+            "Step 23 transfers Lean encoding and a streamed disjoint counting frontier with finite algebraic leaves. "
+            "Step 24 constructs ternary Newton digits and exact accepted/marked query counts through "
+            "shared marker truncation and finite squarefree polynomial sums. "
+            "Step 25 constructs the scheduled sparse ternary code with regenerated rows and "
+            "selects history rows by accumulated marked-violation mass before counting the "
+            "separate final accepted query. "
+            "The high-variable loop, packing, streamed Taylor leaves and Python resource "
+            "refinement remain open. "
             "Proposition 6.4's running time is not claimed. Appendix D recursive contraction is not implemented. "
             "Complete Theorem 1.1 alignment remains open."
         )
@@ -1139,7 +1153,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–22. The full path stays in ``main``."""
+    """Run a subset of Steps 2–25. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1247,7 +1261,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 22)"
+        description="Counting algorithm reference verifier (Steps 0 through 25)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1309,8 +1323,11 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step20', action='store_true', help='check Appendix D modular networks, Cauchy deformation and tapered recovery')
     parser.add_argument('--step21', action='store_true', help='check Appendix D collision packing and prospective child topology')
     parser.add_argument('--step22', action='store_true', help='check finite Appendix D.4.5 weighted modes')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–22 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step22)')
+    parser.add_argument('--step23', action='store_true', help='check Lean-guided encoding and streamed disjoint counting')
+    parser.add_argument('--step24', action='store_true', help='check native ternary algebra and accepted/marked queries')
+    parser.add_argument('--step25', action='store_true', help='check scheduled sparse codes and violation-mass greedy selection')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–25 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step25)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1348,11 +1365,14 @@ def main(argv: List[str] | None = None) -> int:
             (20, args.step20 or args.reference),
             (21, args.step21 or args.reference),
             (22, args.step22 or args.reference),
+            (23, args.step23 or args.reference),
+            (24, args.step24 or args.reference),
+            (25, args.step25 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step22')
+        parser.error('--output requires --reference or --step9 through --step25')
     if selected:
         return _run_selected(
             selected,
@@ -1361,7 +1381,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 22")
+    print("counting_sat_algebra.verify — Steps 0 through 25")
     print("Counting polynomial, univariate interpolation, bounded-occurrence checks,")
     print("a blocked sum on hand-built replacements, a tiny replacement matrix,")
     print("Hermite recovery of H(0) from Hasse coefficients,")
@@ -1524,6 +1544,14 @@ def main(argv: List[str] | None = None) -> int:
         "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered recovery. "
         "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
         "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
+        "Step 23 checks Lean-compatible syntax and a streamed disjoint counting frontier. "
+        "Step 24 constructs ternary Newton digits and exact accepted/marked query counts "
+        "through shared marker truncation and finite squarefree polynomial sums. "
+        "Step 25 constructs the scheduled sparse ternary code with regenerated rows and "
+        "selects history rows by accumulated marked-violation mass before counting the "
+        "separate final accepted query. "
+        "The high-variable loop, packing, streamed Taylor leaf and Python resource "
+        "refinement remain open. "
         "Appendix D recursive contraction is not implemented. Complete "
         "Theorem 1.1 alignment remains open. "
         f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "

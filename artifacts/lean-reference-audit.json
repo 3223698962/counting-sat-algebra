@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "scope": "Static import-closure and source-marker audit; no Lean execution or kernel verification.",
+  "entry_module": "OAI.Algorithms.SubexponentialSAT.Main",
+  "audited_entry_modules": [
+    "OAI.Algorithms.SubexponentialSAT.Main",
+    "OAI.Algorithms.SubexponentialSAT.SqrtLogSpace.Final",
+    "OAI.Algorithms.SubexponentialSAT.SubexpOrderedRawMainTheorem"
+  ],
+  "toolchain": "leanprover/lean4:v4.34.1",
+  "local_modules": 3969,
+  "source_bytes": 36126047,
+  "source_sha256": "a685dfd8414a8a0138a35d76c1745500c8a58dd6bdcf408f2907f7d77539185c",
+  "missing_local_imports": [],
+  "external_dependency_roots": [
+    "Lean",
+    "Mathlib"
+  ],
+  "proof_placeholders": [],
+  "axiom_declarations": [],
+  "declarations": [
+    {
+      "file": "OAI/Algorithms/SubexponentialSAT/SubexpOrderedRawMainTheorem.lean",
+      "declaration": "mainTheorem_explicit",
+      "body_present": true
+    },
+    {
+      "file": "OAI/Algorithms/SubexponentialSAT/SqrtLogSpace/Final.lean",
+      "declaration": "compiled_exact_count_and_sat",
+      "body_present": true
+    },
+    {
+      "file": "OAI/Algorithms/SubexponentialSAT/SqrtLogSpace/Final.lean",
+      "declaration": "exact_count_and_sat",
+      "body_present": true
+    },
+    {
+      "file": "OAI/Algorithms/SubexponentialSAT/SqrtLogSpace/Final.lean",
+      "declaration": "exact_count_eth",
+      "body_present": true
+    }
+  ],
+  "static_checks_passed": true,
+  "kernel_verified": false,
+  "python_algorithm_complete": false
+}

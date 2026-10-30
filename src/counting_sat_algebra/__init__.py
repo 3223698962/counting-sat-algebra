@@ -21,13 +21,22 @@ claimed.
 Step 20 adds Appendix D's finite coefficient rings, CNF tensor networks,
 direct modular leaves, Cauchy local coordinates and tapered Hermite recovery.
 Step 21 constructs finite collision labels and packet layouts, and checks
-the prospective child topologies. Weighted modes and recursive child
-contractions remain open.
+the prospective child topologies. Step 22 checks finite weighted modes.
+Step 23 supplies Lean-compatible syntax, exact dyadic parameter search and
+a streamed disjoint counting frontier on the original declared n. Step 24
+constructs ternary Newton digits and exact accepted/marked query counts
+through shared-marker truncation and finite squarefree polynomial sums.
+Step 25 constructs the scheduled sparse ternary code with regenerated rows
+and selects history rows by accumulated marked-violation mass before the
+separate final accepted query. The DIMACS Lean backend connects the native
+and hash leaves to the same frontier.
 
-The target is reference Theorem 1.1's exact count with its time/space bounds.
-The general-formula reduction and complete asymptotic pipeline remain open.
-Finite comparisons and numerical admission do not establish those bounds.
-Step 21 does not implement Theorem 1.1 or the general Appendix D contraction.
+The active roadmap follows the supplied SqrtLogSpace counting program.
+The high-variable loop, counting extensions, placement, streamed Taylor
+leaves and Python time/space refinement remain open.
+The supplied Lean library has theorem proof source; local kernel validation
+is pending. Finite comparisons do not establish general asymptotic bounds.
+Appendix D packet tensors and recursive contraction remain a later route.
 """
 
 from .blocked_sum import (
@@ -60,6 +69,32 @@ from .sparse_placement import (
     check_sparse_design, place_sparse_formula, schedule_sparse_placement,
 )
 from .component_count import ComponentCountResult, count_cnf_components
+from .lean_code import (
+    CodeBudgets, CodeMeter, CodeRefusal, CodeSearchResult, SparseCodeCertificate,
+    SparseCodeParameters, SparseCodeResult, SparseCodeRows, SparseTannerCode,
+    canonical_hash_candidates, certify_sparse_code, construct_sparse_code, radix_words,
+    search_local_ternary_matrix, search_walsh_shifts, sparse_code_parameters,
+)
+from .lean_encoding import (
+    cnf_numbers, count_word, decode_cnf, decode_count_word, encode_cnf, formula_bit_length,
+    literal_code,
+)
+from .lean_greedy import (
+    STEP25_SCOPE, GreedyBudgets, GreedyCountResult, count_cnf_greedy, occurrence_bound,
+    select_history_rows,
+)
+from .lean_parameters import SparseParameter, choose_sparse_parameter, parameter_test
+from .lean_ring import (
+    DenseElement, LeanAlgebraBudgets, LeanAlgebraRefusal, TernaryIndicator, TruncatedRing,
+    construct_ternary_indicator,
+)
+from .lean_query import (
+    STEP24_SCOPE, TernaryHashRow, TernaryQueryResult, count_cnf_ternary, count_ternary_query,
+)
+from .lean_sparsify import (
+    STEP23_SCOPE, PriorityChoice, StreamingBudgets, StreamingCountResult, count_cnf_streaming,
+    normalize_lean_cnf, select_priority, split_priority,
+)
 from .support_count import SupportCountPlan, SupportCountResult, count_placed_formula_by_support
 from .tensor_count import ContractionBudgets, ContractionPlan, ContractionResult, count_placed_formula_by_contraction
 from .modular_ring import ModularBudgetRefusal, ModularRing, extension_ring_for_size
@@ -141,6 +176,18 @@ from .sparsify import (
 )
 
 __all__ = [
+    "STEP23_SCOPE", "PriorityChoice", "SparseParameter", "StreamingBudgets",
+    "StreamingCountResult", "choose_sparse_parameter", "cnf_numbers", "count_cnf_streaming",
+    "count_word", "decode_cnf", "decode_count_word", "encode_cnf", "formula_bit_length",
+    "literal_code", "normalize_lean_cnf", "parameter_test", "select_priority", "split_priority",
+    "DenseElement", "LeanAlgebraBudgets", "LeanAlgebraRefusal", "TernaryIndicator", "TruncatedRing",
+    "construct_ternary_indicator", "STEP24_SCOPE", "TernaryHashRow", "TernaryQueryResult",
+    "count_cnf_ternary", "count_ternary_query", "STEP25_SCOPE", "GreedyBudgets",
+    "GreedyCountResult", "count_cnf_greedy", "occurrence_bound", "select_history_rows",
+    "CodeBudgets", "CodeMeter", "CodeRefusal", "CodeSearchResult", "SparseCodeCertificate",
+    "SparseCodeParameters", "SparseCodeResult", "SparseCodeRows", "SparseTannerCode",
+    "canonical_hash_candidates", "certify_sparse_code", "construct_sparse_code", "radix_words",
+    "search_local_ternary_matrix", "search_walsh_shifts", "sparse_code_parameters",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -322,4 +369,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.23.0"
+__version__ = "0.25.0"

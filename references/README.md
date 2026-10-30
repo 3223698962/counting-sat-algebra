@@ -5,6 +5,6 @@ Offline copies for reading this repository. `pytest` and `python -m counting_sat
 | Path | What it is |
 |------|------------|
 | [`paper/`](paper/README.md) | Preprint *The Exponential Time Hypothesis is False* (OpenAI; 17 October 2026, revised 25 October 2026): PDF and plain-text extract |
-| [`lean/`](lean/README.md) | Scope note and Lean scaffold from a separate formalization effort. The main theorem ends in `sorry` |
+| [`lean/`](lean/README.md) | Supplied SubexponentialSAT library with final exact-count and space proof source, plus the separately retained historical single-file scaffold |
 
-A copy in this tree is a reading aid. It does not mean `counting-sat-algebra` proves the preprint, and it does not mean the Lean file is a finished proof. The status of the Python checks is [`docs/STATUS.md`](../docs/STATUS.md).
+The supplied library is the active Python implementation reference in version 0.25.0. Its static local-import audit passes; local Lean kernel compilation and Python refinement remain pending. The old scaffold's `sorry` does not describe the new library. Source availability, kernel verification and completion of the Python algorithm are recorded separately in [`lean/README.md`](lean/README.md) and [`docs/STATUS.md`](../docs/STATUS.md).

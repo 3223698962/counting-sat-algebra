@@ -1,6 +1,8 @@
 # 与 references 的实现对齐
 
-目标是实现本地参考文献描述的确定性精确计数算法，并核验对应的时间、空间结论。当前版本是 0.23.0；此文件记录目标和实际完成的范围。0.23.0 在 Steps 9–21 之外增加有限 D.4.5 模式。Theorem 1.1 没有实现，本仓库不否定 ETH，也没有一般的 \(2^{o(n)}\) 算法。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。
+当前版本 **0.25.0**。主目标是移植新加入的完整 Lean `SqrtLogSpace` 精确计数程序，并核验 Python 的语义、时间和空间连接。Step 23 已实现原声明 n 上的流式互不重叠前沿，Step 24 已实现三元指示系数、接受/标记查询及原生计数叶，Step 25 已实现日程稀疏码、逐行再生与违反质量贪心选行。原论文 Sections 3–6 和 Appendix D 的有限结果保留；更强的 Appendix D 路线列为后续工作。
+
+本包尚未实现一般输入的完整渐近算法，`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。新 Lean 库具有终点证明源码；这些标志记录 Python 实现、本地内核核验和精化的未完成状态，不把新库误写成旧的 `sorry` 脚手架。
 
 ## 需要达到的结论
 
@@ -12,7 +14,17 @@
 
 时间与 \((n+m)^{O_k(1)}\) 空间。当子句密度固定时，指数改善为 \(O_{k,D}(n/\sqrt{\log n})\)。这些更强的界来自 Appendix D 的张量收缩。
 
-Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)^2/\sqrt{\log n})\)。Lean 的范围说明采用这个较弱的界；其 `exact_count_and_sat` 定理仍以 `sorry` 结束。
+新 Lean 的 `SqrtLogSpace/Final.lean` 给出 `compiled_exact_count_and_sat`、`exact_count_and_sat` 和 `exact_count_eth`：一个固定程序返回完整自然数计数字及 SAT 位，计数字长度不超过 n+1，并给出全部执行前缀的多项式 visited-tape 空间界。`SubexpOrderedRawMainTheorem.lean/mainTheorem_explicit` 保留原始外部 SAT 编码签名。
+
+时间尺度采用较弱的指数 \(O_k(n(\log\log n)^2/\sqrt{\log n})\)。`SqrtLog/StatementScale.lean` 的具体定义为
+
+\[
+runtimeScale(n)=n\frac{(\log\log(n+16))^2}{\sqrt{\log(n+16)}}.
+\]
+
+`SqrtLogSpace/Asymptotics.lean` 则以底数 2 的对数定义 rho，并把它连接到该尺度。它与原 Sections 3–6 的指数同阶，不能写成 Appendix D 的更强指数。主路线按这套计数程序的依赖实施，无需先补完 Appendix D 递归。
+
+静态审计覆盖 3969 个本地导入模块，没有缺失的本地导入、代码级 `sorry`/`admit` 或 `axiom` 声明；所列入口具有证明体或证明项。`kernel_verified=false`，本机尚未执行 Lean 编译。旧 `references/lean/SubexponentialSAT.lean` 的 `sorry` 只属于历史脚手架。审计边界和可重复编译入口见 [Lean 参考说明](../references/lean/README.md)。
 
 因此，准确计数、小实例检查、一般输入的复杂度分析和完整 Lean 证明分别需要证据。Python 的测试通过不代表时间界或 Lean 定理已经完成。
 
@@ -41,6 +53,10 @@ Sections 3–6 的有理数插值路线给出较弱的指数 \(O_k(n(\log\log n)
 | Appendix D.4.2 的有限日程与碰撞分包 | `modular_packing.py`；`verify --step21` | 精确整数日程及 D.6 平方守卫；邻接重数直方图处理共享端点和平行边的条件期望；统一填充和相等坐标副本位；数值前提与实际结论分别检查。标签与包的资源预算在搜索前核对 |
 | Appendix D.4.6 的子网络端口拓扑 | `modular_packing.py` 的 `child_topology` | 保留原端口顺序和孤立顶点，检查有限子图的边数和度数。8192 边匹配的最大子拓扑有 256 条边、度数 4；未构造包张量，也未执行递归收缩 |
 | Appendix D.4.5 的有限加权模式 | `modular_modes.py`；`verify --step22` | 一个包的模式表、\(6M/D\) 与指数预算、交叉 Cauchy 余数 8。模式通过后 Step 20 仍恢复 9+4V。拒绝不返回计数。不是包张量，也不是 D.16 |
+| Lean 编码、参数和流式计数前沿 | `lean_encoding.py`、`lean_parameters.py`、`lean_sparsify.py`；`verify --step23` | 二进制往返与计数字、首个通过精确整数条件的 M、规范化和优先核心；只保留活动前沿，按原声明 n 累加互不重叠的叶。结构先预检，叶拒绝时不发布部分总和 |
+| Lean 三元系数与真实查询 | `lean_ring.py`、`lean_squarefree.py`、`lean_query.py`；`verify --step24` | 实际 Newton digits、独立 U/Z 截断和完整乘积后读出；支持并集乘法与布尔单项式权重求和；原始子句编号、重复和 fixed 条件下的接受/标记违反计数。单位行给出 CNF #SAT，原生叶已接到同一前沿 |
+
+Step 24 的完整查询没有布尔赋值扫描，但仍存储平方自由支持表，可能指数增长。当前 CNF 叶对应 J=1；一般 t*J 稠密环还没有接通流式节点求值、修正对和 Hermite 恢复。接受查询是历史行的公共零点数，标记查询是接受集中的单个子句违反数，它们不能直接替换原 CNF #SAT。源声明、恒等式和预算见 [LEAN_NATIVE.md](LEAN_NATIVE.md)。
 
 `count_placed_formula` 使用安全次数上界 \(d_H=M(R-1)\)，取 \(q=\lfloor d_H/Q\rfloor\)、\(J=q+1\)，因此 \(QJ>d_H\)。它只调用局部扫描，不调用 `brute_count`、`eval_H_at` 或 `eval_H_hasse_jet`。这些全空间函数用于独立验证。
 
@@ -95,7 +111,13 @@ Step 21 的十四项检查覆盖整数日程、对数见证、D.6 平方守卫�
 
 Step 22 的十三项检查覆盖一个包的模式表、空的局部包、指数元组、加权支持拒绝门、交叉 Cauchy 余数 **8**、模式通过后的 Step 20 恢复 **9+4V**，以及模式个数、\(6M/D\)、元组上界、部分选择上界、不合格次数、支持记录预算和超预算指数的拒绝。拒绝的 `count` 为 null。包张量求值为 0。详见 [WEIGHTED_MODES.md](WEIGHTED_MODES.md)。
 
-344 项 pytest 全部通过；`--reference` 的 97 项检查全部通过。保存结果 `benches/reference_alignment.json` 的版本为 0.23.0，步骤为 9–22。它区分 `COUNTED`、`CHECKED`、`REFUSED`，记录原有计数、参数、设计检查，以及 Step 20 和 Step 21 各十四行、Step 22 十三行的有限 Appendix D 检查，保留 `theorem_1_1_complete=false` 和 `lean_proof_complete=false`；Appendix D 结果的 `recursive_contraction=false`。报告不记录运行时间。大计数以精确十六进制保存。`--output` 可直接重建报告；报告列出实际执行的步骤，检查失败或没有返回检查行时不会标为全部通过。Step 15 的四行保存在 `artifacts/step15-verification.json`。Step 16 的十行保存在 `artifacts/step16-verification.json`。Step 17 的九行保存在 `artifacts/step17-verification.json`。Step 18 的七行保存在 `artifacts/step18-verification.json`。Step 19 的九行保存在 `artifacts/step19-verification.json`。Step 20 与 Step 21 的十四行分别保存在 `artifacts/step20-verification.json` 和 `artifacts/step21-verification.json`。Step 22 的十三行保存在 `artifacts/step22-verification.json`。`verify --quick` 和两项 CI 报告校验也已通过。
+Step 25 的十五项检查覆盖日程整数公式、相对距离恒等式、局部距离与 Walsh 的首选见证、槽位行再生、证书算术、接受/拒绝证书、矩阵与候选预算拒绝、候选流与贪心暴力轨迹、零质量模型集、流式 hash 叶、三类拒绝和终端情形。
+
+当前完整报告 `benches/reference_alignment.json` 覆盖 Steps 9–25，新增 Step 25 的十五行：日程参数、距离/Walsh 见证、行再生、候选流、贪心轨迹（星形质量 12→4→1→0、计数 9）与流式 hash 叶计数 196/9/25。`artifacts/step15-verification.json` 至 `artifacts/step25-verification.json` 可分别用对应 `--stepN --output` 重新执行并保存；报告版本与包版本一致。
+
+版本 0.25.0 的完整 pytest 为 **453/453**，完整参考检查为 **143/143**；Steps 15–25 的单步报告也已实际重新执行生成。
+
+报告区分 `COUNTED`、`CHECKED`、`REFUSED`，保留全部完成标志为 false，不记录运行时间，大计数以精确十六进制保存。`--output` 只记录实际执行的检查，失败或空 suite 不会标为全部通过。静态 Lean 审计独立保存在 `artifacts/lean-reference-audit.json`；它不替代计数检查或 Lean 内核核验。
 
 命令：
 
@@ -112,18 +134,26 @@ python -m counting_sat_algebra.verify --step19
 python -m counting_sat_algebra.verify --step20
 python -m counting_sat_algebra.verify --step21
 python -m counting_sat_algebra.verify --step22
+python -m counting_sat_algebra.verify --step23
+python -m counting_sat_algebra.verify --step24
+python -m counting_sat_algebra.verify --step25
 python -m counting_sat_algebra.verify --quick
+python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-audit.json
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
+python -m counting_sat_algebra count examples/count_demo.cnf --backend lean --leaf-backend native --json
 python -m counting_sat_algebra count examples/connected_path.cnf --backend tensor --output benches/connected_path.json
 ```
 
-`--step9` 至 `--step22` 可以分别运行上述十四组新检查，也支持 `--output` 保存所选参考检查。`--step8` 保留原布尔预算模式的拒绝记录。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 只改变局部代数计数。`--quick` 包含 Steps 16–22 的同一组有限检查。Steps 17–22 不改变 DIMACS 计数命令；模网络、自动分包和加权模式通过独立 Python API 提供。
+`--step9` 至 `--step25` 可分别运行十七组参考检查，也支持 `--output` 保存所选结果。`--step8` 保留原布尔预算模式。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 提供有限 Taylor 消元，`lean` 提供流式外层及 `common|tensor|native` 叶。`--quick` 运行 Steps 0–8 的小网格和 Steps 9–25 的同一组有限检查。Steps 17–22 的模网络、分包等仍由独立 API 提供。
 
 ## 尚未完成的条件
 
-1. Lemma 4.8 的闭式已能精确计算，并在预算允许时执行一个通过 Lemma 4.7 的有限成员。机器可放置的 n 上，闭式在形成 D 之前失败；n=16384 的有限成员是 r=2、Q=3、R=2、τ=5/16，不满足 R≥32 或 6R≤Q。这次执行没有证明渐近时间或空间界，也没有让一般输入自动获得该界。共享测量路线在该放置上仍超出预算。桶宽不超过预算的连通支持可由 Step 15 计数；更宽的因子或消除桶仍在建表前拒绝。调用者仍可直接提供参数。
-2. Section 5.1–5.5 的有限对象已经可以在预算内核对：单项式、Lemma 5.1、截断乘积，以及在显式有限设计上的 \(A_\ell\) 替换求和。该设计不是 Lemma 4.8 的行，这次求和也不是 Theorem 2.2 的运行时间。Section 6 的有限方程选择和互不重叠稀疏化也已经在预算内核对：小实例上 \(A(0)\) 满足权重下界，贪心计数与 \(\#F\) 一致，叶计数之和等于输入 \(\#F\)，且子公式保持声明的 \(n\)。超预算的搜索和候选表在分配前拒绝。Proposition 6.4 的整数可以计算；\(n=20\) 是穷举情形，不声称 \(O_k(\rho(n))\)。Step 5 的蕴涵环复制会增加 \(n\)，不是 Lemma 6.3。Step 17 的穷举和 Step 18 的有限求和都不是这套构造。
-3. Steps 20–22 已实现 Appendix D 的有限模环、CNF 网络、Cauchy 变形、分层恢复、D.4.2 日程与碰撞分包、D.4.6 子网络拓扑，以及一个包上的有限 D.4.5 加权模式。仍需完成 D.4.6 的包张量系数及其不可变创建时描述、D.4.7 的递归收缩与不变量，以及 D.3 的稀疏系统编码，才能对齐 Theorem 1.1 的较强时间界。Step 14 的有限不相交支持集收缩，以及 Step 15 在小中间表上的有限 Taylor 变量消去，都没有给出这一一般算法或复杂度证明。Step 22 的模式表也没有给出。
-4. 完成精确位复杂度、总空间的分析，以及 Lean 主定理中的实际机器构造与证明。有限存储统计、独立分量计数、不相交支持集计数和有限连通收缩都不能证明这些界。
+1. （Step 25 已完成）构造并核对 Lean 的实际三元稀疏码，按游标再生候选行，保留距离、宽度和出现次数约束。
+2. （Step 25 已完成）用真实标记查询累加候选行的违反质量，接通流式贪心选择，并独立执行最终历史接受查询；`hash` 叶已使用该程序。
+3. 接通原声明 n 上的高变量赋值循环和参数前端；单个 fixed 查询已有，但完整分支累加及度数/出现次数控制尚未接通。
+4. 构造计数扩张环、互异插值节点和实际分组放置，建立 QJ>degree。已有有限参数放置与 Appendix D 模环不能直接代替这套构造。
+5. 按 Lean 修正对再生、节点喷射和 Hermite 恢复程序实现流式 Taylor 查询叶，替换当前可能指数增长的平方自由支持表。
+6. 对整条 Python 程序核对精确位时间、所有前缀的工作空间、完整计数字和成功/失败路径；将操作统计与 Lean 原始机器资源建立精化关系。
+7. 在库锁定的 Lean 环境中实际编译入口、保存公理依赖输出。新增库已有证明源码；尚未完成的是本地内核核验及 Python 对该程序的移植与精化。
 
-这些是完成参考结论的验收条件。当前实现已推进 Sections 3、4、Section 5 的有限检查，以及 Section 6 的有限里程碑，但尚未达到 Theorem 1.1 或 Lean 主定理。Appendix D 的有限局部部件、分包和一个包上的加权模式已在 Steps 20–22 核对，一般递归收缩仍未实现。
+Appendix D 的 D.4.6 包张量、D.4.7 子递归和 D.3 编码单列为后续路线，以达到论文 Theorem 1.1 的更强界。当前的有限参数成员、独立分量、支持集收缩、Taylor 消元与模局部恢复都不能建立一般输入的渐近结论。
