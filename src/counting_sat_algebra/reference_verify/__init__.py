@@ -13,7 +13,7 @@ rows and the violation-mass greedy selector. Step 26 checks the early
 high-incidence threshold, the high-variable frontend and the streamed
 conditioned rank loop. Step 27 checks the counting extension ring, the fixed
 nodes and the Q*J > degree Hermite condition. Step 28 checks the streamed
-correction pairs and the Taylor readback. Step 29 checks the streamed pointwise correction-pair leaf. The active roadmap follows the
+correction pairs and the Taylor readback. Step 29 checks the streamed pointwise correction-pair leaf. Step 30 checks the assembled leaf placement and framed stream. The active roadmap follows the
 supplied SqrtLogSpace program; packing and the whole-machine resource refinement remain open. These checks do not establish Python asymptotic bounds or replace
 Lean kernel verification. Appendix D packet tensors and recursive modular
 contraction remain open.
@@ -27,6 +27,7 @@ from .asymptotic import run_asymptotic_family_suite
 from .common import run_common_count_suite
 from .component import run_component_count_suite
 from .design import run_reference_design_suite
+from .lean_assembly import run_lean_assembly_suite
 from .lean_ext import run_lean_ext_suite
 from .lean_greedy import run_lean_greedy_suite
 from .lean_high import run_lean_high_suite
@@ -67,6 +68,7 @@ REFERENCE_SUITES = (
     (27, run_lean_ext_suite),
     (28, run_lean_taylor_suite),
     (29, run_lean_stream_suite),
+    (30, run_lean_assembly_suite),
 )
 
 __all__ = [
@@ -76,6 +78,7 @@ __all__ = [
     'run_common_count_suite',
     'run_component_count_suite',
     'run_lean_streaming_suite',
+    'run_lean_assembly_suite',
     'run_lean_ext_suite',
     'run_lean_greedy_suite',
     'run_lean_high_suite',

@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "version": "0.30.0",
+  "goal": "Implement the complete SqrtLogSpace Lean algorithm in Python and verify its time and space contracts.",
+  "theorem_1_1_complete": false,
+  "lean_proof_complete": false,
+  "scope": "Finite reference Sections 3 and 4 checks, sparse admitted placements, independent component counts, disjoint replacement supports, finite connected Taylor contraction, finite members of the Lemma 4.8 parameter schedule, finite Section 5.1–5.2 sparse-system checks, a finite Section 5.3–5.5 replacement sum in A_ell, and finite Section 6 equation selection with disjoint sparsification, and finite Appendix D coefficient rings, CNF networks, Cauchy deformation, tapered Hermite recovery, collision parameter schedules, packet layouts, prospective child topologies, and finite D.4.5 weighted modes, Lean-compatible binary syntax and a streamed disjoint counting frontier with finite algebraic leaves, ternary Newton coefficient words, shared marker truncation and exact accepted/marked counts through finite squarefree polynomial sums. SqrtLogSpace native sparse-code search, greedy row selection, packing, streamed Taylor leaves and the Python bit-complexity transfer remain open. The Python checks do not establish Proposition 6.4's O_k(rho(n)) bound. Packet-tensor coefficients, Appendix D recursive contraction and Theorem 1.1 are not implemented; no general-input asymptotic claim.",
+  "wall_times_recorded": false,
+  "steps": [
+    30
+  ],
+  "failed_step": null,
+  "all_checks_passed": true,
+  "rows": [
+    {
+      "name": "lean-assembly-placement-port-lengths",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "cases": [
+        {
+          "n": 4,
+          "m": 3,
+          "t": 7,
+          "d": 3,
+          "nodes": 2,
+          "port_bits": 1640
+        },
+        {
+          "n": 8,
+          "m": 7,
+          "t": 12,
+          "d": 3,
+          "nodes": 2,
+          "port_bits": 3147
+        },
+        {
+          "n": 6,
+          "m": 4,
+          "t": 10,
+          "d": 3,
+          "nodes": 2,
+          "port_bits": 2507
+        },
+        {
+          "n": 8,
+          "m": 2,
+          "t": 11,
+          "d": 3,
+          "nodes": 2,
+          "port_bits": 2822
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-structure-table-words",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "words": 8,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-scalar-codes-and-node-caches",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-row-stream-round-trip",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-append-encoding",
+      "n": 4,
+      "m": 3,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "appended_bits": 26,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-connected-run-counts",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "cases": [
+        {
+          "n": 4,
+          "m": 3,
+          "count": 9,
+          "rows": 2,
+          "rounds": 3,
+          "port_bits": 1640
+        },
+        {
+          "n": 8,
+          "m": 7,
+          "count": 129,
+          "rows": 2,
+          "rounds": 7,
+          "port_bits": 3147
+        },
+        {
+          "n": 6,
+          "m": 4,
+          "count": 25,
+          "rows": 2,
+          "rounds": 4,
+          "port_bits": 2507
+        },
+        {
+          "n": 8,
+          "m": 2,
+          "count": 196,
+          "rows": 2,
+          "rounds": 2,
+          "port_bits": 2822
+        }
+      ],
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-budget-refusals",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "REFUSED",
+      "count": null,
+      "refusals": 6,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-terminal-leaves",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "COUNTED",
+      "count": null,
+      "free_bits": 256,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    },
+    {
+      "name": "lean-assembly-recorded-port-map",
+      "n": 0,
+      "m": 0,
+      "brute": -1,
+      "ok": true,
+      "label": "CHECKED",
+      "count": null,
+      "ports": 21,
+      "recursive_contraction": false,
+      "theorem_1_1_complete": false,
+      "lean_proof_complete": false
+    }
+  ]
+}

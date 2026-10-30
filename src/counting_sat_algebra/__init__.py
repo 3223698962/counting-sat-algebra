@@ -34,12 +34,14 @@ through the streamed conditioned rank loop. Step 27 constructs the counting
 extension ring, the fixed nodes and the Q*J > degree Hermite placement.
 Step 28 streams the correction pairs and re-reads the per-node Taylor
 coefficients by Newton Hermite. Step 29 adds the streamed pointwise
-correction-pair leaf, which needs no squarefree support table. The DIMACS
-Lean backend connects the native, hash and stream leaves to the same
-frontier.
+correction-pair leaf, which needs no squarefree support table. Step 30 places
+the leaf's ring constants, node tables and framed row stream into one
+threaded assembled run. The DIMACS Lean backend connects the native, hash and
+stream leaves to the same frontier.
 
 The active roadmap follows the supplied SqrtLogSpace counting program.
-Packing, native placement and Python time/space refinement remain open.
+The physical machine, grouping replacement, default leaf selection and
+Python time/space refinement remain open.
 The supplied Lean library has theorem proof source; local kernel validation
 is pending. Finite comparisons do not establish general asymptotic bounds.
 Appendix D packet tensors and recursive contraction remain a later route.
@@ -75,6 +77,12 @@ from .sparse_placement import (
     check_sparse_design, place_sparse_formula, schedule_sparse_placement,
 )
 from .component_count import ComponentCountResult, count_cnf_components
+from .lean_assembly import (
+    PORT, STEP30_SCOPE, AssembledLeafResult, AssemblyBudgets, AssemblyRefusal,
+    PlacedLeafState, append_payload, decode_flat, decode_history,
+    history_from_payloads, payload_to_slots, place_leaf_state, run_assembled_leaf,
+    serialize_leaf_history, structure_table,
+)
 from .lean_code import (
     CodeBudgets, CodeMeter, CodeRefusal, CodeSearchResult, SparseCodeCertificate,
     SparseCodeParameters, SparseCodeResult, SparseCodeRows, SparseTannerCode,
@@ -225,6 +233,10 @@ __all__ = [
     "node_coefficient_stream", "pair_count", "reconstruct_from_stream",
     "streamed_boolean_sum", "streamed_taylor_count",
     "STEP29_SCOPE", "StreamedQueryResult", "count_cnf_streamed", "streamed_query_count",
+    "PORT", "STEP30_SCOPE", "AssembledLeafResult", "AssemblyBudgets", "AssemblyRefusal",
+    "PlacedLeafState", "append_payload", "decode_flat", "decode_history",
+    "history_from_payloads", "payload_to_slots", "place_leaf_state",
+    "run_assembled_leaf", "serialize_leaf_history", "structure_table",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -406,4 +418,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.29.0"
+__version__ = "0.30.0"
