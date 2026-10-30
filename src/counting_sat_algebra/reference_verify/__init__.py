@@ -12,9 +12,9 @@ queries. Step 25 checks the scheduled sparse ternary code, its regenerated
 rows and the violation-mass greedy selector. Step 26 checks the early
 high-incidence threshold, the high-variable frontend and the streamed
 conditioned rank loop. Step 27 checks the counting extension ring, the fixed
-nodes and the Q*J > degree Hermite condition. The active roadmap follows the
-supplied SqrtLogSpace program; the streamed Taylor leaf, packing and the
-whole-machine resource refinement remain open. These checks do not establish Python asymptotic bounds or replace
+nodes and the Q*J > degree Hermite condition. Step 28 checks the streamed
+correction pairs and the Taylor readback. The active roadmap follows the
+supplied SqrtLogSpace program; packing and the whole-machine resource refinement remain open. These checks do not establish Python asymptotic bounds or replace
 Lean kernel verification. Appendix D packet tensors and recursive modular
 contraction remain open.
 
@@ -32,6 +32,7 @@ from .lean_greedy import run_lean_greedy_suite
 from .lean_high import run_lean_high_suite
 from .lean_streaming import run_lean_streaming_suite
 from .lean_native import run_lean_native_suite
+from .lean_taylor import run_lean_taylor_suite
 from .packet_packing import run_packet_packing_suite
 from .report import write_reference_report
 from .section5 import run_section5_suite
@@ -63,6 +64,7 @@ REFERENCE_SUITES = (
     (25, run_lean_greedy_suite),
     (26, run_lean_high_suite),
     (27, run_lean_ext_suite),
+    (28, run_lean_taylor_suite),
 )
 
 __all__ = [
@@ -76,6 +78,7 @@ __all__ = [
     'run_lean_greedy_suite',
     'run_lean_high_suite',
     'run_lean_native_suite',
+    'run_lean_taylor_suite',
     'run_packet_packing_suite',
     'run_reference_design_suite',
     'run_section5_replacement_suite',

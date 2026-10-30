@@ -265,3 +265,14 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Check the Hermite margin Q\*J > width\*R\*(2\*factors + 3(t-1) + 1) with the exact division-plus-one identity, and refuse on degree, candidate, division and ring budgets
 - [x] Export 12 `verify --step27` rows and 26 pytest checks; keep the theorem, Lean and recursive-contraction flags false
 - The full native placement into the ABI, grouping replacement and the streamed Taylor leaf remain open obligations
+
+### Step 28 — streamed correction pairs and Taylor readback
+
+- [x] Stream all correction pairs (|E| < J, U subset of E) in the exact fold order with strict-budget pruning; check the pair counts, the codec round trips and the enumeration against an independent mask family
+- [x] Extract every squarefree coefficient by the alternating difference sum and match the support table on all masks
+- [x] Verify the Boolean finite-difference identity: the streamed totals equal the direct weight sums and the brute-force point sums on signed probes, and the model indicators of the star, double star and hub give 9, 25 and 129
+- [x] Emit per-node blocks of the J exact Taylor coefficients of the shifted target as Q\*J\*d little-endian 2t-bit words, and rebuild them from the stream alone
+- [x] Recover the count by Newton-Hermite with Q\*J above the degree; detect short and trailing streams, reordered nodes and out-of-range readback
+- [x] Refuse on order, pair, assignment, term, jet-order and stream-word budgets without a partial sum, including the first-order constant case
+- [x] Export 9 `verify --step28` rows and 29 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The production native leaf still evaluates the full squarefree support table. Switching it to the streamed path with immediate U-specialization and complete pair regeneration, the native placement and the whole-machine resource refinement remain open

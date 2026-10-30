@@ -1,6 +1,6 @@
 # Lean 原生三元计数查询
 
-包版本 **0.27.0**。Step 24 将新 Lean 库中的三元指示系数、共享标记截断和查询语义实现为可运行的有限 Python 后端；Step 25 增加日程三元稀疏码、逐行再生和违反质量贪心选行，`--backend lean --leaf-backend hash` 用它们计数流式稀疏化叶；Step 26 计算早期阈值与高变量前端，并可按秩流式路由全部查询；Step 27 构造计数扩张环、固定节点与 `Q*J > degree` 的 Hermite 条件。当前查询直接展开平方自由支持表，完整的流式 Taylor 叶、分组替换和实际放置仍列在 [ROADMAP.md](../ROADMAP.md)。
+包版本 **0.28.0**。Step 24 将新 Lean 库中的三元指示系数、共享标记截断和查询语义实现为可运行的有限 Python 后端；Step 25 增加日程三元稀疏码、逐行再生和违反质量贪心选行，`--backend lean --leaf-backend hash` 用它们计数流式稀疏化叶；Step 26 计算早期阈值与高变量前端，并可按秩流式路由全部查询；Step 27 构造计数扩张环、固定节点与 `Q*J > degree` 的 Hermite 条件；Step 28 流式枚举修正对并把逐节点 J 系数流按 Newton–Hermite 读回。当前查询直接展开平方自由支持表，把生产叶切换到该流式路径、分组替换和实际放置仍列在 [ROADMAP.md](../ROADMAP.md)。
 
 ## 源声明与接口
 
@@ -19,6 +19,8 @@
 | `HashGreedy`、`HashGreedyCNF`：`mass`、`best`、`history`、`loopCap` | `select_history_rows`、`count_cnf_greedy` | 标记质量累加、严格最小保留最早、零质量后的单独接受查询 |
 | `HighQueryProgram.lean`、`HighQueryCount.lean`：`highSet`、`threshold`、`rankSum` | `high_frontend`、`count_cnf_high_loop` | 早期阈值、截断与掩码；逐秩条件化查询与精确累加 |
 | `RingCore.lean`、`IrreducibleSearch.lean`、`RingModelNodes.lean`：`Base`、`O`、`poly`、`passes`、`residueNode`、`difference_isUnit` | `counting_extension`、`node_element`、`ExtensionSchedule` | 日程整数、不可约单首搜索、固定节点与唯一自然数读回 |
+| `BooleanDifferences.lean`、`DifferencePairs.lean`：`difference`、`words`、`pairCount`、`fold` | `difference_coefficient`、`iter_pairs`、`pair_count`、`streamed_boolean_sum` | 修正对枚举、单目系数提取与布尔有限差分求和 |
+| `QueryStreamProgram.lean`、`QueryCountReconstruction.lean`：`jets_of_outputs`、`query_run_space` | `node_coefficient_stream`、`reconstruct_from_stream`、`streamed_taylor_count` | 逐节点 J 系数流、Newton–Hermite 读回与唯一计数字 |
 
 这些是源码和有限行为的对应关系。Python 测试与静态源码审计不提供 Lean 内核编译或 Python 程序精化证明。
 
@@ -110,14 +112,20 @@ assert accepted.marker_sums == (8, 36, 45, 0)  # modulus = 81
 
 Hermite 放置：先算目标多项式在节点处的 J 个精确 Taylor 喷射 `target(X + θ) mod X^J`（整数二项系数，无除法），再用 Newton–Hermite 重建——除节点差外不做除法，`Q*J > degree` 时唯一且与目标逐系数一致；条件数以内的目标精确恢复、达到条件数的目标被检出不等。
 
+## 修正对与 Taylor 读回
+
+修正对 `(E,U)` 满足 `|E| < J`、`U ⊆ E`，按 `DifferencePairs.fold` 的坐标优先顺序深度优先流式枚举（先 none 后 out 再 in，严格预算耗尽即剪枝，不保存完成对表）；对计数为 `Σ_{j<J} 2^j·C(n,j)`。布尔有限差分恒等式把平方自由求和严格写成 `Σ_{(E,U)} (−1)^(|E|−|U|)·2^(n−|E|)·p(U)`：`difference(E,p)` 的交替和逐项等于支撑表系数；`J` 超过最大支撑度时流式和等于直接权重和与暴力逐点求和（有符号探针 116；模型指示多项式给出星形 9、双星 25、hub 129）。
+
+逐节点读回：目标多项式在每个节点的 `J` 个精确 Taylor 系数按 `d` 个 2t 位小端字写入扁平流（`Q*J*d` 个字，含零字；前缀长度逐节线性）。`decode_stream` 只从流重建各块，`hermite_reconstruct` 在 `Q*J > degree` 下读回目标在 0 处的值，即 `3^t` 以内的唯一计数字。修正对、赋值、项数、喷射阶与流字预算拒绝不返回任何部分和。生产原生叶仍使用完整平方自由支持表；切换该路径与整机资源仍是开放义务。
+
 ## 预算、收据与下一步
 
-`LeanAlgebraBudgets` 限制变量、子句、原始文字与行项数、编码长度、精度、单个支持表项数、活跃系数、逻辑编码位数、单项式乘法和标量操作。`CodeBudgets` 限制矩阵项、图维数、候选、字检查、操作和编码位数；`GreedyBudgets` 限制候选深度、候选数、轮数、标记查询数与历史行/项数。`HighBudgets` 限制单个查询的秩数与条件化查询数；`--high-loop` 只改变查询的执行路径，不改变计数。`ExtensionBudgets` 限制扩张度数、候选、除法检查与环操作；搜索与环构造的拒绝不返回任何见证。拒绝不返回部分码或部分计数，已完成工作保留在收据中。默认 `max_precision=64`、`max_polynomial_terms=16384`、`max_monomial_products=2000000`、`max_scalar_operations=8000000`。超预算返回 `status='refused', count=None`；调用参数无效时抛出 `ValueError`。
+`LeanAlgebraBudgets` 限制变量、子句、原始文字与行项数、编码长度、精度、单个支持表项数、活跃系数、逻辑编码位数、单项式乘法和标量操作。`CodeBudgets` 限制矩阵项、图维数、候选、字检查、操作和编码位数；`GreedyBudgets` 限制候选深度、候选数、轮数、标记查询数与历史行/项数。`HighBudgets` 限制单个查询的秩数与条件化查询数；`--high-loop` 只改变查询的执行路径，不改变计数。`ExtensionBudgets` 限制扩张度数、候选、除法检查与环操作；搜索与环构造的拒绝不返回任何见证。`TaylorBudgets` 限制修正对数、赋值数、流字数、喷射阶与项数；拒绝不返回任何部分和。拒绝不返回部分码或部分计数，已完成工作保留在收据中。默认 `max_precision=64`、`max_polynomial_terms=16384`、`max_monomial_products=2000000`、`max_scalar_operations=8000000`。超预算返回 `status='refused', count=None`；调用参数无效时抛出 `ValueError`。
 
 原生查询的计量器累计整个查询的操作。流式前沿让全部叶共享乘法和标量操作预算；峰值存储取各叶的最大值，前沿存储单独报告。若第一叶已完成而第二叶拒绝，总计数与 SAT 结果仍为空，已完成工作保留在收据中。独立的 `TruncatedRing` 检查每次稠密运算的工作上界；它不记录任意外部调用序列的累计工作。
 
 活跃的不可变支持表通过弱引用跟踪，另计临时表、输出系数与准备数据。`peak_algebra_bits` 使用每项 n 位支持掩码、固定宽度系数和 framing 的逻辑编码；这些值不是 Python 对象的堆占用、位运算次数或实际磁带空间。
 
-当前 native 计数相当于没有 Z 展开的 `J=1` 查询。虽已实现一般 `t*J` 稠密环，它还没有接到节点求值、修正对和 Hermite 恢复。完整平方自由支持表仍可能指数增长；零布尔扫描不能建立一般多项式空间或次指数时间。下一阶段依次接通流式 Taylor 叶、分组放置，以及整条机器的资源精化。
+当前 native 计数相当于没有 Z 展开的 `J=1` 查询。虽已实现一般 `t*J` 稠密环，它还没有接到节点求值、修正对和 Hermite 恢复。完整平方自由支持表仍可能指数增长；零布尔扫描不能建立一般多项式空间或次指数时间。下一阶段依次把生产叶切换到流式路径、接通分组放置，以及整条机器的资源精化。
 
-独立核对入口为 `python -m counting_sat_algebra.verify --step24`（17 项：Newton 系数、共享截断、查询语义、前沿计数和预算拒绝）、`--step25`（15 项：日程整数、距离与 Walsh 首选见证、行再生、候选流、贪心轨迹与流式 hash 叶）、`--step26`（12 项：阈值、截断与掩码、秩和恒等式、路由一致性与预算拒绝）与 `--step27`（12 项：日程整数、守卫边界、不可约搜索、环运算、单位与读回、节点、Hermite 恢复与拒绝）。单元测试还独立核对小精度的 Hermite/Hasse 条件、稠密卷积和小布尔立方语义。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均保持 false。
+独立核对入口为 `python -m counting_sat_algebra.verify --step24`（17 项：Newton 系数、共享截断、查询语义、前沿计数和预算拒绝）、`--step25`（15 项：日程整数、距离与 Walsh 首选见证、行再生、候选流、贪心轨迹与流式 hash 叶）、`--step26`（12 项：阈值、截断与掩码、秩和恒等式、路由一致性与预算拒绝）与 `--step27`（12 项：日程整数、守卫边界、不可约搜索、环运算、单位与读回、节点、Hermite 恢复与拒绝）与 `--step28`（9 项：修正对计数与枚举、差分系数、流式和一致性、节点流几何、读回与预算拒绝）。单元测试还独立核对小精度的 Hermite/Hasse 条件、稠密卷积和小布尔立方语义。`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均保持 false。

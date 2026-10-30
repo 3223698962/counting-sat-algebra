@@ -31,12 +31,13 @@ and selects history rows by accumulated marked-violation mass before the
 separate final accepted query. Step 26 computes the early high-incidence
 threshold and the high-variable frontend, and routes the hash leaf queries
 through the streamed conditioned rank loop. Step 27 constructs the counting
-extension ring, the fixed nodes and the Q*J > degree Hermite placement. The
-DIMACS Lean backend connects the native and hash leaves to the same frontier.
+extension ring, the fixed nodes and the Q*J > degree Hermite placement.
+Step 28 streams the correction pairs and re-reads the per-node Taylor
+coefficients by Newton Hermite. The DIMACS Lean backend connects the native
+and hash leaves to the same frontier.
 
 The active roadmap follows the supplied SqrtLogSpace counting program.
-The streamed Taylor leaf, placement and Python time/space refinement
-remain open.
+Packing, native placement and Python time/space refinement remain open.
 The supplied Lean library has theorem proof source; local kernel validation
 is pending. Finite comparisons do not establish general asymptotic bounds.
 Appendix D packet tensors and recursive contraction remain a later route.
@@ -95,6 +96,12 @@ from .lean_ext import (
 from .lean_high import (
     STEP26_SCOPE, HighBudgets, HighFrontend, HighLoopResult, count_cnf_high_loop,
     early_log, early_threshold, high_frontend,
+)
+from .lean_taylor import (
+    STEP28_SCOPE, TaylorBudgets, TaylorRefusal, decode_pair, decode_stream,
+    difference_coefficient, direct_sum, encode_pair, iter_pairs,
+    node_coefficient_stream, pair_count, reconstruct_from_stream,
+    streamed_boolean_sum, streamed_taylor_count,
 )
 from .lean_parameters import SparseParameter, choose_sparse_parameter, parameter_test
 from .lean_ring import (
@@ -208,6 +215,10 @@ __all__ = [
     "is_irreducible_f3", "layout_cutoff", "layout_energy", "layout_q", "layout_r",
     "node_code_words", "node_element", "node_stream", "search_irreducible_polynomial",
     "taylor_jets",
+    "STEP28_SCOPE", "TaylorBudgets", "TaylorRefusal", "decode_pair", "decode_stream",
+    "difference_coefficient", "direct_sum", "encode_pair", "iter_pairs",
+    "node_coefficient_stream", "pair_count", "reconstruct_from_stream",
+    "streamed_boolean_sum", "streamed_taylor_count",
     "STEP22_SCOPE",
     "FrozenModeDescription",
     "ModeBudgets",
@@ -389,4 +400,4 @@ __all__ = [
     "step7_examples",
 ]
 
-__version__ = "0.27.0"
+__version__ = "0.28.0"

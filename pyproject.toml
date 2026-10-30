@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "counting-sat-algebra"
-version = "0.27.0"
-description = "Exact algebraic #SAT with Lean-guided streaming disjoint sparsification, scheduled sparse codes, violation-mass greedy selection, streamed high-variable loops, counting extension rings and finite reference backends. The streamed Taylor leaf, packing and bit-complexity transfer remain open."
+version = "0.28.0"
+description = "Exact algebraic #SAT with Lean-guided streaming disjoint sparsification, scheduled sparse codes, violation-mass greedy selection, streamed high-variable loops, counting extension rings, streamed correction pairs and finite reference backends. Packing, native placement and bit-complexity transfer remain open."
 readme = "README.md"
 requires-python = ">=3.10"
 

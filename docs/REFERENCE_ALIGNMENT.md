@@ -1,6 +1,6 @@
 # 与 references 的实现对齐
 
-当前版本 **0.27.0**。主目标是移植新加入的完整 Lean `SqrtLogSpace` 精确计数程序，并核验 Python 的语义、时间和空间连接。Step 23 已实现原声明 n 上的流式互不重叠前沿，Step 24 已实现三元指示系数、接受/标记查询及原生计数叶，Step 25 已实现日程稀疏码、逐行再生与违反质量贪心选行，Step 26 已实现早期阈值、高变量前端与流式秩循环，Step 27 已实现计数扩张环、固定节点与 Hermite 放置条件。原论文 Sections 3–6 和 Appendix D 的有限结果保留；更强的 Appendix D 路线列为后续工作。
+当前版本 **0.28.0**。主目标是移植新加入的完整 Lean `SqrtLogSpace` 精确计数程序，并核验 Python 的语义、时间和空间连接。Step 23 已实现原声明 n 上的流式互不重叠前沿，Step 24 已实现三元指示系数、接受/标记查询及原生计数叶，Step 25 已实现日程稀疏码、逐行再生与违反质量贪心选行，Step 26 已实现早期阈值、高变量前端与流式秩循环，Step 27 已实现计数扩张环、固定节点与 Hermite 放置条件，Step 28 已实现流式修正对与 Taylor 读回。原论文 Sections 3–6 和 Appendix D 的有限结果保留；更强的 Appendix D 路线列为后续工作。
 
 本包尚未实现一般输入的完整渐近算法，`theorem_1_1_complete`、`lean_proof_complete` 与 `recursive_contraction` 均为 false。新 Lean 库具有终点证明源码；这些标志记录 Python 实现、本地内核核验和精化的未完成状态，不把新库误写成旧的 `sorry` 脚手架。
 
@@ -117,9 +117,11 @@ Step 26 的十二项检查覆盖早期对数与阈值、截断上取整与两条
 
 Step 27 的十二项检查覆盖日程整数复现、守卫边界（K=2^24 拒绝、K=2^25 通过）与 `Q*J > degree` 恒等、独立乘法分解器核对的首个不可约见证、环运算与可逆元（牛顿提升）、`3^t` 以内唯一自然数读回、节点互异与单位差、精确 Taylor 喷射与 Newton–Hermite 精确恢复/条件数失配、双字长编码与搜索拒绝。
 
-当前完整报告 `benches/reference_alignment.json` 覆盖 Steps 9–27，新增 Step 27 的十二行：日程与守卫、不可约搜索、扩张环、读回、节点与 Hermite 见证、搜索拒绝。`artifacts/step15-verification.json` 至 `artifacts/step27-verification.json` 可分别用对应 `--stepN --output` 重新执行并保存；报告版本与包版本一致。
+Step 28 的九项检查覆盖修正对计数与 `fold` 顺序枚举、差分系数对支撑表、有符号探针的流式=直接=暴力（116）、修正对/赋值/项数预算拒绝、节点流几何（`Q*J*d` 字）与解码错误、唯一读回范围、星形/双星/hub 模型计数（9/25/129）、一阶终端情形与流字预算拒绝。
 
-版本 0.27.0 的完整 pytest 为 **500/500**，完整参考检查为 **167/167**；Steps 15–27 的单步报告也已实际重新执行生成。
+当前完整报告 `benches/reference_alignment.json` 覆盖 Steps 9–28，新增 Step 28 的九行：修正对枚举与差分、流式求和一致性、节点流几何、唯一读回、模型计数与预算拒绝。`artifacts/step15-verification.json` 至 `artifacts/step28-verification.json` 可分别用对应 `--stepN --output` 重新执行并保存；报告版本与包版本一致。
+
+版本 0.28.0 的完整 pytest 为 **529/529**，完整参考检查为 **176/176**；Steps 15–28 的单步报告也已实际重新执行生成。
 
 报告区分 `COUNTED`、`CHECKED`、`REFUSED`，保留全部完成标志为 false，不记录运行时间，大计数以精确十六进制保存。`--output` 只记录实际执行的检查，失败或空 suite 不会标为全部通过。静态 Lean 审计独立保存在 `artifacts/lean-reference-audit.json`；它不替代计数检查或 Lean 内核核验。
 
@@ -143,6 +145,7 @@ python -m counting_sat_algebra.verify --step24
 python -m counting_sat_algebra.verify --step25
 python -m counting_sat_algebra.verify --step26
 python -m counting_sat_algebra.verify --step27
+python -m counting_sat_algebra.verify --step28
 python -m counting_sat_algebra.verify --quick
 python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-audit.json
 python -m counting_sat_algebra count examples/count_demo.cnf --output benches/count_demo.json
@@ -150,7 +153,7 @@ python -m counting_sat_algebra count examples/count_demo.cnf --backend lean --le
 python -m counting_sat_algebra count examples/connected_path.cnf --backend tensor --output benches/connected_path.json
 ```
 
-`--step9` 至 `--step27` 可分别运行十九组参考检查，也支持 `--output` 保存所选结果。`--step8` 保留原布尔预算模式。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 提供有限 Taylor 消元，`lean` 提供流式外层及 `common|tensor|native` 叶。`--quick` 运行 Steps 0–8 的小网格和 Steps 9–27 的同一组有限检查。Steps 17–22 的模网络、分包等仍由独立 API 提供。
+`--step9` 至 `--step28` 可分别运行二十组参考检查，也支持 `--output` 保存所选结果。`--step8` 保留原布尔预算模式。默认 `schedule_placement` 使用线性代数检查。默认 DIMACS 后端是 `common`；`tensor` 提供有限 Taylor 消元，`lean` 提供流式外层及 `common|tensor|native` 叶。`--quick` 运行 Steps 0–8 的小网格和 Steps 9–28 的同一组有限检查。Steps 17–22 的模网络、分包等仍由独立 API 提供。
 
 ## 尚未完成的条件
 
@@ -158,7 +161,7 @@ python -m counting_sat_algebra count examples/connected_path.cnf --backend tenso
 2. （Step 25 已完成）用真实标记查询累加候选行的违反质量，接通流式贪心选择，并独立执行最终历史接受查询；`hash` 叶已使用该程序。
 3. （Step 26 已完成）接通原声明 n 上的高变量赋值循环：早期阈值、截断、掩码、逐秩条件化累加与 `--high-loop` 路由；完整参数前端与出现次数守卫随整机精化推进。
 4. （Step 27 已完成环与节点部分）构造计数扩张环、互异插值节点并建立 QJ>degree；实际分组放置进 ABI 仍待接通。
-5. 按 Lean 修正对再生、节点喷射和 Hermite 恢复程序实现流式 Taylor 查询叶，替换当前可能指数增长的平方自由支持表。
+5. （Step 28 已完成有限移植）修正对分解、逐节点 J 系数流与 Newton–Hermite 读回已落地；把生产叶切换到该流式路径（含立即 U 特化与完整修正对再生）仍待接通。
 6. 对整条 Python 程序核对精确位时间、所有前缀的工作空间、完整计数字和成功/失败路径；将操作统计与 Lean 原始机器资源建立精化关系。
 7. 在库锁定的 Lean 环境中实际编译入口、保存公理依赖输出。新增库已有证明源码；尚未完成的是本地内核核验及 Python 对该程序的移植与精化。
 
