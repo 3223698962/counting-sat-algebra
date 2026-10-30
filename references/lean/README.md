@@ -1,6 +1,6 @@
 # Lean reference materials
 
-Python package version **0.29.0** uses the newly supplied Lean library as its implementation reference. Source availability, Lean kernel verification and completion of the Python algorithm are separate facts.
+Python package version **0.30.0** uses the newly supplied Lean library as its implementation reference. Source availability, Lean kernel verification and completion of the Python algorithm are separate facts.
 
 ## Supplied library
 
@@ -33,6 +33,6 @@ The final file includes `#print axioms` for its endpoints. Save that actual outp
 
 ## Python transfer
 
-Step 23 implements the binary syntax and streaming disjoint frontier. Step 24 implements ternary Newton digits, shared-marker truncation and finite accepted/marked query counts, with a native algebraic leaf available in the DIMACS command. Step 25 implements the scheduled ternary sparse code with regenerated rows and the violation-mass greedy selector, available as the hash leaf. Step 26 implements the early high-incidence threshold, the high-variable frontend and the streamed conditioned rank loop, which the hash leaf can use for every query. Step 27 implements the counting extension ring with the searched irreducible lift, fixed radix nodes and the Q*J > degree Hermite condition. Step 28 streams the correction pairs and re-reads the per-node Taylor coefficient blocks by Newton Hermite. Step 29 adds the streamed pointwise correction-pair leaf without squarefree support tables. Packing and native placement remain open. Python scalar operation counts and logical encoding charges are not primitive Lean-machine step or visited-tape measurements.
+Step 23 implements the binary syntax and streaming disjoint frontier. Step 24 implements ternary Newton digits, shared-marker truncation and finite accepted/marked query counts, with a native algebraic leaf available in the DIMACS command. Step 25 implements the scheduled ternary sparse code with regenerated rows and the violation-mass greedy selector, available as the hash leaf. Step 26 implements the early high-incidence threshold, the high-variable frontend and the streamed conditioned rank loop, which the hash leaf can use for every query. Step 27 implements the counting extension ring with the searched irreducible lift, fixed radix nodes and the Q*J > degree Hermite condition. Step 28 streams the correction pairs and re-reads the per-node Taylor coefficient blocks by Newton Hermite. Step 29 adds the streamed pointwise correction-pair leaf without squarefree support tables. Step 30 assembles and places one leaf at the recorded QueryReady ports with a threaded run. The physical machine, packing and grouping replacement remain open. Python scalar operation counts and logical encoding charges are not primitive Lean-machine step or visited-tape measurements.
 
 `theorem_1_1_complete`, `lean_proof_complete` and `recursive_contraction` stay false in Python reports. In particular, `lean_proof_complete=false` records the pending local verification and Python refinement; it does not assert that the newly supplied source has a missing theorem proof.

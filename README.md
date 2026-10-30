@@ -1,8 +1,8 @@
 # counting-sat-algebra
 
-根据 `references/` 中的论文和 Lean 程序逐步实现确定性的精确 #SAT 计数。当前版本为 **0.29.0**，主线已转向新加入的 `SubexponentialSAT/SqrtLogSpace`：保留声明变量数，流式遍历互不重叠的稀疏化叶，叶内先装配日程稀疏码，再用违反质量贪心选择历史行，最后单独执行接受查询并累加完整的自然数计数；hash 叶可选地把标记与接受查询路由到流式高变量秩循环，计数扩张环、Hermite 放置、修正对分解与 Taylor 读回、以及无支持表的流式逐点叶已有有限见证。
+根据 `references/` 中的论文和 Lean 程序逐步实现确定性的精确 #SAT 计数。当前版本为 **0.30.0**，主线已转向新加入的 `SubexponentialSAT/SqrtLogSpace`：保留声明变量数，流式遍历互不重叠的稀疏化叶，叶内先装配日程稀疏码，再用违反质量贪心选择历史行，最后单独执行接受查询并累加完整的自然数计数；hash 叶可选地把标记与接受查询路由到流式高变量秩循环，计数扩张环、Hermite 放置、修正对分解与 Taylor 读回、无支持表的流式逐点叶、以及记录端口的叶装配与放置已有有限见证。
 
-Step 23 实现 Lean 二进制语法、精确二进参数搜索、规范化和深度优先计数前沿。Step 24 新增模 `3^t` 的 Newton 指示系数、共享标记截断、布尔平方自由多项式求和，以及真实的接受/标记违反计数查询。Step 25 按日程整数构造三元稀疏码并逐行再生，用真实标记查询累加全部子句的违反质量做贪心选择，核对零质量后单独执行接受查询。Step 26 计算早期高出现阈值与高变量前端，并可按秩流式路由全部查询。Step 27 构造模 `3^t` 的计数扩张环、固定互异节点与 `Q*J > degree` 的 Hermite 条件。Step 28 流式枚举修正对 `(E,U)` 并用布尔有限差分恒等式精确求和，再经逐节点 J 系数流与 Newton–Hermite 读回计数。Step 29 增加无平方自由支持表的逐点修正对叶（`--leaf-backend stream`）：每个修正对只做一次点求值并精确累加。`--backend lean --leaf-backend native|hash|stream` 已接通这些部件。完整的 Lean 叶程序移植仍需分组放置与整机资源。
+Step 23 实现 Lean 二进制语法、精确二进参数搜索、规范化和深度优先计数前沿。Step 24 新增模 `3^t` 的 Newton 指示系数、共享标记截断、布尔平方自由多项式求和，以及真实的接受/标记违反计数查询。Step 25 按日程整数构造三元稀疏码并逐行再生，用真实标记查询累加全部子句的违反质量做贪心选择，核对零质量后单独执行接受查询。Step 26 计算早期高出现阈值与高变量前端，并可按秩流式路由全部查询。Step 27 构造模 `3^t` 的计数扩张环、固定互异节点与 `Q*J > degree` 的 Hermite 条件。Step 28 流式枚举修正对 `(E,U)` 并用布尔有限差分恒等式精确求和，再经逐节点 J 系数流与 Newton–Hermite 读回计数。Step 29 增加无平方自由支持表的逐点修正对叶（`--leaf-backend stream`）：每个修正对只做一次点求值并精确累加。Step 30 把环常量、节点表、插值缓存与成帧行流按记录的 `QueryReady` 端口放置，并用一条贯通运行从日程走到计数字。`--backend lean --leaf-backend native|hash|stream` 已接通这些部件。完整的 Lean 叶程序移植仍需物理机器、分组替换与整机资源。
 
 新的 Lean 参考源码含精确计数和全执行前缀的多项式空间定理。静态审计覆盖 **3969 个本地模块**，没有缺失的本地导入、代码级 `sorry`/`admit` 或 `axiom` 声明。审计不等于 Lean 内核验证；本机尚未编译该库。旧的单文件脚手架另行保留，详见 [Lean 参考说明](references/lean/README.md)。
 
@@ -21,6 +21,7 @@ python -m counting_sat_algebra.verify --step26 --output artifacts/step26-verific
 python -m counting_sat_algebra.verify --step27 --output artifacts/step27-verification.json
 python -m counting_sat_algebra.verify --step28 --output artifacts/step28-verification.json
 python -m counting_sat_algebra.verify --step29 --output artifacts/step29-verification.json
+python -m counting_sat_algebra.verify --step30 --output artifacts/step30-verification.json
 python -m counting_sat_algebra.lean_reference --output artifacts/lean-reference-audit.json
 ```
 

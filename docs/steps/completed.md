@@ -286,3 +286,13 @@ Historical scaffold from 0.9.0. The explicit Boolean mode reproduces its budget 
 - [x] Connect `--leaf-backend stream` with shared pair and point-evaluation budgets; refusals publish no partial total
 - [x] Export 9 `verify --step29` rows and 26 pytest checks; keep the theorem, Lean and recursive-contraction flags false
 - The full machine's degree reduction, the native placement and the whole-machine resource refinement remain open; the default leaf stays `common`
+
+### Step 30 — leaf assembly and placement
+
+- [x] Place the ring constants at the recorded QueryReady ports: modulus bits, the `d^3` structure words, capacity width, scalar codes of 0/1/-1/1/2, unary degree/precision/jet/`3^d-2` exponent words, the `6t^2`-bit idempotent code, flat and framed node tables and the unary row/ring widths
+- [x] Check every placed length against the recorded formula and every value against an independent oracle: power words, half-inverts-two, node digits, inverse and negative codes, and pairwise unit differences with a zero diagonal
+- [x] Frame the regenerated rows exactly like `Encoding.encodeList`, decode back to the raw payloads and to the slot lists, and satisfy the `initial_encoding` identity; the append encoding matches `true :: frame (payload.reverse) ++ history`
+- [x] Thread one run from the scheduled code through placement and the framed stream to the greedy rounds and the little-endian count word, with the decoded-history marked score equal to the direct rows
+- [x] Count the star, hub, forest and supplied example as 9/129/25/196, equal to brute force and the direct greedy; refusals on node, degree, exponent, table and stream budgets publish no count
+- [x] Export 9 `verify --step30` rows and 27 pytest checks; keep the theorem, Lean and recursive-contraction flags false
+- The physical 896-stack machine, the query-derived ring target, grouping replacement and the prefix-space refinement remain open

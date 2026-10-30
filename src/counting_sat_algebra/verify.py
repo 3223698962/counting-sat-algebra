@@ -5,7 +5,7 @@ Step 1 bounded-occurrence degree check, Step 2 blocked-sum agreement, a
 Step 3 tiny replacement-matrix slice, Step 4 Hermite recovery of H(0),
 Step 5 occurrence copying with #F' = #F on instances inside the brute window,
 and a Step 6 parameter scan that records matches and refusals.
-Steps 9–22 retain the finite reference suites. Steps 23–29 check the
+Steps 9–22 retain the finite reference suites. Steps 23–30 check the
 Lean-guided disjoint frontier, native ternary accepted/marked queries, the
 scheduled sparse codes, the violation-mass greedy selector, the streamed
 high-variable loop, the counting extension rings and the streamed correction
@@ -15,7 +15,7 @@ Usage:
   python -m counting_sat_algebra.verify
   python -m counting_sat_algebra.verify --quick
   python -m counting_sat_algebra.verify --step2 ... --step8
-  python -m counting_sat_algebra.verify --step14 ... --step29
+  python -m counting_sat_algebra.verify --step14 ... --step30
   python -m counting_sat_algebra.verify --reference --output benches/reference_alignment.json
 """
 
@@ -1052,7 +1052,7 @@ def print_summary_table(
             + (f" ({refused} refused as recorded)" if refused else "")
         )
     if reference_rows:
-        print(f"Reference (K–AE): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
+        print(f"Reference (K–AF): {sum(bool(r['ok']) for r in reference_rows)}/{len(reference_rows)} checks passed")
     print("=" * 72)
 
 
@@ -1095,41 +1095,31 @@ def _selected_scope(steps: Sequence[int]) -> str:
         )
     if 8 in steps:
         parts.append(
-            "Step 8 runs successive choice only when the balance inequalities "
-            "hold and the slice is under the cap. On the admitted rows the "
-            "multiplicity and group bounds hold, and design_problems_at is not "
-            "called because its Boolean walk is above the budget. Formulas that "
-            "fail the inequalities still refuse with no placement. Full M0 and "
-            "side length 1024 were refused before allocation. A direct check on "
-            "eight units, which are not admitted, passed design and T=0; "
-            "schedule_placement does not make that call. The schedule cube was "
-            "not enumerated."
+            "Step 8 runs successive choice only when the balance inequalities hold "
+            "and the slice is under the cap; on admitted rows the multiplicity and "
+            "group bounds hold and design_problems_at is above the budget. Failing "
+            "formulas still refuse with no placement; full M0 and side 1024 were "
+            "refused before allocation; the schedule cube was not enumerated."
         )
-    if any(step in steps for step in range(9, 30)):
+    if any(step in steps for step in range(9, 31)):
         parts.append(
-            "Reference Sections 3 and 4: conditional expectation, rational kernels, streamed Taylor recovery, "
-            "structured matrix entries, sparse admitted placements, independent CNF components, disjoint "
-            "replacement supports and finite connected Taylor contraction. Step 16 chooses Lemma 4.8's "
-            "schedule and runs a budget-feasible finite member when Lemma 4.7 accepts it. "
-            "Step 17 checks sparse F2 systems, Lemma 5.1, and a truncated product on a tiny cube. "
-            "Step 18 sums Section 5.3–5.5 replacement factors in A_ell by the Section 3 routine. "
-            "Step 19 checks finite Section 6 equation selection and disjoint sparsification on a fixed n. "
-            "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered Hermite recovery. "
-            "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
-            "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
-            "Step 23 transfers Lean encoding and a streamed disjoint counting frontier with finite algebraic leaves. "
-            "Step 24 constructs ternary Newton digits and exact accepted/marked query counts through "
-            "shared marker truncation and finite squarefree polynomial sums. "
-            "Step 25 constructs the scheduled sparse ternary code with regenerated rows and "
-            "selects history rows by accumulated marked-violation mass before counting the "
-            "separate final accepted query. "
-            "Step 26 checks the early high-incidence threshold, the high-variable frontend "
-            "and the streamed conditioned rank loop. "
-            "Step 27 checks the counting extension ring, the fixed nodes and the "
-            "Q*J > degree Hermite condition. "
-            "Step 28 checks the streamed correction pairs and the Taylor readback. "
-            "Step 29 streams the pointwise correction-pair leaf without support tables. "
-            "Packing and Python resource refinement remain open. "
+            "at most 2M/D and group size at most 2n/r. Steps 9–16 check conditional "
+            "expectation designs, streamed Taylor recovery, structured entries, sparse "
+            "placements, component counts, disjoint supports, connected contraction and "
+            "one finite Lemma 4.8 member; that execution is not a proof of the asymptotic "
+            "bound. Steps 17–19 check finite Section 5–6 objects (sparse F2 systems, the "
+            "A_ell replacement sum, equation selection and sparsification); declared n is "
+            "unchanged and Proposition 6.4's running time is not claimed. Steps 20–22 "
+            "check finite Appendix D networks, Cauchy deformation, tapered recovery, "
+            "collision packing and D.4.5 modes. "
+            "Steps 23–26 check the Lean syntax, the streamed disjoint frontier, "
+            "ternary Newton digits and exact accepted/marked queries, the scheduled "
+            "sparse code with greedy row selection, and the high-variable rank loop. "
+            "Steps 27–30 check the counting extension ring and Hermite condition, "
+            "the streamed correction pairs and Taylor readback, the pointwise leaf "
+            "and the assembled placement. "
+            "The physical machine, grouping replacement and Python resource refinement "
+            "remain open. "
             "Proposition 6.4's running time is not claimed. Appendix D recursive contraction is not implemented. "
             "Complete Theorem 1.1 alignment remains open."
         )
@@ -1143,7 +1133,7 @@ def _run_selected(
     scan_profile: str,
     reference_output: str | None = None,
 ) -> int:
-    """Run a subset of Steps 2–29. The full path stays in ``main``."""
+    """Run a subset of Steps 2–30. The full path stays in ``main``."""
     label = ", ".join(str(number) for number in steps)
     noun = "Step" if len(steps) == 1 else "Steps"
     print(f"counting_sat_algebra.verify — {noun} {label} only")
@@ -1251,7 +1241,7 @@ def _run_selected(
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Counting algorithm reference verifier (Steps 0 through 29)"
+        description="Counting algorithm reference verifier (Steps 0 through 30)"
     )
     parser.add_argument("--trials-b", type=int, default=50, help="interpolation trials")
     parser.add_argument("--trials-a", type=int, default=20, help="independent-component trials")
@@ -1320,8 +1310,9 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument('--step27', action='store_true', help='check counting extension rings and Hermite placement')
     parser.add_argument('--step28', action='store_true', help='check streamed correction pairs and the Taylor readback')
     parser.add_argument('--step29', action='store_true', help='check the streamed pointwise correction-pair leaf')
-    parser.add_argument('--reference', action='store_true', help='run Steps 9–29 against the local reference')
-    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step29)')
+    parser.add_argument('--step30', action='store_true', help='check assembly and placement of one assembled leaf run')
+    parser.add_argument('--reference', action='store_true', help='run Steps 9–30 against the local reference')
+    parser.add_argument('--output', help='save reference checks as JSON (requires --reference or --step9 through --step30)')
     args = parser.parse_args(argv)
 
     n_min, n_max = 4, 10
@@ -1366,11 +1357,12 @@ def main(argv: List[str] | None = None) -> int:
             (27, args.step27 or args.reference),
             (28, args.step28 or args.reference),
             (29, args.step29 or args.reference),
+            (30, args.step30 or args.reference),
         )
         if enabled
     ]
     if args.output and not any(step >= 9 for step in selected):
-        parser.error('--output requires --reference or --step9 through --step29')
+        parser.error('--output requires --reference or --step9 through --step30')
     if selected:
         return _run_selected(
             selected,
@@ -1379,7 +1371,7 @@ def main(argv: List[str] | None = None) -> int:
             args.output,
         )
 
-    print("counting_sat_algebra.verify — Steps 0 through 29")
+    print("counting_sat_algebra.verify — Steps 0 through 30")
     print("Legacy Steps 0–8 checks (interpolation, blocked sums, Hermite recovery,")
     print("occurrence copying, a parameter scan and the bounded balancer).")
     print("Theorem 1.1 is not implemented. This program does not refute ETH.")
@@ -1520,23 +1512,15 @@ def main(argv: List[str] | None = None) -> int:
         "rows are recorded and not counted. Popcount measurement tuples grow as (r+1)^b. "
         "Refused scan cells were not timed. Caller-supplied schedules are checked. "
         "When the balance inequalities hold, successive choice aims at multiplicity "
-        "at most 2M/D and group size at most 2n/r. Step 9 checks the admitted "
-        "n=1024 placement using exact linear algebra. Step 10 recovers jets by "
-        "streaming local measurement scans. Step 11 queries full-parameter matrix "
-        "entries. Step 12 checks a sparse placement admitted by every Lemma 4.7 "
-        "hypothesis. Step 13 counts independent components exactly. Step 14 "
-        "contracts disjoint replacement supports of the same global polynomial. Step 15 "
-        "eliminates variables in connected supports within intermediate-table budgets. Step 16 "
-        "evaluates Lemma 4.8's closed form and, where the sparse budgets allow, places and counts "
-        "one finite tuple that passes every Lemma 4.7 numerical hypothesis. That execution is not "
-        "a proof of the asymptotic time or space bound. Step 17 checks the finite Section 5.1–5.2 "
-        "sparse-system algebra on a tiny cube. Step 18 sums the Section 5.3–5.5 replacement "
-        "factors with the Section 3 routine in A_ell; Lemma 4.8 does not form D on these branches. "
-        "Step 19 checks finite Section 6 equation selection and disjoint sparsification; "
-        "declared n is unchanged and Proposition 6.4's running time is not claimed. "
-        "Step 20 checks finite Appendix D modular networks, Cauchy deformation and tapered recovery. "
-        "Step 21 constructs finite collision labels, packet layouts and prospective child topologies. "
-        "Step 22 checks finite D.4.5 weighted modes and one crossing Cauchy residue. "
+        "at most 2M/D and group size at most 2n/r. Steps 9–16 check conditional "
+        "expectation designs, streamed Taylor recovery, structured entries, sparse "
+        "placements, component counts, disjoint supports, connected contraction and "
+        "one finite Lemma 4.8 member; that execution is not a proof of the asymptotic "
+        "bound. Steps 17–19 check finite Section 5–6 objects (sparse F2 systems, the "
+        "A_ell replacement sum, equation selection and sparsification); declared n is "
+        "unchanged and Proposition 6.4's running time is not claimed. Steps 20–22 "
+        "check finite Appendix D networks, Cauchy deformation, tapered recovery, "
+        "collision packing and D.4.5 modes. "
         "Step 23 checks Lean-compatible syntax and a streamed disjoint counting frontier. "
         "Step 24 constructs ternary Newton digits and exact accepted/marked query counts "
         "through shared marker truncation and finite squarefree polynomial sums. "
@@ -1549,7 +1533,9 @@ def main(argv: List[str] | None = None) -> int:
         "Q*J > degree Hermite condition. "
         "Step 28 checks the streamed correction pairs and the Taylor readback. "
         "Step 29 streams the pointwise correction-pair leaf without support tables. "
-        "Packing and Python resource refinement remain open. "
+        "Step 30 assembles the leaf placement and framed stream into one run. "
+        "The physical machine, grouping replacement and Python resource refinement "
+        "remain open. "
         "Appendix D recursive contraction is not implemented. Complete "
         "Theorem 1.1 alignment remains open. "
         f"The dense matrix at R≥32 and 6R≤Q remains unallocated (side length "
